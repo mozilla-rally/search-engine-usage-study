@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+    <ShortName>Yandex</ShortName>
+    <LongName>Yandex Search</LongName>
+    <Description>Yandex Search</Description>
+    <InputEncoding>UTF-8</InputEncoding>
+    <Image width="64" height="64" type="image/png">https://yastatic.net/iconostasis/_/KKii9ECKxo3QZnchF7ayZhbzOT8.png</Image>
+    <Url type="text/html" template="https://yandex.com/search/?text={searchTerms}"/>
+    <Url type="application/x-suggestions+json" method="GET" template="https://suggest.yandex.com/suggest-ff.cgi?part={searchTerms}&amp;uil=en&amp;v=3&amp;sn=5&amp;lr=110509&amp;yu=9622919671616011800"/>
+</OpenSearchDescription>

@@ -105,3 +105,8 @@ dist
 
 # Generated study files
 web-ext-artifacts/
+
+# Compiled Typescript .js
+src/
+
+.DS_Store

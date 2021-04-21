@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "WebScience.version": {
+      "type": "string"
+    },
+    "SurveyId": {
+      "type": "string",
+      "description": "ID sent to Qualtrics, for associating survey responses with telemetry data"
+    },
+    "InitialEngine": {
+      "type": "string"
+    },
+    "InterventionType": {
+      "type": "string"
+    },
+    "Time": {
+      "type": "number"
+    },
+    "TimeOffset": {
+      "type": "number"
+    },
+    "HistoryData": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "SearchEngine": {
+            "type": "string"
+          },
+          "Visits": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "NoticeNewEngine": {
+      "type": "string"
+    },
+    "NoticeInterventionData": {
+      "type": "object",
+      "properties": {
+        "Revert": {
+          "type": "boolean"
+        },
+        "AttentionTime": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BallotInterventionData": {
+      "type": "object",
+      "properties": {
+        "SelectedEngine": {
+          "type": "string"
+        },
+        "AttentionTime": {
+          "type": "number"
+        },
+        "SeeMoreSelected": {
+          "type": "boolean"
+        },
+        "Ordering": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "DetailsExpanded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

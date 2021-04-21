@@ -1,0 +1,47 @@
+[
+  {
+    "namespace": "experimental",
+    "functions": [
+      {
+        "name": "changeSearchEngine",
+        "type": "function",
+        "description": "Change the user's default search engine",
+        "async": true,
+        "parameters": [
+          {
+            "name": "searchEngineName",
+            "type": "string",
+            "description": "name of search engine to make default"
+          }
+        ]
+      },
+      {
+        "name": "getSearchEngine",
+        "type": "function",
+        "description": "Get the user's current search engine",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "changeHomepage",
+        "type": "function",
+        "description": "Change the user's homepage",
+        "async": false,
+        "parameters": [
+          {
+            "name": "newHomepage",
+            "type": "string",
+            "description": "url of the new homepage"
+          }
+        ]
+      },
+      {
+        "name": "getHomepage",
+        "type": "function",
+        "description": "Get the user's homepage",
+        "async": true,
+        "parameters": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,121 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+html {
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+/*standardized font*/
+html {
+  /* Never get smaller than this */
+  font-size: 8px;
+}
+@media (min-width:600px) {
+  html {
+    font-size: 9px;
+  }
+}
+@media (min-width:800px) {
+  html {
+    font-size: 10px;
+  }
+}
+@media (min-width:1000px) {
+  html {
+    /* Never get larger than this */
+    font-size: 12px;
+  }
+}
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+h1 {
+  font-size: 3.5rem;
+}
+h2 {
+  font-size: 2rem;
+}
+h3 {
+  font-size: 2.5rem;
+}
+h4 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+p {
+  line-height: 1;
+  font-size: 2rem;
+}
+
+.chevron-container {
+    display: flex;
+    align-items: center;
+    font-size: 40px;;
+}
+.radio-container {
+    display: flex;
+    align-items: center;
+}
+
+.rotate {
+  -moz-transition: all 0.3s linear;
+  -webkit-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+}
+
+.rotate.down {
+  -moz-transform:rotate(180deg);
+  -webkit-transform:rotate(180deg);
+  transform:rotate(180deg);
+}
+.showing {
+  display: block;
+}
+.hiding {
+  display: none;
+}
+
+.wrapper {
+  padding-top: 1rem;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 20px 20px 20px 20px;
+}
+
+.logo {
+  max-height:100px;
+}
+
+.logo-div {
+  text-align: right;
+}
+
+.fa-chevron-down {
+  height: 40px;
+  width: 40px;
+}
+
+.radio-button {
+  height: 40px;
+  width: 40px;
+}
+
+.button {
+  font-size: 2rem;
+}
+
+.see-more-container {
+  margin-top: 20px;
+}
