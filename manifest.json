@@ -1,21 +1,20 @@
 {
-  "description": "A basic template for a Mozilla Rally Study.",
-  "author": "Mozilla",
+  "description": "A study to assess how individuals interact with their search engines.",
+  "author": "Kartikeya Kandula",
   "manifest_version": 2,
-  "name": "Rally Basic Study Template",
+  "name": "Search Engine Usage Study",
   "version": "0.3.1",
   "homepage_url": "https://github.com/mozilla-ion/ion-basic-study",
-
   "applications": {
     "gecko": {
       "id": "ion-basic-study@mozilla.org",
       "strict_min_version": "77.0a1"
     }
   },
-
   "permissions": [],
-
   "background": {
-    "scripts": ["dist/background.js"]
+    "scripts": [
+      "dist/background.js"
+    ]
   }
 }
