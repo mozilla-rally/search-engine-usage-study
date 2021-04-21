@@ -74,7 +74,7 @@ View this (and other) output by going to `about:debugging`, then "This Firefox",
 - Criteria for completion of interventions:
   - Control group: the intervention is immediately complete.
   - Notice groups: the intervention is complete when the notice page unloads or upon the next restart of the study extension, whichever occurs first.
-  - Ballot groups: A ballot page is loaded upon study extension startup if the user has not completed the intervention. The intervention is complete when the participant selects an option on the ballot. If a ballot is loaded three times with no selection from the participant, then the intervention is complete upon the fourth study extension startup.
+  - Ballot groups: A ballot page is loaded upon study extension startup if the user has not completed the intervention. The intervention is complete when the participant selects an option on the ballot or upon study extension startup if a ballot has already been loaded 3 times for the participant.
 - Upon the start of the study, complete the randomly chosen intervention and check that the intervention data appears in the output.
 - Here's an example of the output for the `BallotExtended` group:
   ```json
