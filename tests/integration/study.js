@@ -5,6 +5,8 @@
 const utils = require("./utils.js");
 const { By, until } = require("selenium-webdriver");
 const firefox = require("selenium-webdriver/firefox");
+const fs = require("fs").promises;
+const assert = require('assert');
 
 // The number of milliseconds to wait for some
 // property to change in tests. This should be
@@ -27,6 +29,26 @@ async function findAndAct(driver, element, action) {
   await driver.findElement(element).then(e => action(e));
 }
 
+async function getObjectsFromTestLog(objectType) {
+
+  const fileContent = await fs.readFile('tests/output/stdout.out', 'utf8');
+  const fileLines = fileContent.replace(/\\/g, '').split((/\r?\n/));
+
+  const rallyObjectKey = `rallyTestingOutput.${objectType}`
+
+  const startString = `console.debug: "${rallyObjectKey}: `
+
+  const matchingLines = fileLines.filter(function (v) { return v.substring(0, startString.length) === startString });
+
+  const matchingObjects = []
+  for(const matchingLine of matchingLines) {
+    // Cut off last character to remove trailing quotation mark
+    matchingObjects.push(JSON.parse(matchingLine.slice(startString.length, -1)))
+  }
+
+  return matchingObjects
+}
+
 describe("Study Template integration test example", function () {
   // eslint-disable-next-line mocha/no-hooks-for-single-case
   beforeEach(async function () {
@@ -45,6 +67,10 @@ describe("Study Template integration test example", function () {
     // switch to browser UI context to interact with Firefox add-on install prompts.
     await this.driver.setContext(firefox.Context.CHROME);
     await findAndAct(this.driver, By.css(`[label="Add"]`), e => e.click());
-    await findAndAct(this.driver, By.css(`[label="Okay, Got It"]`), e => e.click());
+    await findAndAct(this.driver, By.css(`[label="Okay"]`), e => e.click());
+
+    const initialDataObjects = await getObjectsFromTestLog("initialData");
+    assert.strictEqual(initialDataObjects.length, 1);
+    assert.strictEqual(initialDataObjects[ 0 ][ "TimeOffset" ], 240)
   });
 });
