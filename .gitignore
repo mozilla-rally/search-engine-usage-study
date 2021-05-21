@@ -110,3 +110,6 @@ web-ext-artifacts/
 src/
 
 .DS_Store
+
+# Testing output files
+tests/output/

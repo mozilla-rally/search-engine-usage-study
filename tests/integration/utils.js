@@ -42,6 +42,8 @@ async function getFirefoxDriver(headless) {
     );
   }
 
+  fs.mkdirSync('tests/output', { recursive: true })
+
   return await new Builder()
     .forBrowser("firefox")
     .setFirefoxOptions(firefoxOptions)

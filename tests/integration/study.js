@@ -29,8 +29,13 @@ async function findAndAct(driver, element, action) {
   await driver.findElement(element).then(e => action(e));
 }
 
+/**
+* Returns all objects of a particularly type logged by the study extension for testing.
+* @param type
+*        The type of the objects to return. This is specified in the extension
+*        through the 'type' parameter passed to the testingLogger callback in TestLogging
+*/
 async function getObjectsFromTestLog(objectType) {
-
   const fileContent = await fs.readFile('tests/output/stdout.out', 'utf8');
   const fileLines = fileContent.replace(/\\/g, '').split((/\r?\n/));
 
