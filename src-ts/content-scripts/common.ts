@@ -219,7 +219,6 @@ function initPageManagerListeners(asyncLoads = true) {
 
 function pageVisitEndListener() {
   if (lastClickTime && Date.now() - lastClickTime < 500) {
-    console.log("unload because of internal click!")
     numInternalClicks++;
   }
   reportResults();
@@ -278,7 +277,6 @@ function registerAttentionListener() {
       previousAttentionStart = performance.now()
     } else if (previousAttentionStart) {
       totalAttentionTime = totalAttentionTime + (performance.now() - previousAttentionStart)
-      console.log(totalAttentionTime)
     }
   });
 }
@@ -327,22 +325,14 @@ function sendQueryToBackground(engine, urlKeys: Array<string>) {
   }
 }
 
-function getAdLinksDefault(adResults: Element[]): Element[] {
-  const adLinks: Element[] = []
-  for (const adResult of adResults) {
-    adLinks.concat(Array.from(adResult.querySelectorAll("[href]")))
-  }
-  return adLinks
-}
-
 function determineOrganicElementsAndAddListeners(
   organicResults: Element[],
   getPageNumForElement: (Element) => number = () => { return pageNum }) {
 
   // Removes any existing listeners from organic elements that we previously added
   for (const organicLinkWithListeners of organicLinksWithListeners) {
-    organicLinkWithListeners.element.removeEventListener("mousedown", organicLinkWithListeners.mousedownListener);
-    organicLinkWithListeners.element.removeEventListener("click", organicLinkWithListeners.clickListener);
+    organicLinkWithListeners.element.removeEventListener("mousedown", organicLinkWithListeners.mousedownListener, true);
+    organicLinkWithListeners.element.removeEventListener("click", organicLinkWithListeners.clickListener, true);
   }
 
   organicDetails = []
@@ -355,7 +345,6 @@ function determineOrganicElementsAndAddListeners(
 
     organicResult.querySelectorAll("[href]").forEach(organicLinkElement => {
       function organicMousedownListener(_event: Event) {
-        // console.log((organicLinkElement as any).href)
         if ((organicLinkElement as any).href) {
           const organicLinkElementHref = urlFilter(encodeURI((organicLinkElement as any).href))
           mousedownOrganicLinksMap.set(organicLinkElementHref, { element: organicLinkElement, index: i })
@@ -364,18 +353,19 @@ function determineOrganicElementsAndAddListeners(
 
       function organicClickListener(event: MouseEvent) {
         if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-          console.log(event.currentTarget)
-          console.log(event.target)
-          console.log("")
           organicClicks.push({ Ranking: i, AttentionTime: getAttentionTime(), Loaded: pageLoaded })
         }
       }
 
-      organicLinkElement.addEventListener("mousedown", organicMousedownListener);
-      organicLinkElement.addEventListener("click", organicClickListener);
+      organicLinkElement.addEventListener("mousedown", organicMousedownListener, true);
+      organicLinkElement.addEventListener("click", organicClickListener, true);
       organicLinksWithListeners.push({ element: organicLinkElement, mousedownListener: organicMousedownListener, clickListener: organicClickListener })
     });
   }
+}
+
+function getIsAdLinkDefault(adLinkElement: Element): boolean {
+  return !!(adLinkElement as any).href;
 }
 
 /**
@@ -385,40 +375,45 @@ function determineOrganicElementsAndAddListeners(
  */
 function determineAdElementsAndAddListeners(
   adResults: Element[],
-  getAdLinks: (adResults: Element[]) => Element[] = getAdLinksDefault) {
+  getIsAdLinkElement: (adLink: Element) => boolean = getIsAdLinkDefault) {
   // Removes any existing listeners from ad elements that we previously added
   for (const adLinkWithListeners of adLinksWithListeners) {
-    adLinkWithListeners.element.removeEventListener("mousedown", adLinkWithListeners.mousedownListener);
-    adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener);
+    adLinkWithListeners.element.removeEventListener("mousedown", adLinkWithListeners.mousedownListener, true);
+    adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener, true);
   }
-
-
 
   numAdResults = adResults.length
 
-
-  const adLinks = getAdLinks(adResults)
-
   // For each ad element, adds mousedown and click listeners to any elements with an href attribute
   // Also adds the listeners to a list so that we can later remove them if we want to refresh these listeners  
-  for (const adLinkElement of adLinks) {
-    const fnAdMousedownListener = function adMousedownListener(_event: Event) {
-      if ((adLinkElement as any).href) {
-        const adLinkElementHref = urlFilter(encodeURI((adLinkElement as any).href))
+
+
+  for (const adResult of adResults) {
+    const fnAdMousedownListener = function adMousedownListener(event: Event) {
+      console.log(event.target)
+      let adLinkElement = (event.target as any)
+      if (getIsAdLinkElement(adLinkElement)) {
+        const adLink = adLinkElement.href
+        console.log(numAdResults)
+        console.log("AD MOUSEDOWN")
+        console.log(adLink)
+        const adLinkElementHref = urlFilter(encodeURI(adLink))
         mousedownAdLinks.add(encodeURI(adLinkElementHref))
       }
     }
 
     const fnAdClickListener = function adClickListener(event: MouseEvent) {
       if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-        console.log("AD CLICK!!!")
-        numAdClicks++;
+        if ((event.target as any).href) {
+          numAdClicks++;
+        }
+
       }
     }
 
-    adLinkElement.addEventListener("mousedown", fnAdMousedownListener);
-    adLinkElement.addEventListener("click", fnAdClickListener);
-    adLinksWithListeners.push({ element: adLinkElement, mousedownListener: fnAdMousedownListener, clickListener: fnAdClickListener })
+    adResult.addEventListener("mousedown", fnAdMousedownListener, true);
+    adResult.addEventListener("click", fnAdClickListener, true);
+    adLinksWithListeners.push({ element: adResult, mousedownListener: fnAdMousedownListener, clickListener: fnAdClickListener })
   }
 
 }
@@ -468,7 +463,7 @@ function addInternalClickListeners(
     if (linkElement && isValidURL(link) && (linkElement as any).getAttribute("href")[0] !== "#") {
       if (isInternalLink(link)) {
         if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-          console.log("INTERNAL CLICK!!!!!!!")
+          numInternalClicks++;
         } else {
           lastClickTime = Date.now()
         }
@@ -502,24 +497,18 @@ function urlFilter(url: string) {
 function registerNewTabListener() {
   browser.runtime.onMessage.addListener((message) => {
     if (message.type === "NewTabURL") {
-      console.log(message)
-      // console.log(mousedownAdLinks)
-      console.log(mousedownInternalLinks)
       const encodedMessageURL = urlFilter(encodeURI(message.url))
       if (mousedownAdLinks.has(encodedMessageURL)) {
-        console.log("AD CLICK!!!")
         numAdClicks++;
         return
       }
       if (mousedownInternalLinks.has(encodedMessageURL)) {
-        console.log("Internal Click!!!")
         numInternalClicks++;
         return
       }
       if (mousedownOrganicLinksMap.has(encodedMessageURL)) {
         const mousedownOrganicLinkValue = mousedownOrganicLinksMap.get(encodedMessageURL)
         const x = { Ranking: mousedownOrganicLinkValue.index, AttentionTime: getAttentionTime(), Loaded: pageLoaded }
-        console.log(x)
         organicClicks.push(x)
         return;
       }

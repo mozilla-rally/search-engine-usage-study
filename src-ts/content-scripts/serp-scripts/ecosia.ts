@@ -28,16 +28,8 @@
         return Array.from(document.querySelectorAll(".card-ad > div, .card-productads > div"));
     }
 
-    /**
-     * @param {string} adResults - an array of the ad results on the page
-     * @returns {Array} An array of all the ad links in the ad results
-     */
-    function getAdLinks(adResults: Element[]): Element[] {
-        const adLinks: Element[] = []
-        for (const adResult of adResults) {
-            adLinks.push(...adResult.querySelectorAll("[href]:not(.ad-hint-wrapper [href])"))
-        }
-        return adLinks
+    function getIsAdLinkElement(adLinkElement: Element): boolean {
+        return !!(adLinkElement as any).href && !adLinkElement.matches('.ad-hint-wrapper, .ad-hint-wrapper *')
     }
 
     /**
@@ -90,7 +82,7 @@
         determineSearchAreaBottomHeight()
 
         determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getAdLinks);
+        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
         addInternalClickListeners(
             ".pagination *, div.card-web > div.result *, .card-ad > div, .card-productads > div *",

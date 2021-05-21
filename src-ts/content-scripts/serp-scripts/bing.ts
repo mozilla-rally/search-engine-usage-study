@@ -28,16 +28,9 @@
         return Array.from(document.querySelectorAll(".b_ad > ul > li, .b_adLastChild"))
     }
 
-    /**
-     * @param {string} adResults - an array of the ad results on the page
-     * @returns {Array} An array of all the ad links in the ad results
-     */
-    function getAdLinks(adResults: Element[]): Element[] {
-        const adLinks: Element[] = []
-        for (const adResult of adResults) {
-            adLinks.push(...adResult.querySelectorAll("[href]:not(.b_adinfo):not(.b_adinfo [href])"))
-        }
-        return adLinks
+    function getIsAdLinkElement(adLinkElement: Element): boolean {
+        return !!(adLinkElement as any).href && !adLinkElement.matches(
+            '.b_adinfo, .b_adinfo *')
     }
 
     /**
@@ -95,7 +88,7 @@
         determineSearchAreaBottomHeight()
 
         determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getAdLinks);
+        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
         addInternalClickListeners(
             ".b_pag *, #b_results > li.b_algo *, .b_ad > ul > li *, .b_adLastChild *",

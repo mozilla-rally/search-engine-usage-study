@@ -27,16 +27,8 @@
         return Array.from(document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li"))
     }
 
-    /**
-     * @param {string} adResults - an array of the ad results on the page
-     * @returns {Array} An array of all the ad links in the ad results
-     */
-    function getAdLinks(adResults: Element[]): Element[] {
-        const adLinks: Element[] = []
-        for (const adResult of adResults) {
-            adLinks.push(...adResult.querySelectorAll("[href]:not(.p-abs [href])"))
-        }
-        return adLinks
+    function getIsAdLinkElement(adLinkElement: Element): boolean {
+        return !!(adLinkElement as any).href && !adLinkElement.matches('.p-abs,.p-abs *')
     }
 
     /**
@@ -96,7 +88,7 @@
         determineSearchAreaBottomHeight()
 
         determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getAdLinks);
+        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
         addInternalClickListeners(
             ".pagination *, #web > .searchCenterMiddle > li > .algo *, ol.searchCenterTopAds > li > .ads *, ol.searchCenterBottomAds > li > .ads *, ol.searchRightTopAds > li *, ol.searchRightMiddleAds > li *, ol.searchRightBottomAds > li *",

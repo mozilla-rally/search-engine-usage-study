@@ -39,18 +39,9 @@
      * @param {string} adResults - an array of the ad results on the page
      * @returns {Array} An array of all the ad links in the ad results
      */
-    function getAdLinks(adResults: Element[]): Element[] {
-        const adLinks: Element[] = []
-        for (const adResult of adResults) {
-            adLinks.push(...Array.from(adResult.querySelectorAll("[href]")).filter(adLinkElement => {
-                if ("href" in adLinkElement && !((adLinkElement as any).href as string).includes("javascript")) {
-                    return true
-                } else {
-                    return false
-                }
-            }))
-        }
-        return adLinks
+    function getIsAdLinkElement(adLinkElement: Element): boolean {
+        const adLink = (adLinkElement as any).href
+        return adLink && !adLink.includes("javascript")
     }
 
     /**
@@ -109,7 +100,7 @@
         determineSearchAreaBottomHeight();
 
         determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getAdLinks)
+        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
 
         addInternalClickListeners(
             "#content_left > .result *",

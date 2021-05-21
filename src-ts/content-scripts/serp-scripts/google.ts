@@ -158,3 +158,5 @@
     registerNewTabListener();
     registerModule(moduleName)
 })()
+
+console.log("GOOGLE")

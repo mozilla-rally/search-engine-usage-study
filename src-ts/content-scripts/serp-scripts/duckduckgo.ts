@@ -26,16 +26,9 @@
         });
     }
 
-    /**
-     * @param {string} adResults - an array of the ad results on the page
-     * @returns {Array} An array of all the ad links in the ad results
-     */
-    function getAdLinks(adResults: Element[]): Element[] {
-        const adLinks: Element[] = []
-        for (const adResult of adResults) {
-            adLinks.push(...adResult.querySelectorAll("[href]:not(.report-ad):not(.feedback-prompt [href]):not(.badge--ad__tooltip [href])"))
-        }
-        return adLinks
+    function getIsAdLinkElement(adLinkElement: Element): boolean {
+        return !!(adLinkElement as any).href && !adLinkElement.matches(
+            '.report-ad, .report-ad *, .feedback-prompt, .feedback-prompt *, .badge--ad__tooltip, .badge--ad__tooltip *')
     }
 
     /**
@@ -116,7 +109,7 @@
             determineSearchAreaBottomHeight();
 
             determineOrganicElementsAndAddListeners(getOrganicResults(), getPageNumForElement);
-            determineAdElementsAndAddListeners(getAdResults(), getAdLinks)
+            determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
 
             addInternalClickListeners(
                 ".result--more *, #ads > div *, .result--ad *, #links > div[id^='r1-'] *",
