@@ -26,20 +26,19 @@ export async function startStudy(rallyArg): Promise<void> {
 
   storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchBallot")
   await webScience.pageManager.initialize()
-
-  WebNavigation.initialize();
+  WebNavigation.registerWebNavigationTracking();
 
   let initialDataReported = await storage.get("InitialDataReported")
+
+  // Report initial data if we have not done so already
   if (!initialDataReported) {
     Initial.reportInitialData(storage);
   }
 
-
-
   let interventionComplete = await storage.get("InterventionComplete")
 
   // If intervention is complete, start recording SERP data.
-  // Otherwise, conduct initial data collection and run intervention.
+  // Otherwise, run intervention.
   if (interventionComplete) {
     RegularCollection.startDataCollection(storage);
   }
