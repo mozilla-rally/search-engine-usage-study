@@ -8,9 +8,7 @@ module.exports = {
     es6: true,
     node: true,
     webextensions: true,
-    jquery: true,
   },
-  ignorePatterns: [ "jquery.js" ],
   extends: [
     "eslint:recommended",
     "plugin:import/warnings",
