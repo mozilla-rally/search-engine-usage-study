@@ -6,34 +6,19 @@ export async function getSearchEngine(): Promise<string> {
   try {
     return await browser.experimental.getSearchEngine();
   } catch (error) {
-    return "ERROR"
+    console.error(error)
+    return ""
   }
 }
 
-let originalHomepage = null;
-let originalEngine = null;
-
-/**
- * Revert changes from call to changeSearchEngine.
- */
-export async function revertSearchEngine(): Promise<void> {
+export async function getHomepage(): Promise<string> {
   try {
-    if (originalHomepage) {
-      browser.experimental.changeHomepage(originalHomepage);
-    }
+    return await browser.experimental.getHomepage();
   } catch (error) {
-    console.error(error);
-  }
-
-  try {
-    if (originalEngine) {
-      await browser.experimental.changeSearchEngine(originalEngine);
-    }
-  } catch (error) {
-    console.error(error);
+    console.error(error)
+    return ""
   }
 }
-
 
 /**
  * Change the default search engine.
@@ -42,24 +27,15 @@ export async function revertSearchEngine(): Promise<void> {
  */
 export async function changeSearchEngine(searchEngine: string): Promise<void> {
   try {
-    const homepage = await browser.experimental.getHomepage();
-
-    // If the current home page is a search engine page, change it to the default Firefox homepage
-    const homepageLowercase = homepage.toLowerCase()
-    if (homepageLowercase.includes("google") || homepageLowercase.includes("bing") ||
-      homepageLowercase.includes("yahoo") || homepageLowercase.includes("duckduckgo") ||
-      homepageLowercase.includes("ecosia") || homepageLowercase.includes("ask") ||
-      homepageLowercase.includes("baidu") || homepageLowercase.includes("yandex")) {
-      originalHomepage = homepage;
-      browser.experimental.changeHomepage("about:home");
-    }
-  } catch (error) {
-    console.error(error);
-  }
-
-  try {
-    originalEngine = await getSearchEngine();
     await browser.experimental.changeSearchEngine(searchEngine);
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+export async function changeHomepage(homepage: string): Promise<void> {
+  try {
+    await browser.experimental.changeHomepage(homepage);
   } catch (error) {
     console.error(error)
   }
