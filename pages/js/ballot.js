@@ -1,4 +1,4 @@
-window.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("DOMContentLoaded", async function () {
     let totalAttentionTime = 0;
     let previousAttentionStart = 0;
     let pageHasAttention = false;
@@ -16,7 +16,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }
 
     browser.runtime.onMessage.addListener(message => {
-        if(message.type === "WebScience.Utilities.PageManager.pageAttentionUpdate") {
+        if(message.type === "webScience.pageManager.pageAttentionUpdate") {
             pageHasAttention = message.pageHasAttention
             if(pageHasAttention) {
                 previousAttentionStart = performance.now()
@@ -29,26 +29,50 @@ window.addEventListener("DOMContentLoaded", function () {
     let see_more_clicked = false
     const details_expanded_set = new Set()
 
-    function shuffleArray(array, ordering) {
+    function shuffleArray(array) {
         for(let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [ array[ i ], array[ j ] ] = [ array[ j ], array[ i ] ];
-            [ ordering[ i ], ordering[ j ] ] = [ ordering[ j ], ordering[ i ] ];
         }
     }
 
-    const searchEnginesContainer = document.querySelector(".search-engines")
-    const engines = Array.from(searchEnginesContainer.children)
-    const engines_ordering = []
-
-    for(const engine of engines) {
-        engines_ordering.push(engine.className)
+    const ballotDetails = await browser.runtime.sendMessage({ type: "BallotDetails" })
+    if(ballotDetails.homepageChange) {
+        const homepageChangeNotification = document.getElementById("homepage_change");
+        if(homepageChangeNotification) homepageChangeNotification.style.display = null;
     }
-    shuffleArray(engines, engines_ordering)
+
+
+
+    const engineContainers = document.querySelectorAll(".search-engines > div");
+    const engineNames = []
+    const engineNameToContainerDict = {}
+    for(const engineContainer of engineContainers) {
+        engineNames.push(engineContainer.className)
+        engineNameToContainerDict[ engineContainer.className ] = engineContainer
+    }
+
+    let engines_ordering = []
+    if(ballotDetails.engines_ordering) {
+        engines_ordering = ballotDetails.engines_ordering
+    } else {
+        shuffleArray(engineNames)
+        engines_ordering = engineNames
+        browser.runtime.sendMessage({ type: "BallotEngineOrdering", engines_ordering });
+    }
+
+    const searchEnginesContainer = document.querySelector(".search-engines")
     searchEnginesContainer.innerHTML = "";
 
-    const initialEngines = engines.slice(0, 4)
-    const moreEngines = engines.slice(4)
+    const randomizedOrderEngineContainers = []
+    for(const engine of engines_ordering) {
+        if(engine in engineNameToContainerDict) {
+            randomizedOrderEngineContainers.push(engineNameToContainerDict[ engine ])
+        }
+    }
+
+    const initialEngines = randomizedOrderEngineContainers.slice(0, 4)
+    const moreEngines = randomizedOrderEngineContainers.slice(4)
 
     for(const engine of initialEngines) {
         searchEnginesContainer.append(engine)
@@ -61,10 +85,9 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // TODO: async here necessary?
     document.querySelector(".continue").addEventListener("click", async () => {
         const selected_engine = document.querySelector("input[name=engine-select]:checked").value
-        await browser.runtime.sendMessage({ type: "SearchBallotResponse", engine: selected_engine, engines_ordering: engines_ordering, see_more_clicked: see_more_clicked, attentionTime: getAttentionTime(), details_expanded: Array.from(details_expanded_set) });
+        await browser.runtime.sendMessage({ type: "BallotResponse", engine: selected_engine, engines_ordering, see_more_clicked, attentionTime: getAttentionTime(), details_expanded: Array.from(details_expanded_set) });
         window.close();
     });
 
@@ -96,7 +119,4 @@ window.addEventListener("DOMContentLoaded", function () {
             document.querySelector(".see-more-container").classList.add("hiding")
         });
     })
-
-
-
 });

@@ -77,6 +77,29 @@ export async function runIntervention(storageIn): Promise<void> {
   }
 }
 
+async function shouldHomepageChange() {
+  const homepage = await Utils.getHomepage();
+  const homepageLowercase = homepage.toLowerCase()
+
+  const enginesLowercase = ["google", "bing", "yahoo", "duckduckgo", "ecosia", "ask", "baidu", "yandex"]
+
+  if (enginesLowercase.some(engineLowercase => homepageLowercase.includes(engineLowercase))) {
+    return true;
+  }
+  return false;
+}
+
+async function changeEngineAndHomepage(newEngine) {
+  Utils.changeSearchEngine(newEngine);
+
+  // If the current home page is a search engine page, change it to the default Firefox homepage
+  if (await shouldHomepageChange()) {
+    Utils.changeHomepage("about:home")
+    return true;
+  }
+  return false;
+}
+
 /**
  * Conduct one of the two notice interventions. The participant's default search engine will be changed
  * and they will be presented a notice notifying them of the change
@@ -84,8 +107,15 @@ export async function runIntervention(storageIn): Promise<void> {
  * Should be either 2 or 3.
  */
 async function noticeIntervention(noticeType: number) {
-  // Determine the participant's default search engine
+  let noticeShown = await storage.get("NoticeShown");
+  if (noticeShown) {
+    completeIntervention();
+    return;
+  }
+
+  // Determine the participant's original search engine and homepage
   const originalEngine = await Utils.getSearchEngine();
+  const originalHomepage = await Utils.getHomepage();
 
   // Creates a list of options for a new default search engine (excluding the original default)
   let newSearchEngineOptions = ["Google", "DuckDuckGo", "Yahoo", "Bing"]
@@ -95,24 +125,26 @@ async function noticeIntervention(noticeType: number) {
 
   // Change the participant's default engine to a random selection from the list of options for a new default
   const newEngine = newSearchEngineOptions[Math.floor(Math.random() * newSearchEngineOptions.length)];
-  Utils.changeSearchEngine(newEngine);
+  const homepageChange = await changeEngineAndHomepage(newEngine);
+
+  storage.set("EngineChangedFrom", originalEngine);
+  storage.set("EngineChangedTo", newEngine);
 
   // Register a listener that will send a response to the notice page with details of the original engine and new engine
   // This allows the notice to notify the participant of their original engine and their new engine
   webScience.messaging.onMessage.addListener((_message, _sender, sendResponse) => {
-    sendResponse({ previous: originalEngine, current: newEngine })
+    sendResponse({ originalEngine, newEngine, homepageChange })
   }, {
-    type: "SearchEngineNotice",
+    type: "NoticeDetails",
     schema: {}
   });
 
-  storage.set("NoticeNewEngine", newEngine)
-
   // Register a listener that will be sent a message when the notice page unloads
   webScience.messaging.onMessage.addListener((message) => {
-    // If the participant clicked on the button to revert the change, we restore their original default search engine
+    // If the participant clicked on the button to revert the change, we restore their original default search engine and homepage
     if (message.revert) {
-      Utils.revertSearchEngine();
+      Utils.changeHomepage(originalHomepage);
+      Utils.changeSearchEngine(originalEngine);
     }
 
     storage.set("NoticeInterventionData", {
@@ -133,7 +165,7 @@ async function noticeIntervention(noticeType: number) {
   // Creates a browser tab displaying the notice to the participant
   browser.tabs.create({ url: `/pages/notice_${noticeType}.html` });
 
-  completeInterventionOnExtensionRestart();
+  storage.set("NoticeShown", true)
 }
 
 
@@ -143,20 +175,40 @@ async function noticeIntervention(noticeType: number) {
  * @param {boolean} ballotDesign - Specifies the ballot style that will be shown to the participant.
  * Should be either 4, 5, 6, or 7. 
  */
-function ballotIntervention(ballotDesign: number) {
-  storage.get("BallotAttempts").then(ballotAttempts => {
-    const newBallotAttempts = ballotAttempts ? ballotAttempts + 1 : 1
-    storage.set("BallotAttempts", newBallotAttempts)
+async function ballotIntervention(ballotDesign: number) {
+  let ballotAttemptsFromStorage = await storage.get("BallotAttempts");
 
-    if (newBallotAttempts >= 3) {
-      completeInterventionOnExtensionRestart();
+  if (ballotAttemptsFromStorage >= 3) {
+    completeIntervention();
+    return;
+  }
+
+  const homepageChange = await shouldHomepageChange();
+  const engines_ordering = await storage.get("BallotEngineOrdering");
+
+  webScience.messaging.onMessage.addListener((_message, _sender, sendResponse) => {
+    sendResponse({ homepageChange, engines_ordering })
+  }, {
+    type: "BallotDetails",
+    schema: {}
+  });
+
+  webScience.messaging.onMessage.addListener(message => {
+    console.log(message)
+    storage.set("BallotEngineOrdering", message.engines_ordering);
+  }, {
+    type: "BallotEngineOrdering",
+    schema: {
+      engines_ordering: "object"
     }
-  })
+  });
 
+  webScience.messaging.onMessage.addListener(async (message) => {
+    storage.set("EngineChangedFrom", await Utils.getSearchEngine());
+    storage.set("EngineChangedTo", message.engine);
 
-  webScience.messaging.onMessage.addListener((message) => {
     // Modify the participant's default search engine to their ballot response and mark the intervention as complete
-    Utils.changeSearchEngine(message.engine);
+    changeEngineAndHomepage(message.engine);
 
     storage.set("BallotInterventionData", {
       SelectedEngine: message.engine,
@@ -169,7 +221,7 @@ function ballotIntervention(ballotDesign: number) {
     // At this point, the intervention is complete
     completeIntervention();
   }, {
-    type: "SearchBallotResponse",
+    type: "BallotResponse",
     schema: {
       engine: "string",
       attentionTime: "number",
@@ -180,7 +232,10 @@ function ballotIntervention(ballotDesign: number) {
   });
 
   // Creates a browser tab displaying the search engine ballot to the participant
-  browser.tabs.create({ url: `/pages/search_ballot_${ballotDesign}.html` });
+  browser.tabs.create({ url: `/pages/ballot_${ballotDesign}.html` });
+
+  const ballotAttempts = ballotAttemptsFromStorage ? ballotAttemptsFromStorage + 1 : 1
+  storage.set("BallotAttempts", ballotAttempts)
 }
 
 /**
@@ -189,14 +244,5 @@ function ballotIntervention(ballotDesign: number) {
  */
 function completeIntervention() {
   storage.set("InterventionComplete", true);
-  RegularCollection.startDataCollection(storage);
-}
-
-/**
- * Called when an intervention will be complete upon the next restart of the extension. Sets
- * the value of InterventionComplete to true so that regular data collection will start upon
- * restart of the extension.
- */
-function completeInterventionOnExtensionRestart() {
-  storage.set("InterventionComplete", true);
+  RegularCollection.startCollection(storage);
 }
