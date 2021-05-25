@@ -144,7 +144,7 @@ this.experimental = class extends ExtensionAPI {
                  * Get the user's current default search engine
                  * @function
                  */
-                getHomepage() {
+                async getHomepage() {
                     return Services.prefs.getCharPref("browser.startup.homepage")
                 },
 
