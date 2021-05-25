@@ -42,6 +42,14 @@ export async function runIntervention(storageIn): Promise<void> {
         name: "BallotExtended",
         weight: 20
       },
+      {
+        name: "ModalPrimaryRevert",
+        weight: 10
+      },
+      {
+        name: "ModalSecondaryRevert",
+        weight: 10
+      },
     ]
   }
   );
@@ -60,6 +68,10 @@ export async function runIntervention(storageIn): Promise<void> {
     ballotIntervention(6);
   } else if (interventionType === "BallotExtended") {
     ballotIntervention(7);
+  } else if (interventionType === "ModalPrimaryRevert") {
+    ballotIntervention(6);
+  } else if (interventionType === "ModalSecondaryRevert") {
+    ballotIntervention(6);
   } else {
     completeIntervention();
   }

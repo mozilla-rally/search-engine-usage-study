@@ -1,6 +1,7 @@
 import * as webScience from "@mozilla/web-science";
 import * as Utils from "./Utils.js"
 import * as Survey from "./Survey.js"
+import * as Modal from "./Modal.js"
 import { preLoadScripts, serpScripts } from "./content-scripts-import.js"
 
 /**
@@ -24,6 +25,7 @@ export async function startDataCollection(storageIn): Promise<void> {
   webScience.scheduling.onIdleDaily.addListener(reportDailyData);
   Survey.runSurvey(storage);
 
+  Modal.startModalIntervention(storage);
   await registerContentScriptDataListeners();
   registerContentScripts();
 }

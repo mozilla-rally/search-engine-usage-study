@@ -17,6 +17,40 @@ this.experimental = class extends ExtensionAPI {
     getAPI() {
         return {
             experimental: {
+                createPopup(searchEngineOld, searchEngineNew, modalPrimaryRevert) {
+                    // Returns whether the search engine should be reverted.
+                    const flags =
+                        Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
+                        Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_1;
+
+                    if(modalPrimaryRevert) {
+                        const x = Services.prompt.confirmEx(
+                            null,
+                            `Change back to ${searchEngineOld} Search?`,
+                            `Your search engine has been changed to use ${searchEngineNew}.`,
+                            flags,
+                            "Change it back",
+                            "Keep it",
+                            null,
+                            null,
+                            {}
+                        );
+                        return x === 0;
+                    } else {
+                        const x = Services.prompt.confirmEx(
+                            null,
+                            `Change back to ${searchEngineOld} Search?`,
+                            `Your search engine has been changed to use ${searchEngineNew}.`,
+                            flags,
+                            "Keep it",
+                            "Change it back",
+                            null,
+                            null,
+                            {}
+                        );
+                        return x === 1;
+                    }
+                },
                 /**
                  * Changes the user's default search engine
                  * 
@@ -94,14 +128,9 @@ this.experimental = class extends ExtensionAPI {
                  * @function
                  */
                 async getSearchEngine() {
-
                     await Services.search.init();
                     const defaultEngine = await Services.search.getDefault()
-                    if(defaultEngine) {
-                        return defaultEngine.name
-                    } else {
-                        return ""
-                    }
+                    return defaultEngine ? defaultEngine.name : "";
                 },
                 /**
                  * Get the user's current default search engine

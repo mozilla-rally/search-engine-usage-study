@@ -3,6 +3,29 @@
     "namespace": "experimental",
     "functions": [
       {
+        "name": "createPopup",
+        "type": "function",
+        "description": "Create popup",
+        "async": false,
+        "parameters": [
+          {
+            "name": "searchEngineOld",
+            "type": "string",
+            "description": "The engine that the default search was changed from."
+          },
+          {
+            "name": "searchEngineNew",
+            "type": "string",
+            "description": "The engine that the default search was changed to."
+          },
+          {
+            "name": "modalPrimaryRevert",
+            "type": "boolean",
+            "description": "Whether the revert button is the primary button on the modal dialog."
+          }
+        ]
+      },
+      {
         "name": "changeSearchEngine",
         "type": "function",
         "description": "Change the user's default search engine",
@@ -39,7 +62,7 @@
         "name": "getHomepage",
         "type": "function",
         "description": "Get the user's homepage",
-        "async": true,
+        "async": false,
         "parameters": []
       }
     ]
