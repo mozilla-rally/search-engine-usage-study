@@ -20,7 +20,7 @@ const searchEngineToQuerySetObject: { [engine: string]: Set<string> } = {}
 
 let storage;
 
-export async function startDataCollection(storageIn): Promise<void> {
+export async function startCollection(storageIn): Promise<void> {
   storage = storageIn;
   webScience.scheduling.onIdleDaily.addListener(reportDailyData);
   Survey.runSurvey(storage);
@@ -92,12 +92,9 @@ async function registerContentScriptDataListeners(): Promise<void> {
 
   // Listen for new queries from content scripts
   webScience.messaging.onMessage.addListener((message) => {
-    // If the set of queries for the respective search engine does not contain the new query,
-    // add the query to the set and update the list in storage
-    if (!searchEngineToQuerySetObject[message.engine].has(message.query)) {
-      searchEngineToQuerySetObject[message.engine].add(message.query);
-      storage.set(`${message.engine}Queries`, Array.from(searchEngineToQuerySetObject[message.engine]));
-    }
+    // Add the query to the set and update the list in storage
+    searchEngineToQuerySetObject[message.engine].add(message.query.toLowerCase());
+    storage.set(`${message.engine}Queries`, Array.from(searchEngineToQuerySetObject[message.engine]));
   }, {
     type: "SERPQuery",
     schema: {

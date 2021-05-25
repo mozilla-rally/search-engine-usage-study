@@ -40,7 +40,7 @@ export async function startStudy(rallyArg): Promise<void> {
   // If intervention is complete, start recording SERP data.
   // Otherwise, run intervention.
   if (interventionComplete) {
-    RegularCollection.startDataCollection(storage);
+    RegularCollection.startCollection(storage);
   }
   else {
     Intervention.runIntervention(storage);
