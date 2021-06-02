@@ -107,7 +107,7 @@ dist
 web-ext-artifacts/
 
 # Compiled Typescript .js
-src/
+compiled-ts/
 
 .DS_Store
 

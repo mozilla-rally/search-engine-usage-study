@@ -295,19 +295,16 @@ function resetAttentionTracking() {
 
 /**
  * Retrieve a query string variable from a URL
- * @param {string} url - the URL to retrieve the query string variable from
+ * @param {string} urlString - the URL to retrieve the query string variable from
  * @param {string} parameter - the parameter of the variable in the URL you want to retrieve
  * @returns {string} The query string variable in url for the given parameter. If the parameter
  * does not exist in the URL, returns null.
  */
-function getQueryVariable(url, variable) {
-  url = url ? url : window.location.href
-  variable = variable.replace(/[[\]]/g, "\\$&");
-  const regex = new RegExp("[?&]" + variable + "(=([^&#]*)|&|#|$)"),
-    results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return "";
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
+function getQueryVariable(urlString, variable) {
+  urlString = urlString ? urlString : window.location.href
+  let url = new URL(urlString);
+  let params = new URLSearchParams(url.search);
+  return params.get(variable);
 }
 
 /**

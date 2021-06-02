@@ -46,4 +46,3 @@ export async function startStudy(rallyArg): Promise<void> {
     Intervention.runIntervention(storage);
   }
 }
-

@@ -12,9 +12,9 @@
     "noImplicitAny": false,
     "sourceMap": false,
     "allowJs": false,
-    "outDir": "src"
+    "outDir": "compiled-ts"
   },
   "include": [
-    "src-ts/**/*.ts"
+    "src/**/*.ts"
   ]
 }
