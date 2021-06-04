@@ -307,21 +307,6 @@ function getQueryVariable(urlString, variable) {
   return params.get(variable);
 }
 
-/**
- * Gets a query from the URL and sends it to the background page to save
- * @param {string} engine - The search engine that the query was made to
- * @param {string[]} urlKeys - A list of parameters that the query variable could associated with in the URL
- */
-function sendQueryToBackground(engine, urlKeys: Array<string>) {
-  for (const key of urlKeys) {
-    const query = getQueryVariable(window.location.href, key);
-    if (query) {
-      browser.runtime.sendMessage({ type: "SERPQuery", engine: engine, query: query });
-      return;
-    }
-  }
-}
-
 function determineOrganicElementsAndAddListeners(
   organicResults: Element[],
   getPageNumForElement: (Element) => number = () => { return pageNum }) {

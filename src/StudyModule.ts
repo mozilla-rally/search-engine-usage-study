@@ -4,10 +4,14 @@
  * @module WebScience.Measurements.SearchBallot
  */
 import * as Intervention from "./Intervention.js"
-import * as RegularCollection from "./RegularCollection.js"
+import * as SerpVisitCollection from "./SerpVisitCollection.js"
+import * as DailyCollection from "./DailyCollection.js"
 import * as WebNavigation from "./WebNavigation.js"
 import * as Initial from "./Initial.js"
 import * as webScience from "@mozilla/web-science";
+import * as Survey from "./Survey.js"
+import * as Modal from "./Modal.js"
+import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 /**
  * @type {webScience.storage.KeyValueStorage}
@@ -25,8 +29,9 @@ export async function startStudy(rallyArg): Promise<void> {
   console.debug(rally)
 
   storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchBallot")
-  await webScience.pageManager.initialize()
+  await webScience.pageManager.initialize();
   WebNavigation.registerWebNavigationTracking();
+  SearchEngineUtils.initialize();
 
   let initialDataReported = await storage.get("InitialDataReported")
 
@@ -35,14 +40,28 @@ export async function startStudy(rallyArg): Promise<void> {
     Initial.reportInitialData(storage);
   }
 
+  Initial.reportInitialData(storage);
+
   let interventionComplete = await storage.get("InterventionComplete")
 
   // If intervention is complete, start recording SERP data.
   // Otherwise, run intervention.
   if (interventionComplete) {
-    RegularCollection.startCollection(storage);
+    postInterventionFunctionality();
   }
   else {
     Intervention.runIntervention(storage);
   }
 }
+
+export async function postInterventionFunctionality() {
+  console.log("Intervention Complete functionality")
+
+  Modal.startModalIntervention(storage);
+
+  Survey.runSurvey(storage);
+
+  SerpVisitCollection.startCollection();
+  DailyCollection.startCollection(storage);
+}
+

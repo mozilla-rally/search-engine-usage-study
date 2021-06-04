@@ -1,8 +1,6 @@
 import * as webScience from "@mozilla/web-science";
 import * as Utils from "./Utils.js"
-import * as Survey from "./Survey.js"
-import * as Modal from "./Modal.js"
-import { preLoadScripts, serpScripts } from "./content-scripts-import.js"
+import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 /**
  * An array of the tracked search engine names
@@ -22,33 +20,9 @@ let storage;
 
 export async function startCollection(storageIn): Promise<void> {
   storage = storageIn;
+
+  await registerQueryListener();
   webScience.scheduling.onIdleDaily.addListener(reportDailyData);
-  Survey.runSurvey(storage);
-
-  Modal.startModalIntervention(storage);
-  await registerContentScriptDataListeners();
-  registerContentScripts();
-}
-
-/**
- * Register the SERP content scripts and the listeners to store SERP queries and get page attribution details
- */
-async function registerContentScripts() {
-  const siteScripts = [...serpScripts]
-
-  for (const siteScript of siteScripts) {
-    if (!siteScript.enabled) {
-      continue
-    }
-
-    siteScript.args.js = [
-      ...preLoadScripts,
-      ...siteScript.args.js,
-    ]
-
-    siteScript.args["runAt"] = "document_start"
-    await browser.contentScripts.register(siteScript.args)
-  }
 }
 
 /**
@@ -83,33 +57,25 @@ async function reportDailyData() {
  *  2. Registers the listener that gets SERP visit data from content scripts and initializes the SERP visit data
  *     array from storage
  */
-async function registerContentScriptDataListeners(): Promise<void> {
+async function registerQueryListener(): Promise<void> {
   // Initialize serpQuerySets from the stored list of queries made for each tracked search engines
   for (const searchEngine of searchEngines) {
     const queries = await storage.get(`${searchEngine}Queries`)
     searchEngineToQuerySetObject[searchEngine] = new Set(queries)
   }
 
-  // Listen for new queries from content scripts
-  webScience.messaging.onMessage.addListener((message) => {
-    // Add the query to the set and update the list in storage
-    searchEngineToQuerySetObject[message.engine].add(message.query.toLowerCase());
-    storage.set(`${message.engine}Queries`, Array.from(searchEngineToQuerySetObject[message.engine]));
-  }, {
-    type: "SERPQuery",
-    schema: {
-      engine: "string",
-      query: "string",
-    }
-  });
 
-  // Listen for new SERP visit data from content scripts
-  webScience.messaging.onMessage.addListener((message) => {
-    console.log(message);
-  }, {
-    type: "SerpVisitData",
-    schema: {
-      data: "object",
+  webScience.pageManager.onPageVisitStart.addListener(pageVisitStartDetails => {
+    console.log(pageVisitStartDetails.url);
+
+    const engineAndQuery = SearchEngineUtils.getEngineAndQueryFromUrl(pageVisitStartDetails.url);
+    if (engineAndQuery) {
+      const engine = engineAndQuery.engine;
+      const query = engineAndQuery.query;
+
+      // Add the query to the set and update the list in storage
+      searchEngineToQuerySetObject[engine].add(query);
+      storage.set(`${engine}Queries`, Array.from(searchEngineToQuerySetObject[engine]));
     }
-  });
+  })
 }

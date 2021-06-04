@@ -1,4 +1,5 @@
 import * as webScience from "@mozilla/web-science";
+import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 // page ID to {attribution, attributionID, and engine}
 let pageIdToAttributionData: {
@@ -23,32 +24,14 @@ let tabHistoryPageIds: {
   }
 } = {}
 
-let searchEngineDomains = {
-  Google: ["google.com"],
-  DuckDuckGo: ["duckduckgo.com"],
-  Bing: ["bing.com"],
-  Yahoo: ["yahoo.com"],
-  Ecosia: ["ecosia.org"],
-  Ask: ["ask.com"],
-  Baidu: ["baidu.com"],
-  Yandex: ["yandex.com", "yandex.ru"],
-}
-
-let searchEngineToMatchPatternSet = {}
-
 /**
  * Registers listeners for webNavigation events that keep track of page attribution details for SERP pages
  */
 export function registerWebNavigationTracking(): void {
-  let allEngineMatchPatterns = []
-  for (let searchEngine in searchEngineDomains) {
-    const matchPatternsForSearchEngine = webScience.matching.domainsToMatchPatterns(searchEngineDomains[searchEngine])
-    searchEngineToMatchPatternSet[searchEngine] = webScience.matching.createMatchPatternSet(matchPatternsForSearchEngine)
-    allEngineMatchPatterns = allEngineMatchPatterns.concat(matchPatternsForSearchEngine)
-  }
+  const allEngineMatchPatterns = SearchEngineUtils.getTrackedEnginesMatchPatterns()
 
   webScience.pageTransition.onPageTransitionData.addListener(pageTransitionDataEvent => {
-    const engine = getEngineFromURL(pageTransitionDataEvent.url);
+    const engine = SearchEngineUtils.getEngineFromURL(pageTransitionDataEvent.url);
     const newAttributionID = webScience.id.generateId();
     if (!engine) {
       return;
@@ -175,20 +158,4 @@ export function registerWebNavigationTracking(): void {
       matchPatterns: allEngineMatchPatterns,
     }
   );
-}
-
-/**
- * Returns the search engine that the URL matches
- * @param {string} url - the URL of the page that is being checked
- * @returns {string|null} The name of the search engine that the URL belongs to or
- * null if the URL does not belong to any of the tracked engines
- */
-function getEngineFromURL(url: string): string {
-  for (let searchEngine in searchEngineToMatchPatternSet) {
-    const matchPatternSet = searchEngineToMatchPatternSet[searchEngine]
-    if (matchPatternSet.matches(url)) {
-      return searchEngine;
-    }
-  }
-  return null;
 }

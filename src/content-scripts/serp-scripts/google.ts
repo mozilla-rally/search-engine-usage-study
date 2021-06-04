@@ -138,10 +138,6 @@
             document.querySelectorAll("#rcnt, #appbar, #atvcap"));
 
         getAttributionDetailsFromBackground(moduleName);
-
-        if (pageIsCorrect) {
-            sendQueryToBackground(moduleName, ["q", "query"]);
-        }
     }
 
     window.addEventListener("DOMContentLoaded", function () {

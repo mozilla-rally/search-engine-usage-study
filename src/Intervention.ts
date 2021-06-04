@@ -1,5 +1,5 @@
 import * as webScience from "@mozilla/web-science";
-import * as RegularCollection from "./RegularCollection.js"
+import * as StudyModule from "./StudyModule.js"
 import * as Utils from "./Utils.js"
 
 let storage;
@@ -244,5 +244,5 @@ async function ballotIntervention(ballotDesign: number) {
  */
 function completeIntervention() {
   storage.set("InterventionComplete", true);
-  RegularCollection.startCollection(storage);
+  StudyModule.postInterventionFunctionality();
 }

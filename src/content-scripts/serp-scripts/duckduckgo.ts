@@ -118,16 +118,6 @@
 
             getAttributionDetailsFromBackground(moduleName);
 
-            if (getQueryVariable(window.location.href, "q")) {
-                sendQueryToBackground(moduleName, ["q"]);
-            } else {
-                const url = new URL(window.location.href)
-                const query = decodeURIComponent(url.pathname.substr(1).replace(/_/g, " "));
-                if (query) {
-                    browser.runtime.sendMessage({ type: "SERPQuery", engine: moduleName, query: query });
-                }
-            }
-
             domObserver.disconnect();
             const container = document.querySelector("#links")
             if (container) {

@@ -99,10 +99,6 @@
 
         getAttributionDetailsFromBackground(moduleName);
 
-        if (pageIsCorrect) {
-            sendQueryToBackground(moduleName, ["q", "query"]);
-        }
-
         numAskDisplayAds = document.querySelectorAll(".display-ad-block").length
     }
 

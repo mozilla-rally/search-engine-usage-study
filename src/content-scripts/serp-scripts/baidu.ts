@@ -108,10 +108,6 @@
             document.querySelectorAll("#container"));
 
         getAttributionDetailsFromBackground(moduleName);
-
-        if (pageIsCorrect) {
-            sendQueryToBackground(moduleName, ["wd", "word"]);
-        }
     }
 
     const bodyObserver = new MutationObserver(function (_, observer) {

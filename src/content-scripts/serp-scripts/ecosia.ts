@@ -90,10 +90,6 @@
             document.querySelectorAll(".results-wrapper"))
 
         getAttributionDetailsFromBackground(moduleName);
-
-        if (pageIsCorrect) {
-            sendQueryToBackground(moduleName, ["q"]);
-        }
     }
 
     window.addEventListener("DOMContentLoaded", function () {
