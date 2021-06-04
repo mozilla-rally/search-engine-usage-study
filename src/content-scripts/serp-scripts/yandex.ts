@@ -90,8 +90,6 @@
             ".pager  *, .serp-item > .organic *",
             isInternalLink,
             document.querySelectorAll(".main"));
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     window.addEventListener("DOMContentLoaded", function () {

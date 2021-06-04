@@ -88,8 +88,6 @@
             ".pagination *, div.card-web > div.result *, .card-ad > div, .card-productads > div *",
             isInternalLink,
             document.querySelectorAll(".results-wrapper"))
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     window.addEventListener("DOMContentLoaded", function () {

@@ -48,8 +48,6 @@ function reportResults() {
     SearchEngine: searchEngine,
     AttentionTime: getAttentionTime(),
     PageNum: pageNum,
-    Attribution: attribution,
-    AttributionID: attributionID,
     OrganicDetails: organicDetails,
     OrganicClickDetails: organicClicks,
     NumAdResults: numAdResults,

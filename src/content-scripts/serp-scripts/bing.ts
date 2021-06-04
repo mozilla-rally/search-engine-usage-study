@@ -94,8 +94,6 @@
             ".b_pag *, #b_results > li.b_algo *, .b_ad > ul > li *, .b_adLastChild *",
             isInternalLink,
             document.querySelectorAll("#b_content"));
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     window.addEventListener("DOMContentLoaded", function () {

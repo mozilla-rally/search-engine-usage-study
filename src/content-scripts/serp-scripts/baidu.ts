@@ -106,8 +106,6 @@
             "#content_left > .result *",
             isInternalLink,
             document.querySelectorAll("#container"));
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     const bodyObserver = new MutationObserver(function (_, observer) {

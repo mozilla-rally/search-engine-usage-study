@@ -23,18 +23,6 @@ let searchAreaBottomHeight: number = null
 
 let lastClickTime: number = null
 
-/**
- * The attribution of the current page
- * @type {string}
- */
-let attribution: string = null
-
-/**
- * The attribution ID of the current page
- * @type {string}
- */
-let attributionID: string = null
-
 let isInternalLinkFunction: (urlString: string) => boolean = null;
 
 
@@ -168,29 +156,6 @@ function getElementTopHeight(element: Element) {
  */
 function getNextElementTopHeight(element: Element) {
   return getElementTopHeight(getNextElement(element))
-}
-
-/**
- * Sends a message to the background script and receives page attribution information as a response
- * @param {string} searchEngine - The search engine of the SERP content script, used for validation in the background
- */
-function getAttributionDetailsFromBackground(searchEngine: string) {
-  if (!attributionID) {
-    browser.runtime.sendMessage({ type: "GetPageAttribution", searchEngine: searchEngine }).then(
-      response => {
-        if (response) {
-          if ("attribution" in response) {
-            attribution = response["attribution"];
-          }
-          if ("attributionID" in response) {
-            attributionID = response["attributionID"];
-          }
-        }
-      },
-      error => {
-        console.error(`Error: ${error}`);
-      });
-  }
 }
 
 /**

@@ -116,8 +116,6 @@
                 isInternalLink,
                 document.querySelectorAll("#zero_click_wrapper, #vertical_wrapper, #web_content_wrapper"));
 
-            getAttributionDetailsFromBackground(moduleName);
-
             domObserver.disconnect();
             const container = document.querySelector("#links")
             if (container) {

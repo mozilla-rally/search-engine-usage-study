@@ -136,8 +136,6 @@
             "[role=navigation] *, div[class='g']:not(.related-question-pair div[class='g']) *",
             isInternalLink,
             document.querySelectorAll("#rcnt, #appbar, #atvcap"));
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     window.addEventListener("DOMContentLoaded", function () {

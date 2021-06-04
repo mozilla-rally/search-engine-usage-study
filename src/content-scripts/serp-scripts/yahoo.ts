@@ -94,8 +94,6 @@
             ".pagination *, #web > .searchCenterMiddle > li > .algo *, ol.searchCenterTopAds > li > .ads *, ol.searchCenterBottomAds > li > .ads *, ol.searchRightTopAds > li *, ol.searchRightMiddleAds > li *, ol.searchRightBottomAds > li *",
             isInternalLink,
             document.querySelectorAll("#bd"));
-
-        getAttributionDetailsFromBackground(moduleName);
     }
 
     window.addEventListener("DOMContentLoaded", function () {

@@ -97,8 +97,6 @@
             isInternalLink,
             document.querySelectorAll(".main"));
 
-        getAttributionDetailsFromBackground(moduleName);
-
         numAskDisplayAds = document.querySelectorAll(".display-ad-block").length
     }
 
