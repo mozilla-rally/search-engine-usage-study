@@ -1,3 +1,5 @@
+import * as SearchEngineUtils from "./SearchEngineUtils.js"
+
 /**
  * Return the default search engine
  * @returns {Promise} Promise object represents the name of the default search engine
@@ -13,10 +15,11 @@ export async function getSearchEngine(): Promise<string> {
 
 export async function getHomepage(): Promise<string> {
   try {
-    return await browser.experimental.getHomepage();
+    const homepage = await browser.experimental.getHomepage();
+    return SearchEngineUtils.getEngineFromURL(homepage);
   } catch (error) {
     console.error(error)
-    return ""
+    return null;
   }
 }
 

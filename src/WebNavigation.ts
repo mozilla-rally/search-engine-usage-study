@@ -2,7 +2,7 @@ import * as webScience from "@mozilla/web-science";
 import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 // page ID to {attribution, attributionID, and engine}
-let pageIdToAttributionData: {
+const pageIdToAttributionData: {
   [pageId: string]:
   {
     attribution: string;
@@ -18,7 +18,7 @@ let pageIdToAttributionData: {
  * @type {Object}
  * @private
  */
-let tabHistoryPageIds: {
+const tabHistoryPageIds: {
   [tabId: number]: {
     [normalizedUrl: string]: string
   }
@@ -37,7 +37,7 @@ export function registerWebNavigationTracking(): void {
       return;
     }
 
-    let pageId = pageTransitionDataEvent.pageId;
+    const pageId = pageTransitionDataEvent.pageId;
     let normalizedUrl;
     try {
       normalizedUrl = webScience.matching.normalizeUrl(pageTransitionDataEvent.url);
@@ -64,7 +64,7 @@ export function registerWebNavigationTracking(): void {
         normalizedUrl in tabHistoryPageIds[pageTransitionDataEvent.tabId] &&
         tabHistoryPageIds[pageTransitionDataEvent.tabId][normalizedUrl] in pageIdToAttributionData) {
 
-        let historyPageId = tabHistoryPageIds[pageTransitionDataEvent.tabId][normalizedUrl]
+        const historyPageId = tabHistoryPageIds[pageTransitionDataEvent.tabId][normalizedUrl]
         const historyPageAttributionData = pageIdToAttributionData[historyPageId]
         pageIdToAttributionData[pageId] = {
           attribution: historyPageAttributionData.attribution,

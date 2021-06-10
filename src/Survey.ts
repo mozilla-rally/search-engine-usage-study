@@ -65,9 +65,9 @@ export async function runSurvey(storageIn): Promise<void> {
     storage.set("InitialSurveyStartTime", initialSurveyStartTime);
   }
 
-  let finalSurveyStartTime = initialSurveyStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilSecondSurvey);
+  const finalSurveyStartTime = initialSurveyStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilSecondSurvey);
 
-  let currentSurvey = await webScience.userSurvey.getSurveyName();
+  const currentSurvey = await webScience.userSurvey.getSurveyName();
 
   if (!currentSurvey ||
     (currentSurvey === surveyConfigData.initial.surveyName && Date.now() <= finalSurveyStartTime)) {
