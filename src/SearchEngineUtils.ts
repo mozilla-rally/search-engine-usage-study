@@ -1,6 +1,8 @@
 import * as webScience from "@mozilla/web-science";
 
-let searchEngineDomains = {
+const searchEngines = ["Google", "DuckDuckGo", "Bing", "Yahoo", "Ecosia", "Yandex", "Ask", "Baidu"]
+
+const searchEngineDomains = {
   Google: {
     domains: ["google.com"],
     regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?google\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
@@ -35,17 +37,20 @@ let searchEngineDomains = {
   },
 }
 
+let initialized = false;
+
 /**
  * An object that maps each tracked engine to the match pattern set for its domains.
  * @type {Object}
  * @private
  */
-let domainMatchPatternSets = {}
+const domainMatchPatternSets = {}
 
 let allTrackedEngineMatchPatterns = []
 
 export function initialize(): void {
-  for (let searchEngine in searchEngineDomains) {
+  initialized = true;
+  for (const searchEngine in searchEngineDomains) {
     const domainMatchPatterns = webScience.matching.domainsToMatchPatterns(searchEngineDomains[searchEngine].domains)
     domainMatchPatternSets[searchEngine] = webScience.matching.createMatchPatternSet(domainMatchPatterns)
     allTrackedEngineMatchPatterns = allTrackedEngineMatchPatterns.concat(domainMatchPatterns)
@@ -53,6 +58,9 @@ export function initialize(): void {
 }
 
 export function getTrackedEnginesMatchPatterns(): string[] {
+  if (!initialized) {
+    initialize;
+  }
   return allTrackedEngineMatchPatterns;
 }
 
@@ -63,7 +71,10 @@ export function getTrackedEnginesMatchPatterns(): string[] {
  * null if the URL does not belong to any of the tracked engines
  */
 export function getEngineFromURL(url: string): string {
-  for (let searchEngine in domainMatchPatternSets) {
+  if (!initialized) {
+    initialize;
+  }
+  for (const searchEngine in domainMatchPatternSets) {
     const matchPatternSetForEngine = domainMatchPatternSets[searchEngine]
     if (matchPatternSetForEngine.matches(url)) {
       return searchEngine;
@@ -73,7 +84,7 @@ export function getEngineFromURL(url: string): string {
 }
 
 function getEngineFromSearchURL(url: string): string {
-  for (let searchEngine in searchEngineDomains) {
+  for (const searchEngine in searchEngineDomains) {
     if (url.match(searchEngineDomains[searchEngine].regExp)) {
       return searchEngine;
     }
@@ -82,6 +93,9 @@ function getEngineFromSearchURL(url: string): string {
 }
 
 export function getEngineAndQueryFromUrl(url: string): { engine: string, query: string } {
+  if (!initialized) {
+    initialize;
+  }
   const searchEngine = getEngineFromSearchURL(url);
   if (searchEngine) {
     let query = null;
@@ -112,7 +126,6 @@ export function getEngineAndQueryFromUrl(url: string): { engine: string, query: 
 }
 
 function getGoogleQuery(url: string): string {
-  console.log(url)
   const tbm = getQueryVariable(url, "tbm")
   if (!tbm) {
     for (const key of ["q", "query"]) {
@@ -208,7 +221,43 @@ function getYandexQuery(url: string): string {
  * does not exist in the URL, returns null.
  */
 function getQueryVariable(urlString, variable) {
-  let url = new URL(urlString);
-  let params = new URLSearchParams(url.search);
+  const url = new URL(urlString);
+  const params = new URLSearchParams(url.search);
   return params.get(variable);
+}
+
+
+
+/**
+ * Collects the number of visits to SERP pages over the 
+ * previous 30 days for each of the tracked search engines
+ */
+export async function getHistoryData(startTime: number): Promise<Array<{ SearchEngine: string, Queries: number }>> {
+  const historyItems = await browser.history.search({ text: "", startTime: startTime, maxResults: Number.MAX_SAFE_INTEGER });
+
+  const searchEngineQuerySets = {}
+
+  for (const searchEngine of searchEngines) {
+    searchEngineQuerySets[searchEngine] = new Set();
+  }
+
+  for (const historyItem of historyItems) {
+    const engineAndQuery = getEngineAndQueryFromUrl(historyItem.url);
+    if (engineAndQuery) {
+      searchEngineQuerySets[engineAndQuery.engine].add(engineAndQuery.query);
+    }
+  }
+
+  const searchEnginesNumHistoryQueries: { SearchEngine: string, Queries: number }[] = [
+    { SearchEngine: "Google", Queries: searchEngineQuerySets["Google"].size },
+    { SearchEngine: "DuckDuckGo", Queries: searchEngineQuerySets["DuckDuckGo"].size },
+    { SearchEngine: "Bing", Queries: searchEngineQuerySets["Bing"].size },
+    { SearchEngine: "Yahoo", Queries: searchEngineQuerySets["Yahoo"].size },
+    { SearchEngine: "Ecosia", Queries: searchEngineQuerySets["Ecosia"].size },
+    { SearchEngine: "Yandex", Queries: searchEngineQuerySets["Yandex"].size },
+    { SearchEngine: "Ask", Queries: searchEngineQuerySets["Ask"].size },
+    { SearchEngine: "Baidu", Queries: searchEngineQuerySets["Baidu"].size }
+  ];
+
+  return searchEnginesNumHistoryQueries;
 }

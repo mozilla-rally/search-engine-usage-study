@@ -17,9 +17,16 @@ const searchEngines = ["Google", "DuckDuckGo", "Bing", "Yahoo", "Ecosia", "Yande
 const searchEngineToQuerySetObject: { [engine: string]: Set<string> } = {}
 
 let storage;
+let dailyCollectionStartTime;
 
-export async function startCollection(storageIn): Promise<void> {
+export async function startCollection(storageIn: any): Promise<void> {
   storage = storageIn;
+
+  dailyCollectionStartTime = await storage.get("DailyCollectionStartTime");
+  if (!dailyCollectionStartTime) {
+    dailyCollectionStartTime = Date.now();
+    storage.set("DailyCollectionStartTime", dailyCollectionStartTime);
+  }
 
   await registerQueryListener();
   webScience.scheduling.onIdleDaily.addListener(reportDailyData);
@@ -45,6 +52,7 @@ async function reportDailyData() {
     SearchEngineQueries: searchEngineToNumQueries,
     Time: Date.now(),
     TimeOffset: new Date().getTimezoneOffset(),
+    HistoryQueries: await SearchEngineUtils.getHistoryData(dailyCollectionStartTime)
   }
 
   console.log(regularTelemetrySubmission)
