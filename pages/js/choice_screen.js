@@ -36,8 +36,8 @@ window.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    const ballotDetails = await browser.runtime.sendMessage({ type: "BallotDetails" })
-    if(ballotDetails.homepageChange) {
+    const choiceScreenDetails = await browser.runtime.sendMessage({ type: "ChoiceScreenDetails" })
+    if(choiceScreenDetails.homepageChange) {
         const homepageChangeNotification = document.getElementById("homepage_change");
         if(homepageChangeNotification) homepageChangeNotification.style.display = null;
     }
@@ -53,12 +53,12 @@ window.addEventListener("DOMContentLoaded", async function () {
     }
 
     let engines_ordering = []
-    if(ballotDetails.engines_ordering) {
-        engines_ordering = ballotDetails.engines_ordering
+    if(choiceScreenDetails.engines_ordering) {
+        engines_ordering = choiceScreenDetails.engines_ordering
     } else {
         shuffleArray(engineNames)
         engines_ordering = engineNames
-        browser.runtime.sendMessage({ type: "BallotEngineOrdering", engines_ordering });
+        browser.runtime.sendMessage({ type: "ChoiceScreenEngineOrdering", engines_ordering });
     }
 
     const searchEnginesContainer = document.querySelector(".search-engines")
@@ -87,17 +87,23 @@ window.addEventListener("DOMContentLoaded", async function () {
 
     document.querySelector(".continue").addEventListener("click", async () => {
         const selected_engine = document.querySelector("input[name=engine-select]:checked").value
-        await browser.runtime.sendMessage({ type: "BallotResponse", engine: selected_engine, engines_ordering, see_more_clicked, attentionTime: getAttentionTime(), details_expanded: Array.from(details_expanded_set) });
+        await browser.runtime.sendMessage({ type: "ChoiceScreenResponse", engine: selected_engine, engines_ordering, see_more_clicked, attentionTime: getAttentionTime(), details_expanded: Array.from(details_expanded_set) });
         window.close();
     });
 
+    function enableContinue() {
+        document.querySelector(".continue").removeAttribute("disabled");
+        document.querySelector(".wrapper").style.marginBottom = "120px";
+    }
+
+    if(document.querySelector("input[name=engine-select]:checked")) {
+        enableContinue();
+    }
     document.querySelectorAll("input").forEach(inputElement => {
         inputElement.addEventListener("click", () => {
-            document.querySelector(".footer").style.display = ""
-            document.querySelector(".wrapper").style.marginBottom = "120px"
+            enableContinue();
         });
     })
-
 
     document.querySelectorAll(".rotate").forEach(rotateElement => {
         rotateElement.addEventListener("click", (event) => {
