@@ -13,23 +13,8 @@ module.exports = {
     "eslint:recommended",
     "plugin:import/warnings",
     "plugin:node/recommended",
+    "plugin:@typescript-eslint/recommended",
   ],
-  overrides: [
-    {
-      files: "tests/**",
-      env: {
-        mocha: true,
-      },
-      extends: [
-        "plugin:mocha/recommended",
-      ],
-    },
-  ],
-  globals: {
-    ChromeUtils: false,
-    ExtensionAPI: false,
-    __ENABLE_DEVELOPER_MODE__: false,
-  },
   parserOptions: {
     ecmaVersion: 2021,
     sourceType: "module",
@@ -37,10 +22,15 @@ module.exports = {
   plugins: [
     "import",
     "node",
-    "mocha"
+    "@typescript-eslint"
   ],
   root: true,
-  ignorePatterns: [ "compiled-ts/**/*.js" ],
+  parser: "@typescript-eslint/parser",
+  globals: {
+    ChromeUtils: false,
+    ExtensionAPI: false,
+    __ENABLE_DEVELOPER_MODE__: false,
+  },
   rules: {
     "node/no-deprecated-api": "error",
     "node/no-extraneous-require": "off",
@@ -48,10 +38,11 @@ module.exports = {
     "node/no-unpublished-import": "off",
     "node/no-unpublished-require": "off",
     "node/no-unsupported-features/es-syntax": "off",
-
     "no-multi-spaces": "error",
-    "no-unused-vars": [ "error", { vars: "all", args: "none", ignoreRestSiblings: false } ],
+    "@typescript-eslint/no-unused-vars": [ "error", { vars: "all", args: "none", ignoreRestSiblings: false } ],
     "no-var": "warn",
     "prefer-const": "warn",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off"
   },
 };
