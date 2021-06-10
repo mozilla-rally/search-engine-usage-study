@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare let webScience: {
   pageManager: {
     pageId,
@@ -12,9 +13,4 @@ declare let webScience: {
     pageVisitStarted,
     pageVisitStartTime
   }
-}
-
-interface Window {
-  webScience,
-  pageManagerHasLoaded: any;
 }

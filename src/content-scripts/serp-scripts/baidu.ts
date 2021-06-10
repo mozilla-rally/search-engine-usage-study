@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Baidu SERP
  */
@@ -11,13 +13,13 @@
     function determinePageIsCorrect(): void {
         const url = new URL(window.location.href)
         if (url.hostname === "baidu.com" || url.hostname === "www.baidu.com") {
-            const tn = getQueryVariable(window.location.href, "tn")
+            const tn = Common.getQueryVariable(window.location.href, "tn")
             if (!tn || (tn === "baidu")) {
-                pageIsCorrect = true
+                Common.setPageIsCorrect(true)
                 return
             }
         }
-        pageIsCorrect = false
+        Common.setPageIsCorrect(false)
 
     }
 
@@ -32,7 +34,7 @@
      * @returns {Array} An array of all the ad results on the page
      */
     function getAdResults() {
-        return getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]")
+        return Common.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]")
     }
 
     /**
@@ -49,7 +51,7 @@
      */
     function determineSearchAreaTopHeight(): void {
         const element = (document.querySelector("#s_tab") as HTMLElement)
-        searchAreaTopHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaTopHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -57,7 +59,7 @@
      */
     function determineSearchAreaBottomHeight(): void {
         const element = (document.querySelector("#container") as HTMLElement)
-        searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -65,7 +67,7 @@
      */
     function determinePageNum(): void {
         const pageNumElement = document.querySelector("strong > .pc")
-        pageNum = pageNumElement ? Number(pageNumElement.textContent) : -1;
+        Common.setPageNum(pageNumElement ? Number(pageNumElement.textContent) : -1)
     }
 
     /**
@@ -99,10 +101,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight();
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             "#content_left > .result *",
             isInternalLink,
             document.querySelectorAll("#container"));
@@ -131,8 +133,7 @@
         determinePageValues();
     });
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

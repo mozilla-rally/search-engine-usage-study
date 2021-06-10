@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Ask SERP
  */
@@ -14,7 +16,7 @@
     function determinePageIsCorrect(): void {
         // Do not need to determine if it is web search, Ask does not
         // have other searches
-        pageIsCorrect = true
+        Common.setPageIsCorrect(true)
     }
 
     /**
@@ -35,14 +37,14 @@
      * Determine the height of the top of the search results area
      */
     function determineSearchAreaTopHeight(): void {
-        searchAreaTopHeight = getElementTopHeight(document.querySelector(".main"))
+        Common.setSearchAreaTopHeight(Common.getElementTopHeight(document.querySelector(".main")));
     }
 
     /**
      * Determine the height of the bottom of the search results area
      */
     function determineSearchAreaBottomHeight(): void {
-        searchAreaBottomHeight = getElementTopHeight(document.querySelector(".PartialWebPagination "))
+        Common.setSearchAreaBottomHeight(Common.getElementTopHeight(document.querySelector(".PartialWebPagination ")))
     }
 
     /**
@@ -50,11 +52,11 @@
      */
     function determinePageNum() {
         const url = webScience.pageManager.url
-        const pageNumberFromUrl = getQueryVariable(url, "page");
+        const pageNumberFromUrl = Common.getQueryVariable(url, "page");
         if (pageNumberFromUrl) {
-            pageNum = Number(pageNumberFromUrl)
+            Common.setPageNum(Number(pageNumberFromUrl))
         } else {
-            pageNum = 1
+            Common.setPageNum(1)
         }
     }
 
@@ -66,7 +68,7 @@
         for (const frame in askFrameToNumAdsObject) {
             total += askFrameToNumAdsObject[frame]
         }
-        numAdResults = total + numAskDisplayAds;
+        Common.setNumAdResults(total + numAskDisplayAds);
     }
 
     /**
@@ -89,10 +91,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight();
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults());
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults());
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             ".PartialWebPagination  *, .PartialPageFooter  *, .PartialSearchResults-item *, .TopAdsPartial *, .BottomAdsPartial *, .PartialRtkAdSlot-ads *",
             isInternalLink,
             document.querySelectorAll(".main"));
@@ -110,8 +112,7 @@
                     console.log(`${event.data.frameID}: ${event.data.numAds}`)
                     askFrameToNumAdsObject[event.data.frameID] = event.data.numAds
                 } else if ("type" in event.data && event.data.type === "adClick") {
-                    numAdClicks += 1
-                    console.log(numAdClicks)
+                    Common.setNumAdClicks(Common.getNumAdClicks() + 1)
                 }
             } catch (error) {
                 // console.log("Wrong message type")
@@ -126,7 +127,7 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true)
     });
 
     /**
@@ -140,7 +141,7 @@
                     (message.url as string).includes("google.com/aclk?") ||
                     (message.url as string).includes("revjet") ||
                     (message.url as string).includes("googleadservices.com")) {
-                    numAdClicks++;
+                    Common.setNumAdClicks(Common.getNumAdClicks() + 1)
                 }
             }
         });
@@ -154,8 +155,7 @@
     registerAskNewTabAdListener();
     initializeFrameListener();
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName, preReportCallbackAsk)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName, preReportCallbackAsk)
 })()

@@ -4,7 +4,7 @@
 
 (async function () {
     const id = randomStringID(10);
-    const bodyObserver = new MutationObserver(_mutations => {
+    const bodyObserver = new MutationObserver(() => {
         reportAds();
         const adBlocks = document.querySelectorAll("#adBlock");
 
@@ -14,7 +14,7 @@
         }
     });
 
-    const adBlockObserver = new MutationObserver(_mutations => {
+    const adBlockObserver = new MutationObserver(() => {
         reportAds();
     });
 

@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Google SERP
  */
@@ -9,15 +11,15 @@
      * Determine whether the page is a web search results page
      */
     function determinePageIsCorrect(): void {
-        const tbm = getQueryVariable(window.location.href, "tbm")
+        const tbm = Common.getQueryVariable(window.location.href, "tbm")
         if (!tbm) {
-            const tbs = getQueryVariable(window.location.href, "tbs")
+            const tbs = Common.getQueryVariable(window.location.href, "tbs")
             if (!tbs || tbs.startsWith("qdr") || tbs.startsWith("li") || tbs.startsWith("cdr")) {
-                pageIsCorrect = true
+                Common.setPageIsCorrect(true)
                 return
             }
         }
-        pageIsCorrect = false
+        Common.setPageIsCorrect(false)
     }
 
     /**
@@ -35,7 +37,7 @@
         const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
 
         // gets all text tags on page that are "Ad" or "Ads"
-        const adTagElements = getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
+        const adTagElements = Common.getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
 
         // Creates a list from the non-keyword ads making sure that none of these non-keyword ads contain each other.
         // Is necessary because some ads on Google contain multiple ad tags
@@ -61,7 +63,7 @@
      */
     function determineSearchAreaTopHeight(): void {
         const element = (document.querySelector("#top_nav") as HTMLElement)
-        searchAreaTopHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaTopHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -70,29 +72,29 @@
     function determineSearchAreaBottomHeight(): void {
         let element = document.querySelector("#botstuff") as HTMLElement
         if (element.offsetHeight !== 0) {
-            searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+            Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
             return
         }
 
         element = document.querySelector("#bottomads") as HTMLElement
         if (element.offsetHeight !== 0) {
-            searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+            Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
             return
         }
 
         element = document.querySelector("#res") as HTMLElement
-        searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
      * Determine the page number
      */
     function determinePageNum(): void {
-        const pageElement = getXPathElement("//div[@role='navigation']//tbody/tr/td[normalize-space(text())]")
+        const pageElement = Common.getXPathElement("//div[@role='navigation']//tbody/tr/td[normalize-space(text())]")
         if (pageElement) {
-            pageNum = Number(pageElement.textContent)
+            Common.setPageNum(Number(pageElement.textContent))
         } else {
-            pageNum = -1
+            Common.setPageNum(-1)
         }
     }
 
@@ -105,7 +107,7 @@
             const url = new URL(urlString)
             if (url.hostname.includes("google.com")) {
                 if (urlString.includes("google.com/url")) {
-                    const newUrlString = getQueryVariable(urlString, "url")
+                    const newUrlString = Common.getQueryVariable(urlString, "url")
                     const newUrl = new URL(newUrlString)
                     return newUrl.hostname.includes("google.com")
                 } else if (urlString.includes("google.com/aclk")) {
@@ -129,10 +131,10 @@
         determinePageNum();
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight()
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults());
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults());
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             "[role=navigation] *, div[class='g']:not(.related-question-pair div[class='g']) *",
             isInternalLink,
             document.querySelectorAll("#rcnt, #appbar, #atvcap"));
@@ -144,13 +146,12 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true)
     });
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()
 
 console.log("GOOGLE")

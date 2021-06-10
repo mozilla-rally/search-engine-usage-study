@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Ecosia SERP
  */
@@ -11,7 +13,7 @@
     function determinePageIsCorrect(): void {
         // Don't need to determine if it is web search, this is handled by
         // content script URL matching
-        pageIsCorrect = true
+        Common.setPageIsCorrect(true);
     }
 
     /**
@@ -36,16 +38,16 @@
      * Determine the height of the top of the search results area
      */
     function determineSearchAreaTopHeight(): void {
-        const element = document.querySelector(".navbar-row") as HTMLElement
-        searchAreaTopHeight = element.offsetHeight + getElementTopHeight(element)
+        const element = document.querySelector(".navbar-row") as HTMLElement;
+        Common.setSearchAreaTopHeight(element.offsetHeight + Common.getElementTopHeight(element));
     }
 
     /**
      * Determine the height of the bottom of the search results area
      */
     function determineSearchAreaBottomHeight(): void {
-        const element = document.querySelector(".pagination").previousElementSibling as HTMLElement
-        searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+        const element = document.querySelector(".pagination").previousElementSibling as HTMLElement;
+        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element));
     }
 
     /**
@@ -53,11 +55,11 @@
      */
     function determinePageNum(): void {
         const url = webScience.pageManager.url
-        const pageNumberFromUrl = getQueryVariable(url, "p");
+        const pageNumberFromUrl = Common.getQueryVariable(url, "p");
         if (pageNumberFromUrl) {
-            pageNum = Number(pageNumberFromUrl) + 1
+            Common.setPageNum(Number(pageNumberFromUrl) + 1)
         } else {
-            pageNum = 1
+            Common.setPageNum(1)
         }
     }
 
@@ -81,10 +83,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight()
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             ".pagination *, div.card-web > div.result *, .card-ad > div, .card-productads > div *",
             isInternalLink,
             document.querySelectorAll(".results-wrapper"))
@@ -96,11 +98,10 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true);
     });
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

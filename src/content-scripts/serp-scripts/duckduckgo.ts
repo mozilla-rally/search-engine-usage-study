@@ -1,3 +1,4 @@
+import * as Common from "../common.js"
 /**
  * Content Scripts for DuckDuckGo SERP
  */
@@ -7,7 +8,7 @@
      * Determine whether the page is a web search results page
      */
     function determinePageIsCorrect(): void {
-        pageIsCorrect = !!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") && !!getQueryVariable(window.location.href, "ia")
+        Common.setPageIsCorrect(!!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") && !!Common.getQueryVariable(window.location.href, "ia"))
     }
 
     /**
@@ -36,9 +37,9 @@
      */
     function determineSearchAreaTopHeight(): void {
         try {
-            searchAreaTopHeight = (document.querySelector("#header_wrapper") as HTMLElement).offsetHeight
+            Common.setSearchAreaTopHeight((document.querySelector("#header_wrapper") as HTMLElement).offsetHeight)
         } catch (error) {
-            searchAreaTopHeight = null
+            Common.setSearchAreaTopHeight(null)
         }
     }
 
@@ -50,9 +51,9 @@
             const resultElements = document.querySelectorAll("#links > div:not(.js-result-hidden-el):not(.is-hidden):not(.result--more)")
 
             const element = resultElements[resultElements.length - 1] as HTMLElement
-            searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+            Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
         } catch (error) {
-            searchAreaBottomHeight = null
+            Common.setSearchAreaBottomHeight(null)
         }
     }
 
@@ -62,11 +63,11 @@
      * a new page for each page of results
      */
     function determinePageNum(): void {
-        const pageElement = getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
+        const pageElement = Common.getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
         if (pageElement) {
-            pageNum = Number(pageElement.textContent)
+            Common.setPageNum(Number(pageElement.textContent))
         } else {
-            pageNum = 1
+            Common.setPageNum(1)
         }
     }
 
@@ -102,16 +103,16 @@
     function determinePageValues(): void {
         determinePageIsCorrect();
 
-        if (pageIsCorrect) {
+        if (Common.getPageIsCorrect()) {
             determinePageNum();
 
             determineSearchAreaTopHeight();
             determineSearchAreaBottomHeight();
 
-            determineOrganicElementsAndAddListeners(getOrganicResults(), getPageNumForElement);
-            determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
+            Common.determineOrganicElementsAndAddListeners(getOrganicResults(), getPageNumForElement);
+            Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
 
-            addInternalClickListeners(
+            Common.addInternalClickListeners(
                 ".result--more *, #ads > div *, .result--ad *, #links > div[id^='r1-'] *",
                 isInternalLink,
                 document.querySelectorAll("#zero_click_wrapper, #vertical_wrapper, #web_content_wrapper"));
@@ -130,46 +131,43 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true);
     });
 
     function initPageManagerListenersDDG() {
         function initModuleDDG() {
-            registerAttentionListener();
-            webScience.pageManager.onPageVisitStart.addListener((timeStamp) => {
-                if (!pageIsCorrect) {
-                    reportResults();
-                    timestamp = timeStamp;
-                    resetAttentionTracking();
+            Common.registerAttentionListener();
+            webScience.pageManager.onPageVisitStart.addListener(() => {
+                if (!Common.getPageIsCorrect()) {
+                    Common.reportResults();
+                    Common.resetAttentionTracking();
                 }
                 determinePageValues();
             });
 
             // In case we miss an initial pageVisitStart event
             if (webScience.pageManager.pageVisitStarted) {
-                timestamp = webScience.pageManager.pageVisitStartTime
-                resetAttentionTracking();
+                Common.resetAttentionTracking();
                 determinePageValues();
             }
         }
 
-        if (("webScience" in window) && ("pageManager" in window.webScience)) {
+        if (("webScience" in window) && ("pageManager" in window["webScience"])) {
             initModuleDDG();
         }
         else {
             if (!("pageManagerHasLoaded" in window)) {
-                window.pageManagerHasLoaded = [];
+                window["pageManagerHasLoaded"] = [];
             }
-            window.pageManagerHasLoaded.push(initModuleDDG);
+            window["pageManagerHasLoaded"].push(initModuleDDG);
         }
     }
 
     window.addEventListener("unload", () => {
-        pageVisitEndListener();
+        Common.pageVisitEndListener();
     });
 
-    isInternalLinkFunction = isInternalLink;
     initPageManagerListenersDDG();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

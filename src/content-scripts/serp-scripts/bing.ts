@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Bing SERP
  */
@@ -11,7 +13,7 @@
     function determinePageIsCorrect(): void {
         // Don't need to determine if it is web search, this is handled by
         // content script URL matching
-        pageIsCorrect = true
+        Common.setPageIsCorrect(true);
     }
 
     /**
@@ -37,7 +39,7 @@
      * Determine the height of the top of the search results area
      */
     function determineSearchAreaTopHeight(): void {
-        searchAreaTopHeight = (document.querySelector("#b_header") as HTMLElement).offsetHeight
+        Common.setSearchAreaTopHeight((document.querySelector("#b_header") as HTMLElement).offsetHeight)
     }
 
     /**
@@ -45,7 +47,7 @@
      */
     function determineSearchAreaBottomHeight(): void {
         const element = (document.querySelector(".b_pag") as HTMLElement)
-        searchAreaBottomHeight = getElementTopHeight(element)
+        Common.setSearchAreaBottomHeight(Common.getElementTopHeight(element))
     }
 
     /**
@@ -54,9 +56,9 @@
     function determinePageNum(): void {
         const pageElement = document.querySelector(".sb_pagS_bp")
         if (pageElement) {
-            pageNum = Number(pageElement.textContent)
+            Common.setPageNum(Number(pageElement.textContent))
         } else {
-            pageNum = -1
+            Common.setPageNum(-1)
         }
     }
 
@@ -87,10 +89,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight()
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             ".b_pag *, #b_results > li.b_algo *, .b_ad > ul > li *, .b_adLastChild *",
             isInternalLink,
             document.querySelectorAll("#b_content"));
@@ -102,11 +104,10 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true)
     });
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

@@ -1,3 +1,5 @@
+import * as Common from "../common.js"
+
 /**
  * Content Scripts for Yahoo SERP
  */
@@ -10,7 +12,7 @@
      */
     function determinePageIsCorrect(): void {
         const url = new URL(window.location.href)
-        pageIsCorrect = url.hostname === "search.yahoo.com" || url.hostname === "www.search.yahoo.com"
+        Common.setPageIsCorrect(url.hostname === "search.yahoo.com" || url.hostname === "www.search.yahoo.com")
     }
 
     /**
@@ -36,7 +38,7 @@
      */
     function determineSearchAreaTopHeight(): void {
         const element = (document.querySelector("#ys") as HTMLElement)
-        searchAreaTopHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaTopHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -44,7 +46,7 @@
      */
     function determineSearchAreaBottomHeight(): void {
         const element = (document.querySelector("#main") as HTMLElement)
-        searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -53,9 +55,9 @@
     function determinePageNum(): void {
         const pageElement = document.querySelector(".pages strong")
         if (pageElement) {
-            pageNum = Number(pageElement.textContent)
+            Common.setPageNum(Number(pageElement.textContent))
         } else {
-            pageNum = -1
+            Common.setPageNum(-1)
         }
     }
 
@@ -87,10 +89,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight()
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement);
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             ".pagination *, #web > .searchCenterMiddle > li > .algo *, ol.searchCenterTopAds > li > .ads *, ol.searchCenterBottomAds > li > .ads *, ol.searchRightTopAds > li *, ol.searchRightMiddleAds > li *, ol.searchRightBottomAds > li *",
             isInternalLink,
             document.querySelectorAll("#bd"));
@@ -102,11 +104,10 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true)
     });
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners();
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners();
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

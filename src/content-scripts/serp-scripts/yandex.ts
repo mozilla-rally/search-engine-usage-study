@@ -1,3 +1,4 @@
+import * as Common from "../common.js"
 /**
  * Content Scripts for Yandex SERP
  */
@@ -10,28 +11,28 @@
      */
     function determinePageIsCorrect(): void {
         const url = new URL(window.location.href)
-        pageIsCorrect = !url.pathname.includes("direct")
+        Common.setPageIsCorrect(!url.pathname.includes("direct"))
     }
 
     /**
      * @returns {Array} An array of all the organic results on the page
      */
     function getOrganicResults() {
-        return getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]")
+        return Common.getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]")
     }
 
     /**
      * @returns {Array} An array of all the ad results on the page
      */
     function getAdResults() {
-        return getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]");
+        return Common.getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]");
     }
 
     /**
      * Determine the height of the top of the search results area
      */
     function determineSearchAreaTopHeight(): void {
-        searchAreaTopHeight = (document.querySelector(".serp-header") as HTMLElement).offsetHeight + (document.querySelector(".navigation") as HTMLElement).offsetHeight
+        Common.setSearchAreaTopHeight((document.querySelector(".serp-header") as HTMLElement).offsetHeight + (document.querySelector(".navigation") as HTMLElement).offsetHeight)
     }
 
     /**
@@ -40,7 +41,7 @@
     function determineSearchAreaBottomHeight(): void {
         const contentElements = document.querySelectorAll(".main__content .content__left > *:not([class*='pager'])")
         const element = contentElements[contentElements.length - 1] as HTMLElement
-        searchAreaBottomHeight = element.offsetHeight + getElementTopHeight(element)
+        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
     }
 
     /**
@@ -48,11 +49,11 @@
      */
     function determinePageNum(): void {
         const url = webScience.pageManager.url
-        const pageNumberFromUrl = getQueryVariable(url, "p");
+        const pageNumberFromUrl = Common.getQueryVariable(url, "p");
         if (pageNumberFromUrl) {
-            pageNum = Number(pageNumberFromUrl) + 1
+            Common.setPageNum(Number(pageNumberFromUrl) + 1)
         } else {
-            pageNum = 1
+            Common.setPageNum(1)
         }
     }
 
@@ -83,10 +84,10 @@
         determineSearchAreaTopHeight()
         determineSearchAreaBottomHeight()
 
-        determineOrganicElementsAndAddListeners(getOrganicResults());
-        determineAdElementsAndAddListeners(getAdResults());
+        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
+        Common.determineAdElementsAndAddListeners(getAdResults());
 
-        addInternalClickListeners(
+        Common.addInternalClickListeners(
             ".pager  *, .serp-item > .organic *",
             isInternalLink,
             document.querySelectorAll(".main"));
@@ -99,13 +100,12 @@
 
     window.addEventListener("load", function () {
         determinePageValues();
-        pageLoaded = true
+        Common.setPageLoaded(true)
     });
 
-    window.addEventListener("unload", pageVisitEndListener);
+    window.addEventListener("unload", Common.pageVisitEndListener);
 
-    isInternalLinkFunction = isInternalLink;
-    initPageManagerListeners(false);
-    registerNewTabListener();
-    registerModule(moduleName)
+    Common.initPageManagerListeners(false);
+    Common.registerNewTabListener();
+    Common.registerModule(moduleName)
 })()

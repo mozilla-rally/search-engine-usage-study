@@ -1,7 +1,6 @@
 /**
  * Functions for content scripts
  */
-
 let pageLoaded = false
 
 let organicDetails: Array<{
@@ -16,14 +15,10 @@ let pageNum: number = null
 
 let pageIsCorrect = null
 
-let timestamp = Date.now()
-
 let searchAreaTopHeight: number = null
 let searchAreaBottomHeight: number = null
 
 let lastClickTime: number = null
-
-let isInternalLinkFunction: (urlString: string) => boolean = null;
 
 
 /**
@@ -106,13 +101,77 @@ const organicLinksWithListeners: LinkListenerDetails[] = []
  */
 const adLinksWithListeners: LinkListenerDetails[] = []
 
+export function setPageLoaded(pageLoaded_in: boolean) {
+  pageLoaded = pageLoaded_in;
+}
+
+export function getNumAdClicks() {
+  return numAdClicks;
+}
+
+export function setNumAdClicks(numAdClicks_in) {
+  numAdClicks = numAdClicks_in;
+}
+
+export function setPageIsCorrect(pageIsCorrect_in: boolean) {
+  pageIsCorrect = pageIsCorrect_in;
+}
+
+export function getOrganicDetails() {
+  return organicDetails;
+}
+
+export function getOrganicClicks() {
+  return organicClicks;
+}
+
+export function getPageIsCorrect() {
+  return pageIsCorrect;
+}
+
+export function getNumAdResults() {
+  return numAdResults;
+}
+
+export function setNumAdResults(numAdResults_in) {
+  numAdClicks = numAdResults_in;
+}
+
+export function getPageNum() {
+  return pageNum;
+}
+
+export function setPageNum(pageNum_in: number) {
+  pageNum = pageNum_in;
+}
+
+export function setSearchAreaTopHeight(searchAreaTopHeight_in: number) {
+  searchAreaTopHeight = searchAreaTopHeight_in;
+}
+
+export function setSearchAreaBottomHeight(searchAreaBottomHeight_in: number) {
+  searchAreaBottomHeight = searchAreaBottomHeight_in;
+}
+
+export function getNumInternalClicks() {
+  return numInternalClicks;
+}
+
+export function getSearchAreaTopHeight() {
+  return searchAreaTopHeight;
+}
+
+export function getSearchAreaBottomHeight() {
+  return searchAreaBottomHeight;
+}
+
 /**
  * Retrieves the first matching element given an xpath query
  * @param {string} xpath - The xpath query
  * @param {Node} contextNode - The context node for the query
  * @returns {Element} The first element matching the xpath
  */
-function getXPathElement(xpath: string, contextNode: Node = document): Element {
+export function getXPathElement(xpath: string, contextNode: Node = document): Element {
   const matchingElement = document.evaluate(
     xpath, contextNode,
     null, XPathResult.FIRST_ORDERED_NODE_TYPE, null
@@ -126,7 +185,7 @@ function getXPathElement(xpath: string, contextNode: Node = document): Element {
  * @param {Node} contextNode - The context node for the query
  * @returns {Element} An array of all elements matching the xpath query
  */
-function getXPathElements(xpath: string, contextNode: Node = document): Element[] {
+export function getXPathElements(xpath: string, contextNode: Node = document): Element[] {
   const results: Element[] = [];
   const query = document.evaluate(xpath, contextNode,
     null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
@@ -143,7 +202,7 @@ function getXPathElements(xpath: string, contextNode: Node = document): Element[
  * @param {string} element - The element
  * @returns {number} The offset from the top
  */
-function getElementTopHeight(element: Element) {
+export function getElementTopHeight(element: Element): number {
   if (!element) return null
   return window.pageYOffset + element.getBoundingClientRect().top
 }
@@ -161,7 +220,7 @@ function getNextElementTopHeight(element: Element) {
 /**
  * Initializes the PageManager listeners and variables
  */
-function initPageManagerListeners(asyncLoads = true) {
+export function initPageManagerListeners(asyncLoads = true) {
   function initModule() {
     registerAttentionListener();
     if (asyncLoads) {
@@ -170,19 +229,19 @@ function initPageManagerListeners(asyncLoads = true) {
     }
   }
 
-  if (("webScience" in window) && ("pageManager" in window.webScience)) {
+  if (("webScience" in window) && ("pageManager" in window["webScience"])) {
     initModule();
   }
   else {
     if (!("pageManagerHasLoaded" in window)) {
-      window.pageManagerHasLoaded = [];
+      window["pageManagerHasLoaded"] = [];
     }
-    window.pageManagerHasLoaded.push(initModule);
+    window["pageManagerHasLoaded"].push(initModule);
   }
 }
 
 
-function pageVisitEndListener() {
+export function pageVisitEndListener() {
   if (lastClickTime && Date.now() - lastClickTime < 500) {
     numInternalClicks++;
   }
@@ -196,8 +255,7 @@ function registerPageVisitEndListener() {
   webScience.pageManager.onPageVisitStop.addListener(pageVisitEndListener);
 }
 
-function pageVisitStartListener({ timeStamp }) {
-  timestamp = timeStamp
+function pageVisitStartListener() {
   resetAttentionTracking();
 }
 
@@ -209,7 +267,7 @@ function registerPageVisitStartListener() {
 
   // In case we miss an initial pageVisitStart event
   if (webScience.pageManager.pageVisitStarted) {
-    pageVisitStartListener({ timeStamp: webScience.pageManager.pageVisitStartTime });
+    pageVisitStartListener();
   }
 }
 
@@ -217,7 +275,7 @@ function registerPageVisitStartListener() {
  * Retrieves the total attention time of the page
  * @returns {number} The total attention time of the page
  */
-function getAttentionTime() {
+export function getAttentionTime() {
   if (webScience.pageManager.pageHasAttention && previousAttentionStart) {
     return totalAttentionTime + (performance.now() - previousAttentionStart)
   }
@@ -229,7 +287,7 @@ function getAttentionTime() {
 /**
  * Registers the page attention listener that updates total attention time
  */
-function registerAttentionListener() {
+export function registerAttentionListener() {
   // Update previous start on registration because we might have missed
   // the initial pageAttentionUpdate event
   if (webScience.pageManager.pageHasAttention) {
@@ -249,7 +307,7 @@ function registerAttentionListener() {
 /**
  * Resets attention tracking for new page visits.
  */
-function resetAttentionTracking() {
+export function resetAttentionTracking() {
   totalAttentionTime = 0
   if (webScience.pageManager.pageHasAttention) {
     previousAttentionStart = performance.now()
@@ -265,14 +323,14 @@ function resetAttentionTracking() {
  * @returns {string} The query string variable in url for the given parameter. If the parameter
  * does not exist in the URL, returns null.
  */
-function getQueryVariable(urlString, variable) {
+export function getQueryVariable(urlString, variable) {
   urlString = urlString ? urlString : window.location.href
-  let url = new URL(urlString);
-  let params = new URLSearchParams(url.search);
+  const url = new URL(urlString);
+  const params = new URLSearchParams(url.search);
   return params.get(variable);
 }
 
-function determineOrganicElementsAndAddListeners(
+export function determineOrganicElementsAndAddListeners(
   organicResults: Element[],
   getPageNumForElement: (Element) => number = () => { return pageNum }) {
 
@@ -320,7 +378,7 @@ function getIsAdLinkDefault(adLinkElement: Element): boolean {
  * @param {callback} getOrganicResults - Callback to get the organic results of the SERP
  * @param {callback} getAdResults - Callback to get the ad results of the SERP
  */
-function determineAdElementsAndAddListeners(
+export function determineAdElementsAndAddListeners(
   adResults: Element[],
   getIsAdLinkElement: (adLink: Element) => boolean = getIsAdLinkDefault) {
   // Removes any existing listeners from ad elements that we previously added
@@ -338,7 +396,7 @@ function determineAdElementsAndAddListeners(
   for (const adResult of adResults) {
     const fnAdMousedownListener = function adMousedownListener(event: Event) {
       console.log(event.target)
-      let adLinkElement = (event.target as any)
+      const adLinkElement = (event.target as any)
       if (getIsAdLinkElement(adLinkElement)) {
         const adLink = adLinkElement.href
         console.log(numAdResults)
@@ -371,7 +429,7 @@ function isValidURL(url: string): boolean {
 }
 
 
-function addInternalClickListeners(
+export function addInternalClickListeners(
   exclude: string,
   isInternalLink: (urlString: string) => boolean,
   searchAreaElements: NodeListOf<Element>) {
@@ -441,7 +499,7 @@ function urlFilter(url: string) {
  * Registers listener that will receive the target of navigation of tabs opened from the tab of the SERP page and match the URL
  * with clicked elements from the SERP page to determine if an element link was opened in a tab
  */
-function registerNewTabListener() {
+export function registerNewTabListener() {
   browser.runtime.onMessage.addListener((message) => {
     if (message.type === "NewTabURL") {
       const encodedMessageURL = urlFilter(encodeURI(message.url))
@@ -481,4 +539,72 @@ function getNextElement(element: Element) {
   }
 
   return element.nextElementSibling
+}
+
+
+
+
+
+
+
+// An array of registered search engines
+const registeredSearchEngines: string[] = []
+
+// A callback executed just before reporting
+let preReportCallback = null
+
+/**
+ * Called by individual search engine modules to register themselves.
+ * @param {string} searchEngineName - The search engine of the registering module
+ * @param {callback} preReportCallbackIn - A function to call immediately before reporting
+ */
+export function registerModule(searchEngineName: string, preReportCallbackIn: () => void = null) {
+  console.log("Registering " + searchEngineName)
+
+  preReportCallback = preReportCallbackIn
+  registeredSearchEngines.push(searchEngineName)
+}
+
+/**
+ * Reports SERP visit data to the background script
+ */
+export function reportResults() {
+  if (registeredSearchEngines.length === 0) {
+    console.log("No registered search engines")
+    return
+  } else if (registeredSearchEngines.length > 1) {
+    console.log("More than one search engine registered!")
+    return
+  }
+
+  const searchEngine = registeredSearchEngines[0]
+
+  if (preReportCallback) preReportCallback();
+
+  // If pageIsCorrect is false, we do not report
+  if (!getPageIsCorrect()) {
+    console.log(
+      "Loaded module " + searchEngine + " is not passing page correctness test"
+    )
+    return
+  }
+
+  const serpVisitData = {
+    SearchEngine: searchEngine,
+    AttentionTime: getAttentionTime(),
+    PageNum: getPageNum(),
+    OrganicDetails: getOrganicDetails(),
+    OrganicClickDetails: getOrganicClicks(),
+    NumAdResults: getNumAdResults(),
+    NumAdClicks: getNumAdClicks(),
+    NumInternalClicks: getNumInternalClicks(),
+    SearchAreaTopHeight: getSearchAreaTopHeight(),
+    SearchAreaBottomHeight: getSearchAreaBottomHeight(),
+  }
+
+  // Send data to background page
+  browser.runtime.sendMessage({
+    type: "SerpVisitData",
+    data: serpVisitData,
+  })
 }
