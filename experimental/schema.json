@@ -6,7 +6,7 @@
         "name": "createPopup",
         "type": "function",
         "description": "Create popup",
-        "async": false,
+        "async": true,
         "parameters": [
           {
             "name": "searchEngineOld",

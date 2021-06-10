@@ -17,7 +17,7 @@ this.experimental = class extends ExtensionAPI {
     getAPI() {
         return {
             experimental: {
-                createPopup(searchEngineOld, searchEngineNew, modalPrimaryRevert) {
+                async createPopup(searchEngineOld, searchEngineNew, modalPrimaryRevert) {
                     // Returns whether the search engine should be reverted.
                     const flags =
                         Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
