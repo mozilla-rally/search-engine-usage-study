@@ -1,0 +1,14 @@
+{
+  "ModalInterventionData": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "ModalAttempts": {
+        "type": "number"
+      },
+      "Revert": {
+        "type": "number"
+      }
+    }
+  }
+}

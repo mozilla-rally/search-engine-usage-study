@@ -1,0 +1,83 @@
+{
+  "SearchPageVisit": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "SearchEngine": {
+        "type": "string"
+      },
+      "AttentionTime": {
+        "type": "number"
+      },
+      "PageNum": {
+        "type": "number"
+      },
+      "Attribution": {
+        "type": "string"
+      },
+      "AttributionID": {
+        "type": "string"
+      },
+      "Transition": {
+        "type": "string"
+      },
+      "OrganicDetails": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "TopHeight": {
+              "type": "number"
+            },
+            "BottomHeight": {
+              "type": "number"
+            },
+            "PageNum": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "SelectedOrganicDetails": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "Ranking": {
+              "type": "number"
+            },
+            "AttentionTime": {
+              "type": "number"
+            },
+            "Loaded": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "NumAdResults": {
+        "type": "number"
+      },
+      "NumAdClicks": {
+        "type": "number"
+      },
+      "NumInternalClicks": {
+        "type": "number"
+      },
+      "SearchAreaTopHeight": {
+        "type": "number"
+      },
+      "SearchAreaBottomHeight": {
+        "type": "number"
+      },
+      "Time": {
+        "type": "number"
+      },
+      "TimeOffset": {
+        "type": "number"
+      }
+    }
+  }
+}

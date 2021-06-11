@@ -1,0 +1,35 @@
+{
+  "ChoiceScreenInterventionData": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "AttentionTime": {
+        "type": "number"
+      },
+      "OriginalEngine": {
+        "type": "string"
+      },
+      "SelectedEngine": {
+        "type": "string"
+      },
+      "SeeMoreSelected": {
+        "type": "boolean"
+      },
+      "Ordering": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "DetailsExpanded": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "Attempts": {
+        "type": "number"
+      }
+    }
+  }
+}

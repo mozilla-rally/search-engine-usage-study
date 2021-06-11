@@ -1,0 +1,20 @@
+{
+  "NoticeInterventionData": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "AttentionTime": {
+        "type": "number"
+      },
+      "RevertSelected": {
+        "type": "boolean"
+      },
+      "OriginalEngine": {
+        "type": "string"
+      },
+      "NewEngine": {
+        "type": "string"
+      }
+    }
+  }
+}

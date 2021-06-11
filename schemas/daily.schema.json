@@ -1,0 +1,47 @@
+{
+  "DailyCollectionData": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "CurrentEngine": {
+        "type": "string"
+      },
+      "SerpVisitQueries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "SearchEngine": {
+              "type": "string"
+            },
+            "Queries": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "HistoryQueries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "SearchEngine": {
+              "type": "string"
+            },
+            "Queries": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "Time": {
+        "type": "number"
+      },
+      "TimeOffset": {
+        "type": "number"
+      }
+    }
+  }
+}
