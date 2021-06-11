@@ -1,61 +1,51 @@
 import * as webScience from "@mozilla/web-science";
 import * as Utils from "./Utils.js"
 import * as PostIntervention from "./PostIntervention.js"
+import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
+/**
+ * @type {Object}
+ * A persistent key-value storage object for the study
+ */
 let storage;
 
-/** 
- * Select an intervention, save the intervention name to storage, and
- * conduct the intervention.
+/**
+ * @type {ConditionSet}
+ * The set of study interventions and their relative weights.
  */
-export async function runIntervention(storageIn): Promise<void> {
-  storage = storageIn
+const interventionSet = {
+  name: "InterventionSelection",
+  conditions: [
+    { name: "NoIntervention", weight: 10 },
+    { name: "NoticeDefault", weight: 20 },
+    { name: "NoticeRevert", weight: 20 },
+    { name: "ChoiceScreenDefault", weight: 10 },
+    { name: "ChoiceScreenHidden", weight: 10 },
+    { name: "ChoiceScreenDescriptions", weight: 10 },
+    { name: "ChoiceScreenExtended", weight: 20 },
+    { name: "ModalPrimaryRevert", weight: 10 },
+    { name: "ModalSecondaryRevert", weight: 10 },
+  ]
+};
 
-  const interventionType = await webScience.randomization.selectCondition({
-    name: "InterventionSelection",
-    conditions: [
-      {
-        name: "NoIntervention",
-        weight: 10,
-      },
-      {
-        name: "NoticeDefault",
-        weight: 20
-      },
-      {
-        name: "NoticeRevert",
-        weight: 20
-      },
-      {
-        name: "ChoiceScreenDefault",
-        weight: 10
-      },
-      {
-        name: "ChoiceScreenHidden",
-        weight: 10
-      },
-      {
-        name: "ChoiceScreenDescriptions",
-        weight: 10
-      },
-      {
-        name: "ChoiceScreenExtended",
-        weight: 20
-      },
-      {
-        name: "ModalPrimaryRevert",
-        weight: 10
-      },
-      {
-        name: "ModalSecondaryRevert",
-        weight: 10
-      },
-    ]
+/**
+ * Starts intervention functionality.
+ * @async
+ * @param {Object} storage - A persistent key-value storage object for the study
+ **/
+export async function start(storageIn): Promise<void> {
+  storage = storageIn;
+
+  // Get the intervention type from storage.
+  // If the value does not exist in storage, then we randomly select
+  // an intervention type and save the selection to storage.
+  let interventionType = await storage.get("InterventionType");
+  if (!interventionType) {
+    interventionType = await webScience.randomization.selectCondition(interventionSet);
+    storage.set("InterventionType", interventionType);
   }
-  );
 
-  storage.set("InterventionType", interventionType);
-
+  // Conducts the randomly selected intervention.
   if (interventionType === "NoticeDefault") {
     noticeIntervention(2);
   } else if (interventionType === "NoticeRevert") {
@@ -80,10 +70,12 @@ export async function runIntervention(storageIn): Promise<void> {
 /**
  * Conduct one of the two notice interventions. The participant's default search engine will be changed
  * and they will be presented a notice notifying them of the change
- * @param {number} noticeType - Specifies the notice style that will be shown to the participant
+ * @async
+ * @param {number} noticeType - Specifies the notice type that will be shown to the participant
  * Should be either 2 or 3.
  */
 async function noticeIntervention(noticeType: number) {
+  // If the notice has been shown already, then the intervention is complete.
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
     const noticeInterventionData = {
@@ -91,8 +83,8 @@ async function noticeIntervention(noticeType: number) {
       RevertSelected: null,
       OriginalEngine: await storage.get("EngineChangedFrom"),
       NewEngine: await storage.get("EngineChangedTo"),
-    }
-    console.log(noticeInterventionData)
+    };
+    console.log(noticeInterventionData);
 
     completeIntervention();
     return;
@@ -101,12 +93,13 @@ async function noticeIntervention(noticeType: number) {
   // Determine the participant's original search engine and homepage
   const originalEngine = await Utils.getSearchEngine();
   const originalHomepage = await Utils.getHomepage();
+  const originalHomepageEngine = SearchEngineUtils.getEngineFromURL(originalHomepage);
 
-  // Creates a list of options for a new default search engine (excluding the original default)
-  let newSearchEngineOptions = ["Google", "DuckDuckGo", "Yahoo", "Bing"]
+  // Creates a list of options for a new default search engine (excluding the participant's current default)
+  let newSearchEngineOptions = ["Google", "DuckDuckGo", "Yahoo", "Bing"];
   if (originalEngine) {
     newSearchEngineOptions = newSearchEngineOptions.filter(engineOption => {
-      return !originalEngine.toLowerCase().includes(engineOption.toLowerCase())
+      return !originalEngine.toLowerCase().includes(engineOption.toLowerCase());
     })
   }
 
@@ -115,19 +108,19 @@ async function noticeIntervention(noticeType: number) {
   Utils.changeSearchEngine(newEngine);
 
   // If the current home page is a search engine page, change it to the default Firefox homepage
-  let homepageChanged = false
-  if (await Utils.getHomepage()) {
-    Utils.changeHomepage("about:home")
+  let homepageChanged = false;
+  if (originalHomepageEngine) {
+    Utils.changeHomepage("about:home");
     homepageChanged = true;
   }
 
   storage.set("EngineChangedFrom", originalEngine);
   storage.set("EngineChangedTo", newEngine);
 
-  // Register a listener that will send a response to the notice page with details of the original engine and new engine
-  // This allows the notice to notify the participant of their original engine and their new engine
+  // Register a listener that will send a response to the notice page with the name of the original engine, new engine,
+  // and if their homepage was changed so that they can be notified of changes.
   webScience.messaging.onMessage.addListener((_message, _sender, sendResponse) => {
-    sendResponse({ originalEngine, newEngine, homepageChange: homepageChanged })
+    sendResponse({ originalEngine, newEngine, homepageChange: homepageChanged });
   }, {
     type: "NoticeDetails",
     schema: {}
@@ -146,8 +139,8 @@ async function noticeIntervention(noticeType: number) {
       RevertSelected: message.revert,
       OriginalEngine: originalEngine,
       NewEngine: newEngine,
-    }
-    console.log(noticeInterventionData)
+    };
+    console.log(noticeInterventionData);
 
     // At this point, the intervention is complete
     completeIntervention();
@@ -162,39 +155,64 @@ async function noticeIntervention(noticeType: number) {
   // Creates a browser tab displaying the notice to the participant
   browser.tabs.create({ url: `/pages/notice_${noticeType}.html` });
 
-  storage.set("NoticeShown", true)
+  storage.set("NoticeShown", true);
 }
 
 
 /**
  * Conduct one of the four choice screen interventions. A search engine choice screen will be displayed to the participant
- * and their default search engine will be changed to their selection
+ * and their default search engine will be changed to their selection.
+ * @async
  * @param {boolean} choiceScreenDesign - Specifies the choice screen style that will be shown to the participant.
  * Should be either 4, 5, 6, or 7. 
  */
 async function choiceScreenIntervention(choiceScreenDesign: number) {
-  let choiceScreenAttempts = await storage.get("ChoiceScreenAttempts");
+  // Get the number of times the choice screen has been displayed to the participant.
+  // If it has been shown three times already, we do not try again and mark the intervention
+  // as completed.
+  const choiceScreenAttemptsCounter = await webScience.storage.createCounter("ChoiceScreenAttempts");
+  let choiceScreenAttempts = choiceScreenAttemptsCounter.get();
   if (choiceScreenAttempts >= 3) {
+    const choiceScreenInterventionData = {
+      AttentionTime: null,
+      OriginalEngine: await Utils.getSearchEngine(),
+      SelectedEngine: null,
+      SeeMoreSelected: null,
+      Ordering: null,
+      DetailsExpanded: null,
+      Attempts: 4
+    };
+
+    console.log(choiceScreenInterventionData);
+
     completeIntervention();
     return;
   }
 
-  choiceScreenAttempts = choiceScreenAttempts ? choiceScreenAttempts + 1 : 1
-  storage.set("ChoiceScreenAttempts", choiceScreenAttempts)
+  // Increment the number of choice screen attempts
+  choiceScreenAttempts = await choiceScreenAttemptsCounter.incrementAndGet();
 
   // Determine the participant's original search engine and homepage
   const originalEngine = await Utils.getSearchEngine();
   const originalHomepage = await Utils.getHomepage();
+  const originalHomepageEngine = SearchEngineUtils.getEngineFromURL(originalHomepage);
 
+  // If the choice screen has previously been displayed, get the order the search engines
+  // were displayed in.
   const engines_ordering = await storage.get("ChoiceScreenEngineOrdering");
 
+  // A listener that will be messaged by the choice screen and respond with whether the homepage
+  // will be changed to the default upon selection on the choice screen and the ordering of engines
+  // on the ballot.
   webScience.messaging.onMessage.addListener((_message, _sender, sendResponse) => {
-    sendResponse({ homepageChange: !!originalHomepage, engines_ordering })
+    sendResponse({ homepageChange: !!originalHomepageEngine, engines_ordering });
   }, {
     type: "ChoiceScreenDetails",
     schema: {}
   });
 
+  // A listener that can be messaged by the choice screen with the ordering of search engines on 
+  // the choice screen.
   webScience.messaging.onMessage.addListener(message => {
     storage.set("ChoiceScreenEngineOrdering", message.engines_ordering);
   }, {
@@ -204,31 +222,31 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
     }
   });
 
+  // A listener that will be messaged by the choice screen upon selection of an engine.
   webScience.messaging.onMessage.addListener(async (message) => {
-    storage.set("EngineChangedFrom", await Utils.getSearchEngine());
+    storage.set("EngineChangedFrom", originalEngine);
     storage.set("EngineChangedTo", message.engine);
 
-    // Modify the participant's default search engine to their choice screen response and mark the intervention as complete
+    // Modify the participant's default search engine to their choice screen response
     Utils.changeSearchEngine(message.engine);
 
     // If the current home page is a search engine page, change it to the default Firefox homepage
-    if (await Utils.getHomepage()) {
-      Utils.changeHomepage("about:home")
+    if (originalHomepageEngine) {
+      Utils.changeHomepage("about:home");
     }
 
     const choiceScreenInterventionData = {
       AttentionTime: message.attentionTime,
-      PreviousEngine: originalEngine,
-      NewEngine: message.engine,
+      OriginalEngine: originalEngine,
+      SelectedEngine: message.engine,
       SeeMoreSelected: message.see_more_clicked,
       Ordering: message.engines_ordering,
       DetailsExpanded: message.details_expanded,
-      ChoiceScreenAttempts: choiceScreenAttempts
-    }
+      Attempts: choiceScreenAttempts
+    };
 
-    console.log(choiceScreenInterventionData)
+    console.log(choiceScreenInterventionData);
 
-    // At this point, the intervention is complete
     completeIntervention();
   }, {
     type: "ChoiceScreenResponse",
@@ -247,9 +265,9 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
 
 /**
  * Called when an intervention is complete. Sets the value of InterventionComplete to true
- * in storage and starts the regular data collection stage of the study.
+ * in storage and starts the post-intervention data collection stage of the study.
  */
 function completeIntervention() {
   storage.set("InterventionComplete", true);
-  PostIntervention.run(storage);
+  PostIntervention.start(storage);
 }

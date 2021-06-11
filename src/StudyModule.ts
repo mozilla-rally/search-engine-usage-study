@@ -5,43 +5,49 @@
  */
 import * as Intervention from "./Intervention.js"
 import * as PostIntervention from "./PostIntervention.js"
-import * as WebNavigation from "./WebNavigation.js"
-import * as Initial from "./Initial.js"
+import * as WebNavigation from "./AttributionTracking.js"
+import * as InitialCollection from "./InitialCollection.js"
 import * as webScience from "@mozilla/web-science";
 import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 /**
- * @type {webScience.storage.KeyValueStorage}
- * A persistent storage space for study data.
+ * @type {Object}
+ * A persistent key-value storage object for the study
  */
-let storage = null
+let storage;
 
+/**
+ * @type {Object}
+ * Rally study object, used for sending data pings.
+ */
 let rally;
 
 /**
  * Start a search engine usage study
+ * @async
+ * @param {Object} rally - Rally study object, used for sending data pings.
  **/
 export async function startStudy(rallyArg): Promise<void> {
   rally = rallyArg;
-  console.debug(rally);
+  console.log(rally);
 
   storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
   await webScience.pageManager.initialize();
   SearchEngineUtils.initialize();
-  WebNavigation.registerWebNavigationTracking();
+  WebNavigation.initializeAttributionTracking();
 
   // Report initial data if we have not done so already
   const initialDataReported = await storage.get("InitialDataReported");
   if (!initialDataReported) {
-    Initial.reportInitialData(storage);
+    InitialCollection.run(storage);
   }
 
-  // If intervention is complete, start recording SERP data.
+  // If intervention is complete, start post-intervention collection.
   // Otherwise, run intervention.
   if (await storage.get("InterventionComplete")) {
-    PostIntervention.run(storage);
+    PostIntervention.start(storage);
   }
   else {
-    Intervention.runIntervention(storage);
+    Intervention.start(storage);
   }
 }

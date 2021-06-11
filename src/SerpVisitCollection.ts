@@ -1,21 +1,26 @@
 import * as webScience from "@mozilla/web-science";
 import { serpScripts } from "./content-scripts-import.js"
 
-export async function startCollection(): Promise<void> {
+/**
+ * Start SERP visit collection
+ * @async
+ **/
+export async function start(): Promise<void> {
   registerSerpVisitDataListener();
   registerContentScripts();
 }
 
 /**
- * Register the SERP content scripts and the listeners to store SERP queries and get page attribution details
+ * Register the SERP content scripts
+ * @async
  */
 async function registerContentScripts() {
   for (const serpScript of serpScripts) {
     if (!serpScript.enabled) {
-      continue
+      continue;
     }
-    serpScript.args["runAt"] = "document_start"
-    await browser.contentScripts.register(serpScript.args)
+    serpScript.args["runAt"] = "document_start";
+    await browser.contentScripts.register(serpScript.args);
   }
 }
 

@@ -1,55 +1,67 @@
 import * as webScience from "@mozilla/web-science";
 
+/**
+ * @type {Array}
+ * An array of the names of the tracked search engines.
+ */
 const searchEngines = ["Google", "DuckDuckGo", "Bing", "Yahoo", "Ecosia", "Yandex", "Ask", "Baidu"]
 
+/**
+ * @type {Object}
+ * An object that maps each tracked engine to its domain and a regular expression for the SERP page urls of the engine.
+ */
 const searchEngineDomains = {
   Google: {
     domains: ["google.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?google\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?google\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   DuckDuckGo: {
     domains: ["duckduckgo.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?duckduckgo\.com(?::[0-9]+)?(?:\/.*)?(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?duckduckgo\.com(?::[0-9]+)?(?:\/.*)?(?:\?.*)?(?:#.*)?$)/i
   },
   Bing: {
     domains: ["bing.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?bing\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?bing\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   Yahoo: {
     domains: ["yahoo.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?search\.yahoo\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?search\.yahoo\.com(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   Ecosia: {
     domains: ["ecosia.org"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?ecosia\.org(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?ecosia\.org(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   Ask: {
     domains: ["ask.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?ask\.com(?::[0-9]+)?\/web\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?ask\.com(?::[0-9]+)?\/web\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   Baidu: {
     domains: ["baidu.com"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?baidu\.com(?::[0-9]+)?\/s\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?baidu\.com(?::[0-9]+)?\/s\W.*(?:\?.*)?(?:#.*)?$)/i
   },
   Yandex: {
     domains: ["yandex.com", "yandex.ru"],
-    regExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?yandex\.(?:ru|com)(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
+    serpUrlRegExp: /(?:^(?:https?|wss?):\/\/(?:www\.)?yandex\.(?:ru|com)(?::[0-9]+)?\/search\W.*(?:\?.*)?(?:#.*)?$)/i
   },
 }
 
-let initialized = false;
-
 /**
- * An object that maps each tracked engine to the match pattern set for its domains.
  * @type {Object}
- * @private
+ * An object that maps each tracked engine to the match pattern set for its domains.
  */
 const domainMatchPatternSets = {}
 
+/**
+ * @type {Array}
+ * An array of match pattern strings for all the tracked search engines.
+ */
 let allTrackedEngineMatchPatterns = []
 
+/**
+ * Initializes the domainMatchPatternSets object and the allTrackedEngineMatchPatterns array.
+ * This function must be called before any of the other exported functions in this module.
+ */
 export function initialize(): void {
-  initialized = true;
   for (const searchEngine in searchEngineDomains) {
     const domainMatchPatterns = webScience.matching.domainsToMatchPatterns(searchEngineDomains[searchEngine].domains)
     domainMatchPatternSets[searchEngine] = webScience.matching.createMatchPatternSet(domainMatchPatterns)
@@ -57,23 +69,19 @@ export function initialize(): void {
   }
 }
 
+/**
+ * @returns {Array} An array of match pattern strings for all the tracked search engines.
+ */
 export function getTrackedEnginesMatchPatterns(): string[] {
-  if (!initialized) {
-    initialize;
-  }
   return allTrackedEngineMatchPatterns;
 }
 
 /**
- * Returns the search engine that the URL matches
- * @param {string} url - the URL of the page that is being checked
- * @returns {string|null} The name of the search engine that the URL belongs to or
- * null if the URL does not belong to any of the tracked engines
+ * @param {string} url - the url of a page.
+ * @returns {string} If the url is for one of the tracked search engines, the name
+ * of the engine. Otherwise, null.
  */
 export function getEngineFromURL(url: string): string {
-  if (!initialized) {
-    initialize;
-  }
   for (const searchEngine in domainMatchPatternSets) {
     const matchPatternSetForEngine = domainMatchPatternSets[searchEngine]
     if (matchPatternSetForEngine.matches(url)) {
@@ -83,19 +91,26 @@ export function getEngineFromURL(url: string): string {
   return null;
 }
 
+/**
+ * @param {string} url - the url of a page.
+ * @returns {string} If the url is a SERP page for one of the tracked search engines, the name
+ * of the engine. Otherwise, null.
+ */
 function getEngineFromSearchURL(url: string): string {
   for (const searchEngine in searchEngineDomains) {
-    if (url.match(searchEngineDomains[searchEngine].regExp)) {
+    if (url.match(searchEngineDomains[searchEngine].serpUrlRegExp)) {
       return searchEngine;
     }
   }
   return null;
 }
 
+/**
+ * @param {string} url - the url of a page
+ * @returns {Object} If the url is for a SERP page for one of the tracked engines, returns the engine and
+ * the search query. Otherwise, null.
+ */
 export function getEngineAndQueryFromUrl(url: string): { engine: string, query: string } {
-  if (!initialized) {
-    initialize;
-  }
   const searchEngine = getEngineFromSearchURL(url);
   if (searchEngine) {
     let query = null;
@@ -125,6 +140,10 @@ export function getEngineAndQueryFromUrl(url: string): { engine: string, query: 
   return null;
 }
 
+/**
+ * @param {string} url - a Google SERP url.
+ * @returns {string} The query from a Google SERP url.
+ */
 function getGoogleQuery(url: string): string {
   const tbm = getQueryVariable(url, "tbm")
   if (!tbm) {
@@ -137,6 +156,11 @@ function getGoogleQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a DuckDuckGo SERP url.
+ * @returns {string} The query from a DuckDuckGo SERP url.
+ */
 function getDuckDuckGoQuery(url: string): string {
   const iaType = getQueryVariable(url, "ia")
   const iaxType = getQueryVariable(url, "iax")
@@ -159,6 +183,11 @@ function getDuckDuckGoQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Bing SERP url.
+ * @returns {string} The query from a Bing SERP url.
+ */
 function getBingQuery(url: string): string {
   const query = getQueryVariable(url, "q");
   if (query) {
@@ -166,6 +195,11 @@ function getBingQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Yahoo SERP url.
+ * @returns {string} The query from a Yahoo SERP url.
+ */
 function getYahooQuery(url: string): string {
   for (const key of ["p", "q", "query"]) {
     const query = getQueryVariable(url, key);
@@ -175,6 +209,11 @@ function getYahooQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Ecosia SERP url.
+ * @returns {string} The query from a Ecosia SERP url.
+ */
 function getEcosiaQuery(url: string): string {
   const query = getQueryVariable(url, "q");
   if (query) {
@@ -182,6 +221,11 @@ function getEcosiaQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Ask SERP url.
+ * @returns {string} The query from a Ask SERP url.
+ */
 function getAskQuery(url: string): string {
   for (const key of ["q", "query"]) {
     const query = getQueryVariable(url, key);
@@ -191,6 +235,11 @@ function getAskQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Baidu SERP url.
+ * @returns {string} The query from a Baidu SERP url.
+ */
 function getBaiduQuery(url: string): string {
   const tn = getQueryVariable(url, "tn")
   if (!tn || tn === "baidu") {
@@ -203,6 +252,11 @@ function getBaiduQuery(url: string): string {
   }
   return null;
 }
+
+/**
+ * @param {string} url - a Yandex SERP url.
+ * @returns {string} The query from a Yandex SERP url.
+ */
 function getYandexQuery(url: string): string {
   if (!webScience.matching.normalizeUrl(url).includes("direct")) {
     const query = getQueryVariable(url, "text");
@@ -214,23 +268,23 @@ function getYandexQuery(url: string): string {
 }
 
 /**
- * Retrieve a query string variable from a URL
- * @param {string} url - the URL to retrieve the query string variable from
+ * Retrieve a query string variable from a url.
+ * @param {string} url - the url to retrieve the query string variable from.
  * @param {string} parameter - the parameter of the variable in the URL you want to retrieve
- * @returns {string} The query string variable in url for the given parameter. If the parameter
+ * @returns {string} The query variable in the url for the given parameter. If the parameter
  * does not exist in the URL, returns null.
  */
-function getQueryVariable(urlString, variable) {
-  const url = new URL(urlString);
-  const params = new URLSearchParams(url.search);
-  return params.get(variable);
+function getQueryVariable(url, parameter) {
+  const urlObject = new URL(url);
+  const params = new URLSearchParams(urlObject.search);
+  return params.get(parameter);
 }
 
-
-
 /**
- * Collects the number of visits to SERP pages over the 
- * previous 30 days for each of the tracked search engines
+ * Collects the number of unique queries made to each of the tracked search engines since the start time from history.
+ * @param {number} startTime - the earliest time from which to get history results.
+ * @returns {Array} An array that, for each of the tracked search engines, has the number of unique queries made to the engine
+ * since the start time from history.
  */
 export async function getHistoryData(startTime: number): Promise<Array<{ SearchEngine: string, Queries: number }>> {
   const historyItems = await browser.history.search({ text: "", startTime: startTime, maxResults: Number.MAX_SAFE_INTEGER });
