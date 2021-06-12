@@ -47,21 +47,21 @@ export async function start(storageIn): Promise<void> {
 
   // Conducts the randomly selected intervention.
   if (interventionType === "NoticeDefault") {
-    noticeIntervention(2);
+    noticeIntervention(1);
   } else if (interventionType === "NoticeRevert") {
-    noticeIntervention(3);
+    noticeIntervention(2);
   } else if (interventionType === "ChoiceScreenDefault") {
-    choiceScreenIntervention(4);
+    choiceScreenIntervention(1);
   } else if (interventionType === "ChoiceScreenHidden") {
-    choiceScreenIntervention(5);
+    choiceScreenIntervention(2);
   } else if (interventionType === "ChoiceScreenDescriptions") {
-    choiceScreenIntervention(6);
+    choiceScreenIntervention(3);
   } else if (interventionType === "ChoiceScreenExtended") {
-    choiceScreenIntervention(7);
+    choiceScreenIntervention(4);
   } else if (interventionType === "ModalPrimaryRevert") {
-    choiceScreenIntervention(6);
+    choiceScreenIntervention(3);
   } else if (interventionType === "ModalSecondaryRevert") {
-    choiceScreenIntervention(6);
+    choiceScreenIntervention(3);
   } else {
     completeIntervention();
   }
@@ -72,7 +72,7 @@ export async function start(storageIn): Promise<void> {
  * and they will be presented a notice notifying them of the change
  * @async
  * @param {number} noticeType - Specifies the notice type that will be shown to the participant
- * Should be either 2 or 3.
+ * Should be either 1 or 2.
  */
 async function noticeIntervention(noticeType: number) {
   // If the notice has been shown already, then the intervention is complete.
@@ -164,7 +164,7 @@ async function noticeIntervention(noticeType: number) {
  * and their default search engine will be changed to their selection.
  * @async
  * @param {boolean} choiceScreenDesign - Specifies the choice screen style that will be shown to the participant.
- * Should be either 4, 5, 6, or 7. 
+ * Should be either 1, 2, 3, or 4. 
  */
 async function choiceScreenIntervention(choiceScreenDesign: number) {
   // Get the number of times the choice screen has been displayed to the participant.
