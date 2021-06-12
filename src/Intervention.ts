@@ -152,8 +152,14 @@ async function noticeIntervention(noticeType: number) {
     }
   });
 
-  // Creates a browser tab displaying the notice to the participant
-  browser.tabs.create({ url: `/pages/notice_${noticeType}.html` });
+  // Creates a browser popup window displaying the notice to the participant
+  browser.windows.create({
+    allowScriptsToClose: true,
+    type: "popup",
+    url: `/pages/notice_${noticeType}.html`,
+    width: 1024,
+    height: 768
+  });
 
   storage.set("NoticeShown", true);
 }
@@ -259,8 +265,14 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
     }
   });
 
-  // Creates a browser tab displaying the search engine choice screen to the participant
-  browser.tabs.create({ url: `/pages/choice_screen_${choiceScreenDesign}.html` });
+  // Creates a browser popup window displaying the search engine choice screen to the participant
+  browser.windows.create({
+    allowScriptsToClose: true,
+    type: "popup",
+    url: `/pages/choice_screen_${choiceScreenDesign}.html`,
+    width: 1024,
+    height: 768
+  });
 }
 
 /**
