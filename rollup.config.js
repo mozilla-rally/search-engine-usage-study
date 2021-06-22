@@ -35,6 +35,7 @@ export default (cliArgs) => {
       },
       plugins: [
         replace({
+          preventAssignment: true,
           // In Developer Mode, the study does not submit data and
           // gracefully handles communication errors with the Core
           // Add-on.
