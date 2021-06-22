@@ -1,74 +1,21 @@
-import * as Common from "../common.js"
+import { PageValues, ElementType } from "../common.js"
+import * as Utils from "../Utils.js"
+import { timing } from "@mozilla/web-science";
+
 /**
- * Content Scripts for DuckDuckGo SERP
+ * Content Script for DuckDuckGo SERP
  */
-(async function () {
-    const moduleName = "DuckDuckGo"
-    /**
-     * Determine whether the page is a web search results page
-     */
-    function determinePageIsCorrect(): void {
-        Common.setPageIsCorrect(!!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") && !!Common.getQueryVariable(window.location.href, "ia"))
-    }
+const serpModule = function () {
+    const pageValues = new PageValues("DuckDuckGo", onNewTab);
 
     /**
-     * @returns {Array} An array of all the organic results on the page
+     * Get whether the page is a basic SERP page.
      */
-    function getOrganicResults() {
-        return Array.from(document.querySelectorAll("#links > div[id^='r1-']"));
-    }
-
-    /**
-     * @returns {Array} An array of all the ad results on the page
-     */
-    function getAdResults() {
-        return Array.from(document.querySelectorAll("#ads > div, .result--ad")).filter(adElement => {
-            return !!adElement.innerHTML && adElement.querySelector(".badge--ad")
-        });
-    }
-
-    function getIsAdLinkElement(adLinkElement: Element): boolean {
-        return !!(adLinkElement as any).href && !adLinkElement.matches(
-            '.report-ad, .report-ad *, .feedback-prompt, .feedback-prompt *, .badge--ad__tooltip, .badge--ad__tooltip *')
-    }
-
-    /**
-     * Determine the height of the top of the search results area
-     */
-    function determineSearchAreaTopHeight(): void {
-        try {
-            Common.setSearchAreaTopHeight((document.querySelector("#header_wrapper") as HTMLElement).offsetHeight)
-        } catch (error) {
-            Common.setSearchAreaTopHeight(null)
-        }
-    }
-
-    /**
-     * Determine the height of the bottom of the search results area
-     */
-    function determineSearchAreaBottomHeight(): void {
-        try {
-            const resultElements = document.querySelectorAll("#links > div:not(.js-result-hidden-el):not(.is-hidden):not(.result--more)")
-
-            const element = resultElements[resultElements.length - 1] as HTMLElement
-            Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
-        } catch (error) {
-            Common.setSearchAreaBottomHeight(null)
-        }
-    }
-
-    /**
-     * Determine the page number 
-     * Note: DDG pagination occurs through continuous scroll rather than loading
-     * a new page for each page of results
-     */
-    function determinePageNum(): void {
-        const pageElement = Common.getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
-        if (pageElement) {
-            Common.setPageNum(Number(pageElement.textContent))
-        } else {
-            Common.setPageNum(1)
-        }
+    function getPageIsCorrect(): boolean {
+        return !!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") &&
+            !!Utils.getQueryVariable(window.location.href, "ia") &&
+            !Utils.getQueryVariable(window.location.href, "iax") &&
+            !Utils.getQueryVariable(window.location.href, "iaxm");
     }
 
     /**
@@ -84,90 +31,182 @@ import * as Common from "../common.js"
         return 1
     }
 
+    function getOrganicDetails(): OrganicDetail[] {
+        const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
+        const organicDetails: OrganicDetail[] = []
+        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getNextElementTopHeight(organicResult), PageNum: getPageNumForElement(organicResult) })
+        }
+        return organicDetails;
+    }
+
+    function getOrganicLinkElements(): Element[][] {
+        const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
+        const organicLinkElements: Element[][] = []
+        for (const organicResult of organicResults) {
+            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        }
+        return organicLinkElements;
+    }
+
     /**
-     * @param {string} urlString - A url
-     * @returns {boolean} Whether the url links to another page on the search engine
+     * @returns {Array} An array of all the ad results on the page
      */
-    function isInternalLink(urlString: string): boolean {
-        const url = new URL(urlString)
-        return url.hostname.includes("duckduckgo.com")
+    function getNumAdResults(): number {
+        return document.querySelectorAll(".badge--ad").length;
+    }
+
+    function getAdLinkElements(): Element[] {
+        const adLinkElements: Element[] = [];
+
+        // Add all the carousel items. We can't just add the elements in the carousel with an href attribute because each item is clickable through a JS event
+        const modules = document.querySelectorAll(".module--carousel");
+        for (const module of modules) {
+            if (module.querySelector(".badge--ad")) {
+                adLinkElements.push(...module.querySelectorAll(".module--carousel__item"));
+            }
+        }
+
+        const regularAdLinkElements = Array.from(document.querySelectorAll("#ads [href], .result--ad [href]")).filter(adLinkElement => {
+            return !adLinkElement.matches(
+                '.report-ad, .report-ad *, .feedback-prompt, .feedback-prompt *, .badge--ad__tooltip, .badge--ad__tooltip *, .module--carousel *')
+        });
+
+        adLinkElements.push(...regularAdLinkElements);
+
+        return adLinkElements;
+    }
+
+    /**
+     * Get the number of pixels between the top of the page and the top of the search area.
+     */
+    function getSearchAreaTopHeight(): number {
+        try {
+            return (document.querySelector("#header_wrapper") as HTMLElement).offsetHeight;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the number of pixels between the top of the page and the bottom of the search area.
+     */
+    function getSearchAreaBottomHeight(): number {
+        try {
+            const resultElements = document.querySelectorAll("#links > div:not(.js-result-hidden-el):not(.is-hidden):not(.result--more)");
+            const element = resultElements[resultElements.length - 1] as HTMLElement;
+            return element.offsetHeight + Utils.getElementTopHeight(element)
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the page number.
+     */
+    function getPageNum(): number {
+        const pageElement = Utils.getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
+        if (pageElement) {
+            return Number(pageElement.textContent);
+        } else {
+            return 1;
+        }
     }
 
     const domObserver = new MutationObserver(function () {
-        determinePageValues();
+        determinePageValues(timing.now());
     });
+
+    // Returns the href if it is an internal link
+    // Returns empty string if the click was in the search area but there was no link
+    // Returns null otherwise
+    function getInternalLink(target: Element): string {
+        if (target.matches("#zero_click_wrapper *, #vertical_wrapper *, #web_content_wrapper *")) {
+            const hrefElement = target.closest("[href]");
+            if (hrefElement) {
+                const href = (hrefElement as any).href;
+                if (Utils.isLinkToDifferentPage(href)) {
+                    const url = new URL(href);
+                    if (url.hostname === window.location.hostname) {
+                        return href;
+                    }
+                } else {
+                    return "";
+                }
+            } else {
+                return "";
+            }
+        }
+        return null;
+    }
 
     /**
      * Determine all the page values and send the query to the background page
      */
-    function determinePageValues(): void {
-        determinePageIsCorrect();
+    function determinePageValues(timeStamp: number): void {
+        const newPageIsCorrect = getPageIsCorrect();
+        if (pageValues.pageIsCorrect && !newPageIsCorrect) {
+            pageValues.reportResults(timeStamp);
+            pageValues.resetTracking();
+        }
+        pageValues.pageIsCorrect = newPageIsCorrect;
+        pageValues.pageNum = getPageNum();
+        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
+        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
+        pageValues.numAdResults = getNumAdResults();
+        pageValues.organicResults = getOrganicDetails();
+        pageValues.addAdListeners(getAdLinkElements());
+        pageValues.addOrganicListeners(getOrganicLinkElements());
+        pageValues.addInternalListeners(getInternalLink);
 
-        if (Common.getPageIsCorrect()) {
-            determinePageNum();
-
-            determineSearchAreaTopHeight();
-            determineSearchAreaBottomHeight();
-
-            Common.determineOrganicElementsAndAddListeners(getOrganicResults(), getPageNumForElement);
-            Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
-
-            Common.addInternalClickListeners(
-                ".result--more *, #ads > div *, .result--ad *, #links > div[id^='r1-'] *",
-                isInternalLink,
-                document.querySelectorAll("#zero_click_wrapper, #vertical_wrapper, #web_content_wrapper"));
-
-            domObserver.disconnect();
-            const container = document.querySelector("#links")
-            if (container) {
-                domObserver.observe(container, { childList: true });
-            }
+        domObserver.disconnect();
+        const container = document.querySelector("#links")
+        if (container) {
+            domObserver.observe(container, { childList: true });
         }
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
+    window.addEventListener("DOMContentLoaded", (event) => {
+        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
     });
 
-    window.addEventListener("load", function () {
-        determinePageValues();
-        Common.setPageLoaded(true);
+    window.addEventListener("load", (event) => {
+        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
+        pageValues.pageLoaded = true;
     });
 
-    function initPageManagerListenersDDG() {
-        function initModuleDDG() {
-            Common.registerAttentionListener();
-            webScience.pageManager.onPageVisitStart.addListener(() => {
-                if (!Common.getPageIsCorrect()) {
-                    Common.reportResults();
-                    Common.resetAttentionTracking();
-                }
-                determinePageValues();
-            });
-
-            // In case we miss an initial pageVisitStart event
-            if (webScience.pageManager.pageVisitStarted) {
-                Common.resetAttentionTracking();
-                determinePageValues();
-            }
+    function onNewTab(url) {
+        if (!pageValues.mostRecentMousedown) {
+            return;
         }
-
-        if (("webScience" in window) && ("pageManager" in window["webScience"])) {
-            initModuleDDG();
-        }
-        else {
-            if (!("pageManagerHasLoaded" in window)) {
-                window["pageManagerHasLoaded"] = [];
+        const normalizedUrl: string = Utils.getNormalizedUrl(url);
+        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+            if (normalizedUrl.includes("duckduckgo.com/y.js") || pageValues.mostRecentMousedown.href === url) {
+                pageValues.numAdClicks++;
             }
-            window["pageManagerHasLoaded"].push(initModuleDDG);
+            return;
+        }
+        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
+            if (pageValues.mostRecentMousedown.href === url) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+            }
+            return;
+        }
+        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+            if (pageValues.mostRecentMousedown.href === url) {
+                pageValues.numInternalClicks++;
+            }
+            return;
         }
     }
 
-    window.addEventListener("unload", () => {
-        Common.pageVisitEndListener();
+    webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
+        determinePageValues(timeStamp);
     });
 
-    initPageManagerListenersDDG();
-    Common.registerNewTabListener();
-    Common.registerModule(moduleName)
-})()
+    window.addEventListener("unload", (event) => {
+        pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
+    });
+};
+
+Utils.waitForPageManagerLoad(serpModule)

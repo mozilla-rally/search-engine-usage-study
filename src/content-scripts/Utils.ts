@@ -92,15 +92,6 @@ export function getQueryVariable(urlString, variable) {
   return params.get(variable);
 }
 
-/**
- * A default URL filter for matching against URLs of new tabs opened from a SERP page
- * @param {string} url - The URL to filter
- * @return {string} The filtered URL
- */
-export function urlFilter(url: string) {
-  return url.substring(0, 60)
-}
-
 function isValidURL(url: string): boolean {
   const res = url.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/g);
   return (res !== null)

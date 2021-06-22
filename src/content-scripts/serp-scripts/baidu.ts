@@ -1,113 +1,174 @@
-import * as Common from "../common.js"
+import { PageValues, ElementType } from "../common.js"
+import * as Utils from "../Utils.js"
 
 /**
  * Content Scripts for Baidu SERP
  */
-
-(async function () {
-    const moduleName = "Baidu"
+const serpModule = function () {
+    const pageValues = new PageValues("Baidu", onNewTab);
 
     /**
-     * Determine whether the page is a web search results page
+     * Get whether the page is a basic SERP page.
      */
-    function determinePageIsCorrect(): void {
+    function getPageIsCorrect(): boolean {
         const url = new URL(window.location.href)
         if (url.hostname === "baidu.com" || url.hostname === "www.baidu.com") {
-            const tn = Common.getQueryVariable(window.location.href, "tn")
-            if (!tn || (tn === "baidu")) {
-                Common.setPageIsCorrect(true)
-                return
+            if (window.location.pathname === "/s") {
+                const tn = Utils.getQueryVariable(window.location.href, "tn")
+                if (!tn || (tn === "baidu")) {
+                    return true;
+                }
             }
         }
-        Common.setPageIsCorrect(false)
-
+        return false;
     }
 
-    /**
-     * @returns {Array} An array of all the organic results on the page
-     */
-    function getOrganicResults() {
-        return Array.from(document.querySelectorAll("#content_left > .result"));
+    function getOrganicDetails(): OrganicDetail[] {
+        const organicResults = document.querySelectorAll("#content_left > .result");
+        const organicDetails: OrganicDetail[] = []
+        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getNextElementTopHeight(organicResult), PageNum: null })
+        }
+        return organicDetails;
+    }
+
+    function getOrganicLinkElements(): Element[][] {
+        const organicResults = document.querySelectorAll("#content_left > .result");
+        const organicLinkElements: Element[][] = []
+        for (const organicResult of organicResults) {
+            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        }
+        return organicLinkElements;
     }
 
     /**
      * @returns {Array} An array of all the ad results on the page
      */
-    function getAdResults() {
-        return Common.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]")
+    function getNumAdResults(): number {
+        return Utils.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]").length;
+    }
+
+    function getAdLinkElements(): Element[] {
+        const adLinkElements: Element[] = [];
+        const adElements = Utils.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]");
+        adElements.forEach(adElement => {
+            adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
+                const href = (adLinkElement as any).href;
+                return href && !href.includes("javascript");
+            }));
+        });
+        return adLinkElements;
     }
 
     /**
-     * @param {string} adResults - an array of the ad results on the page
-     * @returns {Array} An array of all the ad links in the ad results
+     * Get the number of pixels between the top of the page and the top of the search area.
      */
-    function getIsAdLinkElement(adLinkElement: Element): boolean {
-        const adLink = (adLinkElement as any).href
-        return adLink && !adLink.includes("javascript")
-    }
-
-    /**
-     * Determine the height of the top of the search results area
-     */
-    function determineSearchAreaTopHeight(): void {
-        const element = (document.querySelector("#s_tab") as HTMLElement)
-        Common.setSearchAreaTopHeight(element.offsetHeight + Common.getElementTopHeight(element))
-    }
-
-    /**
-     * Determine the height of the bottom of the search results area
-     */
-    function determineSearchAreaBottomHeight(): void {
-        const element = (document.querySelector("#container") as HTMLElement)
-        Common.setSearchAreaBottomHeight(element.offsetHeight + Common.getElementTopHeight(element))
-    }
-
-    /**
-     * Determine the page number
-     */
-    function determinePageNum(): void {
-        const pageNumElement = document.querySelector("strong > .pc")
-        Common.setPageNum(pageNumElement ? Number(pageNumElement.textContent) : -1)
-    }
-
-    /**
-     * @param {string} urlString - A url
-     * @returns {boolean} Whether the url links to another page on the search engine
-     */
-    function isInternalLink(urlString: string): boolean {
+    function getSearchAreaTopHeight(): number {
         try {
-            const url = new URL(urlString)
-            if (url.hostname.includes("baidu.com")) {
-                if (urlString.includes("baidu.com/other.php")) {
-                    return false
+            const element = (document.querySelector("#s_tab") as HTMLElement)
+            return element.offsetHeight + Utils.getElementTopHeight(element)
+        } catch (error) {
+            return null;
+        }
+
+    }
+
+    /**
+     * Get the number of pixels between the top of the page and the bottom of the search area.
+     */
+    function getSearchAreaBottomHeight(): number {
+        try {
+            const element = (document.querySelector("#container") as HTMLElement)
+            return element.offsetHeight + Utils.getElementTopHeight(element);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the page number.
+     */
+    function getPageNum(): number {
+        const pageNumElement = document.querySelector("strong > .pc")
+        return pageNumElement ? Number(pageNumElement.textContent) : -1;
+    }
+
+    // Returns the href if it is an internal link
+    // Returns empty string if the click was in the search area but there was no link
+    // Returns null otherwise
+    function getInternalLink(target: Element): string {
+        if (target.matches("#container *")) {
+            const hrefElement = target.closest("[href]");
+            if (hrefElement) {
+                const href = (hrefElement as any).href;
+                if (Utils.isLinkToDifferentPage(href)) {
+                    const normalizedUrl = Utils.getNormalizedUrl(href);
+                    if (normalizedUrl.includes("baidu.com") &&
+                        !normalizedUrl.includes("baidu.com/link") &&
+                        !normalizedUrl.includes("baidu.com/baidu.php")) {
+                        return href
+                    }
                 } else {
-                    return true
+                    return "";
                 }
             } else {
-                return false
+                return "";
             }
-        } catch (error) {
-            return false
         }
+        return null;
     }
 
     /**
      * Determine all the page values and send the query to the background page
      */
     function determinePageValues(): void {
-        determinePageIsCorrect();
-        determinePageNum();
+        pageValues.pageIsCorrect = getPageIsCorrect();
+        if (!pageValues.pageIsCorrect) return;
+        pageValues.pageNum = getPageNum();
+        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
+        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
+        pageValues.numAdResults = getNumAdResults();
+        pageValues.organicResults = getOrganicDetails();
+        pageValues.addAdListeners(getAdLinkElements());
+        pageValues.addOrganicListeners(getOrganicLinkElements());
+        pageValues.addInternalListeners(getInternalLink);
+    }
 
-        determineSearchAreaTopHeight()
-        determineSearchAreaBottomHeight();
+    window.addEventListener("DOMContentLoaded", function () {
+        determinePageValues();
+    });
 
-        Common.determineOrganicElementsAndAddListeners(getOrganicResults());
-        Common.determineAdElementsAndAddListeners(getAdResults(), getIsAdLinkElement)
+    window.addEventListener("load", function () {
+        determinePageValues();
+        pageValues.pageLoaded = true;
+    });
 
-        Common.addInternalClickListeners(
-            "#content_left > .result *",
-            isInternalLink,
-            document.querySelectorAll("#container"));
+    function onNewTab(url) {
+        if (!pageValues.mostRecentMousedown) {
+            return;
+        }
+        const normalizedUrl: string = Utils.getNormalizedUrl(url);
+        const normalizedRecentUrl: string = Utils.getNormalizedUrl(pageValues.mostRecentMousedown.href)
+        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+            if (normalizedRecentUrl === normalizedUrl) {
+                pageValues.numAdClicks++;
+            }
+            return;
+        }
+        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
+            if ((pageValues.mostRecentMousedown.href === url) ||
+                (normalizedUrl.includes("baidu.com/link") && normalizedRecentUrl.includes("baidu.com/link") &&
+                    Utils.getQueryVariable(url, "url") === Utils.getQueryVariable(pageValues.mostRecentMousedown.href, "url"))) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+            }
+            return;
+        }
+        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+            if (normalizedRecentUrl === normalizedUrl) {
+                pageValues.numInternalClicks++;
+            }
+            return;
+        }
     }
 
     const bodyObserver = new MutationObserver(function (_, observer) {
@@ -119,21 +180,20 @@ import * as Common from "../common.js"
             const config = { childList: true };
             domObserver.observe(container, config);
             observer.disconnect()
-            console.log("tracking")
         }
     });
     const bodyConfig = { childList: true, subtree: true };
     bodyObserver.observe(document, bodyConfig);
 
-
-
     // TODO: do we need this?
     webScience.pageManager.onPageVisitStart.addListener(() => {
-        console.debug("We hit this")
+        pageValues.resetTracking();
         determinePageValues();
     });
 
-    Common.initPageManagerListeners();
-    Common.registerNewTabListener();
-    Common.registerModule(moduleName)
-})()
+    webScience.pageManager.onPageVisitStop.addListener(({ timeStamp }) => {
+        pageValues.reportResults(timeStamp);
+    });
+};
+
+Utils.waitForPageManagerLoad(serpModule)

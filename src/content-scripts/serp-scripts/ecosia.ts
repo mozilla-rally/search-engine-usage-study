@@ -1,4 +1,4 @@
-import { PageValues, MousedownType } from "../common.js"
+import { PageValues, ElementType } from "../common.js"
 import * as Utils from "../Utils.js"
 import { timing } from "@mozilla/web-science";
 
@@ -107,7 +107,7 @@ const serpModule = function () {
         pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
         pageValues.numAdResults = getNumAdResults();
         pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdClickListeners(getAdLinkElements());
+        pageValues.addAdListeners(getAdLinkElements());
         pageValues.addOrganicListeners(getOrganicLinkElements());
         pageValues.addInternalListeners(getInternalLink);
     }
@@ -122,22 +122,27 @@ const serpModule = function () {
     });
 
     function onNewTab(url) {
+        if (!pageValues.mostRecentMousedown) {
+            return;
+        }
         const normalizedUrl: string = Utils.getNormalizedUrl(url);
-        if (pageValues.mostRecentMousedown.type === MousedownType.Ad) {
-            if (normalizedUrl.includes("bing.com/aclick")) {
-                console.debug("Advertisement Click")
+        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+            if (normalizedUrl.includes("bing.com/aclick") || pageValues.mostRecentMousedown.href === url) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === MousedownType.Organic && pageValues.mostRecentMousedown.href === url) {
-            console.debug(`Internal Click: Ranking: ${pageValues.mostRecentMousedown.index}, AttentionDuration: ${pageValues.getAttentionDuration()}, PageLoaded: ${pageValues.pageLoaded}`);
-            pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
+            if (pageValues.mostRecentMousedown.href === url) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+            }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === MousedownType.Internal && pageValues.mostRecentMousedown.href === url) {
-            console.debug("Internal Click")
-            pageValues.numInternalClicks++;
+        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+            if (pageValues.mostRecentMousedown.href === url) {
+                pageValues.numInternalClicks++;
+            }
+            return;
         }
     }
 
