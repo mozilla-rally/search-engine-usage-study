@@ -1,4 +1,11 @@
-import * as Utils from "./Utils.js"
+/**
+ * This module provides functionality for conducting the second stage of modal interventions.
+ * The first stage of the modal intervention is the choice screen shown to the user.
+ * The second stage is the modal dialog that is displayed upon a generated search
+ * with the newly selected engine from the choice screen.
+ */
+
+import * as Privileged from "./Privileged.js"
 import * as webScience from "@mozilla/web-science";
 
 /**
@@ -34,7 +41,7 @@ let modalPrimaryRevert;
 async function listener(details) {
     // The modal dialog should be displayed on a generated search if the current engine is the same
     // as the engine that the participant selected on the choice screen.
-    const currentEngine = await Utils.getSearchEngine();
+    const currentEngine = await Privileged.getSearchEngine();
     if (details.transitionType === "generated" && currentEngine === engineChangedTo) {
         // Gets the number of times the modal dialog has been displayed
         const modalAttemptsCounter = await webScience.storage.createCounter("ModalAttempts");
@@ -50,7 +57,7 @@ async function listener(details) {
         // If the participant chooses to revert, then change their search engine back to the engine that the choice screen
         // stage of the intervention changed it from.
         if (revertChosen) {
-            Utils.changeSearchEngine(engineChangedFrom);
+            Privileged.changeSearchEngine(engineChangedFrom);
         }
 
         // Set the completion status of the modal intervention to true.
@@ -66,7 +73,7 @@ async function listener(details) {
 }
 
 /**
- * Start modal intervention functionality
+ * Start modal dialog functionality
  * @async
  * @param {Object} storage - A persistent key-value storage object for the study
  **/

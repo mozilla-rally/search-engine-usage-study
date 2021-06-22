@@ -1,7 +1,13 @@
+/**
+ * This module enables selecting an intervention group for the participant
+ * and conducting the respective intervention. This does not, however, conduct the
+ * second stage of modal interventions (the popping up of a modal dialog)
+ */
+
 import * as webScience from "@mozilla/web-science";
-import * as Utils from "./Utils.js"
+import * as Privileged from "./Privileged.js"
 import * as PostIntervention from "./PostIntervention.js"
-import * as SearchEngineUtils from "./SearchEngineUtils.js"
+import * as Utils from "./Utils.js"
 
 /**
  * @type {Object}
@@ -91,9 +97,9 @@ async function noticeIntervention(noticeType: number) {
   }
 
   // Determine the participant's original search engine and homepage
-  const originalEngine = await Utils.getSearchEngine();
-  const originalHomepage = await Utils.getHomepage();
-  const originalHomepageEngine = SearchEngineUtils.getEngineFromURL(originalHomepage);
+  const originalEngine = await Privileged.getSearchEngine();
+  const originalHomepage = await Privileged.getHomepage();
+  const originalHomepageEngine = Utils.getEngineFromURL(originalHomepage);
 
   // Creates a list of options for a new default search engine (excluding the participant's current default)
   let newSearchEngineOptions = ["Google", "DuckDuckGo", "Yahoo", "Bing"];
@@ -105,12 +111,12 @@ async function noticeIntervention(noticeType: number) {
 
   // Change the participant's default engine to a random selection from the list of options for a new default
   const newEngine = newSearchEngineOptions[Math.floor(Math.random() * newSearchEngineOptions.length)];
-  Utils.changeSearchEngine(newEngine);
+  Privileged.changeSearchEngine(newEngine);
 
   // If the current home page is a search engine page, change it to the default Firefox homepage
   let homepageChanged = false;
   if (originalHomepageEngine) {
-    Utils.changeHomepage("about:home");
+    Privileged.changeHomepage("about:home");
     homepageChanged = true;
   }
 
@@ -130,8 +136,8 @@ async function noticeIntervention(noticeType: number) {
   webScience.messaging.onMessage.addListener((message) => {
     // If the participant clicked on the button to revert the change, we restore their original default search engine and homepage
     if (message.revert) {
-      Utils.changeHomepage(originalHomepage);
-      Utils.changeSearchEngine(originalEngine);
+      Privileged.changeHomepage(originalHomepage);
+      Privileged.changeSearchEngine(originalEngine);
     }
 
     const noticeInterventionData = {
@@ -181,7 +187,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
   if (choiceScreenAttempts >= 3) {
     const choiceScreenInterventionData = {
       AttentionDuration: null,
-      OriginalEngine: await Utils.getSearchEngine(),
+      OriginalEngine: await Privileged.getSearchEngine(),
       SelectedEngine: null,
       SeeMoreSelected: null,
       Ordering: null,
@@ -199,9 +205,9 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
   choiceScreenAttempts = await choiceScreenAttemptsCounter.incrementAndGet();
 
   // Determine the participant's original search engine and homepage
-  const originalEngine = await Utils.getSearchEngine();
-  const originalHomepage = await Utils.getHomepage();
-  const originalHomepageEngine = SearchEngineUtils.getEngineFromURL(originalHomepage);
+  const originalEngine = await Privileged.getSearchEngine();
+  const originalHomepage = await Privileged.getHomepage();
+  const originalHomepageEngine = Utils.getEngineFromURL(originalHomepage);
 
   // If the choice screen has previously been displayed, get the order the search engines
   // were displayed in.
@@ -234,11 +240,11 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
     storage.set("EngineChangedTo", message.engine);
 
     // Modify the participant's default search engine to their choice screen response
-    Utils.changeSearchEngine(message.engine);
+    Privileged.changeSearchEngine(message.engine);
 
     // If the current home page is a search engine page, change it to the default Firefox homepage
     if (originalHomepageEngine) {
-      Utils.changeHomepage("about:home");
+      Privileged.changeHomepage("about:home");
     }
 
     const choiceScreenInterventionData = {

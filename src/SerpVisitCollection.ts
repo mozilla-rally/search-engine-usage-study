@@ -1,3 +1,8 @@
+/**
+ * This module enables registering SERP content scripts and collecting 
+ * data for SERP visits.
+ */
+
 import * as webScience from "@mozilla/web-science";
 import { serpScripts } from "./content-scripts-import.js"
 import * as AttributionTracking from "./AttributionTracking.js"

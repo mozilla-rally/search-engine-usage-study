@@ -8,9 +8,6 @@
  *  -- enabled: whether this content script should be loaded
  *  -- matches/exclude matches: which URL fragments to match
  *  -- js: content script to load
- * The objects prefixed by "testing" are only loaded when the module is being tested.
- *
- * TODO: don't even register the testing objects when not being tested
  */
 export const serpScripts = [
   {

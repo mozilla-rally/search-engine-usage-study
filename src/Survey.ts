@@ -1,3 +1,9 @@
+/**
+ * This module enables survey functionality of the study. There are two surveys in this study.
+ * The initial survey starts immediately after completion of the Intervention module functionality
+ * and the second survey starts 20 days after that.
+ */
+
 import * as webScience from "@mozilla/web-science";
 
 const millisecondsPerSecond = 1000;

@@ -1,16 +1,23 @@
+/**
+ * This module enables tracking attribution information for search engine page visits.
+ */
+
 import * as webScience from "@mozilla/web-science";
-import * as SearchEngineUtils from "./SearchEngineUtils.js"
+import * as Utils from "./Utils.js"
 
 /**
- * @type {Object}
- * An object that maps page IDs to attribution details.
+ * @type {Object} An object that maps page IDs to attribution details.
  */
 const pageIdToAttributionData: {
   [pageId: string]:
   {
+    // How the participant originally navigated to the search engine
     attribution: string;
+    // An ID common to all page visits that can be attributed to the same navigation
     attributionID: string;
+    // The engine that the page is of
     engine: string;
+    // The transition that brought participant to this page
     transition: string;
   }
 } = {};
@@ -34,14 +41,14 @@ export function getAttributionForPageId(pageId: string) {
  * Initializes tracking of attribution details for page visits.
  */
 export function initializeAttributionTracking(): void {
-  const allEngineMatchPatterns = SearchEngineUtils.getTrackedEnginesMatchPatterns()
+  const allEngineMatchPatterns = Utils.getTrackedEnginesMatchPatterns()
   webScience.pageTransition.onPageTransitionData.addListener(pageTransitionDataEvent => {
     const pageUrl = pageTransitionDataEvent.url;
     const pageId = pageTransitionDataEvent.pageId;
 
     // Gets the engine of the page from the url. If the url is not for one of the tracked engines,
     // we do not need to track attribution information for the page.
-    const engine = SearchEngineUtils.getEngineFromURL(pageTransitionDataEvent.url);
+    const engine = Utils.getEngineFromURL(pageTransitionDataEvent.url);
     if (!engine) {
       return;
     }

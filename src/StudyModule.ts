@@ -1,14 +1,13 @@
 /**
- * This module measures user interaction on Google Search Engine Result Pages
- *
- * @module WebScience.Measurements.SearchEngineUsage
+ * Starts the study
  */
-import * as Intervention from "./Intervention.js"
-import * as PostIntervention from "./PostIntervention.js"
-import * as WebNavigation from "./AttributionTracking.js"
-import * as InitialCollection from "./InitialCollection.js"
+
+import * as Intervention from "./Intervention.js";
+import * as PostIntervention from "./PostIntervention.js";
+import * as WebNavigation from "./AttributionTracking.js";
+import * as InitialCollection from "./InitialCollection.js";
 import * as webScience from "@mozilla/web-science";
-import * as SearchEngineUtils from "./SearchEngineUtils.js"
+import * as Utils from "./Utils.js";
 
 /**
  * @type {Object}
@@ -33,7 +32,7 @@ export async function startStudy(rallyArg): Promise<void> {
 
   storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
   await webScience.pageManager.initialize();
-  SearchEngineUtils.initialize();
+  Utils.initialize();
   WebNavigation.initializeAttributionTracking();
 
   // Report initial data if we have not done so already

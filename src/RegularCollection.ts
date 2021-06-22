@@ -1,6 +1,11 @@
+/**
+ * This module enables regular collection of the participant's default search engine
+ * and the number of unique queries made to search engines.
+ */
+
 import * as webScience from "@mozilla/web-science";
+import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
-import * as SearchEngineUtils from "./SearchEngineUtils.js"
 
 /**
  * @type {Array}
@@ -22,39 +27,39 @@ let storage;
 
 /**
  * @type {number}
- * The milliseconds since epoch when daily collection started.
+ * The timestamp when regular reporting started
  */
-let initialDailyCollectionStartTime;
+let initialRegularCollectionStartTime;
 
 /**
- * Start daily collection
+ * Start regular collection
  * @async
  **/
 export async function start(storageIn: any): Promise<void> {
   storage = storageIn;
 
-  // Get the initial start time of daily collection from storage.
-  // If the value does not exist in storage, then this is the the intiial start time
-  // of daily collection and we set the value in storage
-  initialDailyCollectionStartTime = await storage.get("InitialDailyCollectionStartTime");
-  if (!initialDailyCollectionStartTime) {
-    initialDailyCollectionStartTime = Date.now();
-    storage.set("InitialDailyCollectionStartTime", initialDailyCollectionStartTime);
+  // Get the initial start time of regular collection from storage.
+  // If the value does not exist in storage, then this is the the initial start time
+  // of regular collection and we set the value in storage
+  initialRegularCollectionStartTime = await storage.get("InitialRegularCollectionStartTime");
+  if (!initialRegularCollectionStartTime) {
+    initialRegularCollectionStartTime = Date.now();
+    storage.set("InitialRegularCollectionStartTime", initialRegularCollectionStartTime);
   }
 
   await initializeQueryTracking();
-  webScience.scheduling.onIdleDaily.addListener(reportDailyData);
+  webScience.scheduling.onIdleDaily.addListener(reportRegularData);
 }
 
 /**
  * Callback for onIdleDaily.
- * Reports daily collection data.
+ * Reports regular collection data.
  * Not spawning off worker because we are not doing significant data aggregation.
  * @async
  */
-async function reportDailyData() {
+async function reportRegularData() {
   // Create object mapping each engine to the number of unique queries made to that engine
-  // since the start of daily collection.
+  // since the start of regular collection.
   const searchEngineToNumQueries: Array<{ SearchEngine: string, Queries: number }> = [];
   for (const searchEngine of searchEngines) {
     searchEngineToNumQueries.push({
@@ -64,9 +69,9 @@ async function reportDailyData() {
   }
 
   const regularTelemetrySubmission = {
-    CurrentEngine: await Utils.getSearchEngine(),
+    CurrentEngine: await Privileged.getSearchEngine(),
     SerpVisitQueries: searchEngineToNumQueries,
-    HistoryQueries: await SearchEngineUtils.getHistoryData(initialDailyCollectionStartTime),
+    HistoryQueries: await Utils.getHistoryData(initialRegularCollectionStartTime),
     Time: Date.now(),
     TimeOffset: new Date().getTimezoneOffset(),
   };
@@ -93,7 +98,7 @@ async function initializeQueryTracking(): Promise<void> {
   // if the page is a SERP for one of the tracked engines. Add the query to the set of queries
   // for the respective engine.
   webScience.pageManager.onPageVisitStart.addListener(pageVisitStartDetails => {
-    const engineAndQuery = SearchEngineUtils.getEngineAndQueryFromUrl(pageVisitStartDetails.url);
+    const engineAndQuery = Utils.getEngineAndQueryFromUrl(pageVisitStartDetails.url);
     if (engineAndQuery) {
       const engine = engineAndQuery.engine;
       const query = engineAndQuery.query;

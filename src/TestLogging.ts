@@ -1,4 +1,11 @@
 /**
+ * This module provides utilities for logging testing events.
+ * The module currently just outputs events with `console.log`.
+ * 
+ * @module debugging
+ */
+
+/**
  * Whether to log testing events.
  * @private
  * @type {boolean}
