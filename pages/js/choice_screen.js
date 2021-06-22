@@ -1,17 +1,17 @@
 window.addEventListener("DOMContentLoaded", async function () {
-    let totalAttentionTime = 0;
+    let totalAttentionDuration = 0;
     let previousAttentionStart = 0;
     let pageHasAttention = false;
     if(!document.hidden) {
         pageHasAttention = true;
         previousAttentionStart = performance.now()
     }
-    function getAttentionTime() {
+    function getAttentionDuration() {
         if(pageHasAttention) {
-            return totalAttentionTime + (performance.now() - previousAttentionStart);
+            return totalAttentionDuration + (performance.now() - previousAttentionStart);
         }
         else {
-            return totalAttentionTime;
+            return totalAttentionDuration;
         }
     }
 
@@ -21,7 +21,7 @@ window.addEventListener("DOMContentLoaded", async function () {
             if(pageHasAttention) {
                 previousAttentionStart = performance.now()
             } else {
-                totalAttentionTime = totalAttentionTime + (performance.now() - previousAttentionStart)
+                totalAttentionDuration = totalAttentionDuration + (performance.now() - previousAttentionStart)
             }
         }
     });
@@ -87,7 +87,7 @@ window.addEventListener("DOMContentLoaded", async function () {
 
     document.querySelector(".continue").addEventListener("click", async () => {
         const selected_engine = document.querySelector("input[name=engine-select]:checked").value
-        await browser.runtime.sendMessage({ type: "ChoiceScreenResponse", engine: selected_engine, engines_ordering, see_more_clicked, attentionTime: getAttentionTime(), details_expanded: Array.from(details_expanded_set) });
+        await browser.runtime.sendMessage({ type: "ChoiceScreenResponse", engine: selected_engine, engines_ordering, see_more_clicked, attentionDuration: getAttentionDuration(), details_expanded: Array.from(details_expanded_set) });
         window.close();
     });
 

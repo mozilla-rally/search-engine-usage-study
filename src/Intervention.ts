@@ -79,7 +79,7 @@ async function noticeIntervention(noticeType: number) {
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
     const noticeInterventionData = {
-      AttentionTime: null,
+      AttentionDuration: null,
       RevertSelected: null,
       OriginalEngine: await storage.get("EngineChangedFrom"),
       NewEngine: await storage.get("EngineChangedTo"),
@@ -135,7 +135,7 @@ async function noticeIntervention(noticeType: number) {
     }
 
     const noticeInterventionData = {
-      AttentionTime: message.attentionTime,
+      AttentionDuration: message.attentionDuration,
       RevertSelected: message.revert,
       OriginalEngine: originalEngine,
       NewEngine: newEngine,
@@ -147,7 +147,7 @@ async function noticeIntervention(noticeType: number) {
   }, {
     type: "NoticeResponse",
     schema: {
-      attentionTime: "number",
+      attentionDuration: "number",
       revert: "boolean"
     }
   });
@@ -180,7 +180,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
   let choiceScreenAttempts = choiceScreenAttemptsCounter.get();
   if (choiceScreenAttempts >= 3) {
     const choiceScreenInterventionData = {
-      AttentionTime: null,
+      AttentionDuration: null,
       OriginalEngine: await Utils.getSearchEngine(),
       SelectedEngine: null,
       SeeMoreSelected: null,
@@ -242,7 +242,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
     }
 
     const choiceScreenInterventionData = {
-      AttentionTime: message.attentionTime,
+      AttentionDuration: message.attentionDuration,
       OriginalEngine: originalEngine,
       SelectedEngine: message.engine,
       SeeMoreSelected: message.see_more_clicked,
@@ -258,7 +258,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
     type: "ChoiceScreenResponse",
     schema: {
       engine: "string",
-      attentionTime: "number",
+      attentionDuration: "number",
       see_more_clicked: "boolean",
       engines_ordering: "object",
       details_expanded: "object",

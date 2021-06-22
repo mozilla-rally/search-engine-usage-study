@@ -6,7 +6,7 @@
       "SearchEngine": {
         "type": "string"
       },
-      "AttentionTime": {
+      "AttentionDuration": {
         "type": "number"
       },
       "PageNum": {
@@ -39,7 +39,7 @@
           }
         }
       },
-      "SelectedOrganicDetails": {
+      "OrganicClicks": {
         "type": "array",
         "items": {
           "type": "object",
@@ -48,7 +48,7 @@
             "Ranking": {
               "type": "number"
             },
-            "AttentionTime": {
+            "AttentionDuration": {
               "type": "number"
             },
             "Loaded": {

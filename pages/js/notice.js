@@ -6,19 +6,19 @@ const engineDetails = {
 }
 
 window.addEventListener("DOMContentLoaded", function () {
-    let totalAttentionTime = 0;
+    let totalAttentionDuration = 0;
     let previousAttentionStart = 0;
     let pageHasAttention = false;
     if(!document.hidden) {
         pageHasAttention = true;
         previousAttentionStart = performance.now()
     }
-    function getAttentionTime() {
+    function getAttentionDuration() {
         if(pageHasAttention) {
-            return totalAttentionTime + (performance.now() - previousAttentionStart);
+            return totalAttentionDuration + (performance.now() - previousAttentionStart);
         }
         else {
-            return totalAttentionTime;
+            return totalAttentionDuration;
         }
     }
 
@@ -28,7 +28,7 @@ window.addEventListener("DOMContentLoaded", function () {
             if(pageHasAttention) {
                 previousAttentionStart = performance.now()
             } else {
-                totalAttentionTime = totalAttentionTime + (performance.now() - previousAttentionStart)
+                totalAttentionDuration = totalAttentionDuration + (performance.now() - previousAttentionStart)
             }
         }
     });
@@ -69,7 +69,7 @@ window.addEventListener("DOMContentLoaded", function () {
             console.error(`Error: ${error}`);
         });
 
-    window.addEventListener("unload", (_event) => {
-        browser.runtime.sendMessage({ type: "NoticeResponse", revert: revert, attentionTime: getAttentionTime() });
+    window.addEventListener("unload", () => {
+        browser.runtime.sendMessage({ type: "NoticeResponse", revert: revert, attentionDuration: getAttentionDuration() });
     });
 });
