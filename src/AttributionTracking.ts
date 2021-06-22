@@ -26,6 +26,10 @@ const tabHistoryPageIds: {
   }
 } = {};
 
+export function getAttributionForPageId(pageId: string) {
+  return pageId ? pageIdToAttributionData[pageId] : null;
+}
+
 /**
  * Initializes tracking of attribution details for page visits.
  */
