@@ -1,5 +1,5 @@
 /**
- * Starts the study
+ * Starts the search engine usage study.
  */
 
 import * as Intervention from "./Intervention.js";
@@ -41,12 +41,13 @@ export async function startStudy(rallyArg): Promise<void> {
     InitialCollection.run(storage);
   }
 
-  // If intervention is complete, start post-intervention collection.
-  // Otherwise, run intervention.
-  if (await storage.get("InterventionComplete")) {
-    PostIntervention.start(storage);
+  // If intervention is not complete, run intervention.
+  // Otherwise, run post-intervention functionality.
+  const interventionComplete = await storage.get("InterventionComplete");
+  if (!interventionComplete) {
+    Intervention.start(storage);
   }
   else {
-    Intervention.start(storage);
+    PostIntervention.start(storage);
   }
 }

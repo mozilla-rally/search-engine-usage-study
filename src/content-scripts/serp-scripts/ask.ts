@@ -1,4 +1,4 @@
-import { PageValues, ElementType } from "../common.js"
+import { PageValues } from "../common.js"
 import * as Utils from "../Utils.js"
 import { timing } from "@mozilla/web-science";
 
@@ -7,17 +7,24 @@ import { timing } from "@mozilla/web-science";
  */
 let internalListeners: { document: Document, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void }[] = [];
 const serpModule = function () {
+    // Create a pageValues object to track data for the SERP page
     const pageValues = new PageValues("Ask", onNewTab);
 
+    /**
+     * @returns {OrganicDetail[]} An array of details for each of the organic search results.
+     */
     function getOrganicDetails(): OrganicDetail[] {
         const organicResults = document.querySelectorAll(".PartialSearchResults-item");
         const organicDetails: OrganicDetail[] = []
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getNextElementTopHeight(organicResult), PageNum: null })
+            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
         }
         return organicDetails;
     }
 
+    /**
+     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
+     */
     function getOrganicLinkElements(): Element[][] {
         const organicResults = document.querySelectorAll(".PartialSearchResults-item");
         const organicLinkElements: Element[][] = []
@@ -27,6 +34,9 @@ const serpModule = function () {
         return organicLinkElements;
     }
 
+    /**
+     * @returns {Element[]} An array of ad link elements on the page.
+     */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
         const adElements = document.querySelectorAll(".display-ad-block");
@@ -37,7 +47,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the top of the search area.
+     * @returns {number} The number of pixels between the top of the page and the top of the search area.
      */
     function getSearchAreaTopHeight(): number {
         try {
@@ -48,7 +58,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the bottom of the search area.
+     * @returns {number} The number of pixels between the top of the page and the bottom of the search area.
      */
     function getSearchAreaBottomHeight(): number {
         try {
@@ -59,23 +69,25 @@ const serpModule = function () {
     }
 
     /**
-     * Get the page number.
+     * @returns {number} The page number.
      */
     function getPageNum(): number {
         const pageNumFromUrl = Utils.getQueryVariable(window.location.href, "page");
         return pageNumFromUrl ? Number(pageNumFromUrl) : 1;
     }
 
-    // Returns the href if it is an internal link
-    // Returns empty string if the click was in the search area but there was no link
-    // Returns null otherwise
+    /**
+     * @param {Element} target - the target of a click event.
+     * @returns {string} A link if the target was an internal link element in the search area.
+     * An empty string if it was a possible internal link element. null otherwise.
+     */
     function getInternalLink(target: Element): string {
         if (target.matches(".main *")) {
             if (!target.matches(".PartialWebPagination *, .PartialPageFooter *")) {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isLinkToDifferentPage(href)) {
+                    if (Utils.isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
                         if (url.hostname.includes("ask.com")) {
                             return href;
@@ -130,7 +142,7 @@ const serpModule = function () {
     }
 
     /**
-     * Determine all the page values and send the query to the background page
+     * Determines the page values and adds listeners
      */
     function determinePageValues(): void {
         pageValues.pageIsCorrect = true;
@@ -143,16 +155,12 @@ const serpModule = function () {
         addInternalListeners(getInternalLink);
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
-    function onNewTab(url) {
+    /**
+     * A callback that will be passed the string URL of new tabs opened from the page. It should
+     * determine if the new tab corresponds with an ad click, organic click, or internal click.
+     * @param {string} url - the url string of a new tab opened from the page.
+     */
+    function onNewTab(url: string) {
         const normalizedUrl: string = Utils.getNormalizedUrl(url);
         if (normalizedUrl.includes("g.doubleclick.net") ||
             normalizedUrl.includes("google.com/aclk") ||
@@ -180,11 +188,22 @@ const serpModule = function () {
         }
     }
 
+    window.addEventListener("DOMContentLoaded", function () {
+        determinePageValues();
+    });
+
+    window.addEventListener("load", function () {
+        determinePageValues();
+        pageValues.pageLoaded = true;
+    });
+
     window.addEventListener("unload", (event) => {
+        // Get the number of ads from iFrames
         let numAskFrameAds = 0;
         for (const frame in askFrameToNumAdsObject) {
             numAskFrameAds += askFrameToNumAdsObject[frame]
         }
+
         pageValues.numAdResults = numAskFrameAds + document.querySelectorAll(".display-ad-block").length;
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });

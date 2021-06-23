@@ -25,7 +25,7 @@ const pageIdToAttributionData: {
 /**
  * @type {Object}
  * An object that, for each tab, maps URLs to IDs of pages visited in the tab.
- * Used to determine the sequence a page visit belongs to if the user navigates with forward/back.
+ * Used to determine the sequence a page visit belongs to if the participant navigates with forward/back.
  */
 const tabHistoryPageIds: {
   [tabId: number]: {
@@ -33,6 +33,11 @@ const tabHistoryPageIds: {
   }
 } = {};
 
+/**
+ * @param {string} pageId - The webScience.pageManager page ID of a page.
+ * @returns {string} Attribution information for a page based on its page ID.
+ * Returns null if attribution information for the given page ID cannot be found.
+ */
 export function getAttributionForPageId(pageId: string) {
   return pageId ? pageIdToAttributionData[pageId] : null;
 }
@@ -41,7 +46,10 @@ export function getAttributionForPageId(pageId: string) {
  * Initializes tracking of attribution details for page visits.
  */
 export function initializeAttributionTracking(): void {
-  const allEngineMatchPatterns = Utils.getTrackedEnginesMatchPatterns()
+  // Gets the match patterns for pages where the onPageTransitionData listener should be notified
+  // of page transition data.
+  const allEngineMatchPatterns = Utils.getTrackedEnginesMatchPatterns();
+
   webScience.pageTransition.onPageTransitionData.addListener(pageTransitionDataEvent => {
     const pageUrl = pageTransitionDataEvent.url;
     const pageId = pageTransitionDataEvent.pageId;
@@ -68,8 +76,8 @@ export function initializeAttributionTracking(): void {
         tabHistoryPageIds[pageTransitionDataEvent.tabId] = { ...tabHistoryPageIds[pageTransitionDataEvent.openerTabId] };
       }
 
-      // If the user used the forward or back button to trigger the navigation, then we continue the attribution from the
-      // most recent visit to the normalized URL in the tab if possible.
+      // If the participant used the forward or back button to trigger the navigation, then we continue the attribution 
+      // from the most recent visit to the normalized URL in the tab if possible.
       if (pageUrl && pageTransitionDataEvent.tabId in tabHistoryPageIds &&
         pageUrl in tabHistoryPageIds[pageTransitionDataEvent.tabId] &&
         tabHistoryPageIds[pageTransitionDataEvent.tabId][pageUrl] in pageIdToAttributionData) {

@@ -43,7 +43,7 @@ export async function start(storageIn: any): Promise<void> {
   // of regular collection and we set the value in storage
   initialRegularCollectionStartTime = await storage.get("InitialRegularCollectionStartTime");
   if (!initialRegularCollectionStartTime) {
-    initialRegularCollectionStartTime = Date.now();
+    initialRegularCollectionStartTime = webScience.timing.now();
     storage.set("InitialRegularCollectionStartTime", initialRegularCollectionStartTime);
   }
 
@@ -72,7 +72,7 @@ async function reportRegularData() {
     CurrentEngine: await Privileged.getSearchEngine(),
     SerpVisitQueries: searchEngineToNumQueries,
     HistoryQueries: await Utils.getHistoryData(initialRegularCollectionStartTime),
-    Time: Date.now(),
+    Time: webScience.timing.now(),
     TimeOffset: new Date().getTimezoneOffset(),
   };
 

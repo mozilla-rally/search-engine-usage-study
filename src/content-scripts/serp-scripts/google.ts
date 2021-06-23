@@ -1,14 +1,15 @@
-import { PageValues, ElementType } from "../common.js"
+import { PageValues } from "../common.js"
 import * as Utils from "../Utils.js"
 
 /**
  * Content Scripts for Google SERP
  */
 const serpModule = function () {
+    // Create a pageValues object to track data for the SERP page
     const pageValues = new PageValues("Google", onNewTab);
 
     /**
-     * Get whether the page is a basic SERP page.
+     * @returns {boolean} Whether the page is a Google web SERP page.
      */
     function getPageIsCorrect(): boolean {
         const tbm = Utils.getQueryVariable(window.location.href, "tbm")
@@ -21,15 +22,21 @@ const serpModule = function () {
         return false;
     }
 
+    /**
+     * @returns {OrganicDetail[]} An array of details for each of the organic search results.
+     */
     function getOrganicDetails(): OrganicDetail[] {
         const organicResults = document.querySelectorAll("div[class='g']:not(.related-question-pair div[class='g'])");
         const organicDetails: OrganicDetail[] = []
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getNextElementTopHeight(organicResult), PageNum: null })
+            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
         }
         return organicDetails;
     }
 
+    /**
+     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
+     */
     function getOrganicLinkElements(): Element[][] {
         const organicResults = document.querySelectorAll("div[class='g']:not(.related-question-pair div[class='g'])");
         const organicLinkElements: Element[][] = []
@@ -40,7 +47,7 @@ const serpModule = function () {
     }
 
     /**
-     * @returns {Array} An array of all the ad results on the page
+     * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
         // gets all basic keyword ads
@@ -68,6 +75,9 @@ const serpModule = function () {
         return nonKeywordAds.length + keywordAds.length;
     }
 
+    /**
+     * @returns {Element[]} An array of ad link elements on the page.
+     */
     function getAdLinkElements(): Element[] {
         // gets all basic keyword ads
         const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
@@ -103,7 +113,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the top of the search area.
+     * @returns {number} The number of pixels between the top of the page and the top of the search area.
      */
     function getSearchAreaTopHeight(): number {
         try {
@@ -116,7 +126,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the bottom of the search area.
+     * @returns {number} The number of pixels between the top of the page and the bottom of the search area.
      */
     function getSearchAreaBottomHeight(): number {
         try {
@@ -139,29 +149,31 @@ const serpModule = function () {
     }
 
     /**
-     * Get the page number.
+     * @returns {number} The page number.
      */
     function getPageNum(): number {
         const pageElement = Utils.getXPathElement("//div[@role='navigation']//tbody/tr/td[normalize-space(text())]")
         return pageElement ? Number(pageElement.textContent) : -1;
     }
 
-    // Returns the href if it is an internal link
-    // Returns empty string if the click was in the search area but there was no link
-    // Returns null otherwise
+    /**
+     * @param {Element} target - the target of a click event.
+     * @returns {string} A link if the target was an internal link element in the search area.
+     * An empty string if it was a possible internal link element. null otherwise.
+     */
     function getInternalLink(target: Element): string {
         if (target.matches("#rcnt *, #appbar *, #atvcap *")) {
             if (!target.matches("[role=navigation] *")) {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isLinkToDifferentPage(href)) {
+                    if (Utils.isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
-                        if (url.hostname === window.location.hostname) {
+                        if (url.hostname.includes("google.com")) {
                             if (url.pathname === "/url") {
                                 const newUrlString = Utils.getQueryVariable(href, "url");
                                 const newUrl = new URL(newUrlString)
-                                if (newUrl.hostname === window.location.hostname) {
+                                if (newUrl.hostname.includes("google.com")) {
                                     return newUrlString;
                                 }
                             } else if (url.pathname.includes("/aclk")) {
@@ -182,7 +194,7 @@ const serpModule = function () {
     }
 
     /**
-     * Determine all the page values and send the query to the background page
+     * Determines the page values and adds listeners
      */
     function determinePageValues(): void {
         pageValues.pageIsCorrect = getPageIsCorrect();
@@ -197,16 +209,12 @@ const serpModule = function () {
         pageValues.addInternalListeners(getInternalLink);
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
-    function onNewTab(url) {
+    /**
+     * A callback that will be passed the string URL of new tabs opened from the page. It should
+     * determine if the new tab corresponds with an ad click, organic click, or internal click.
+     * @param {string} url - the url string of a new tab opened from the page.
+     */
+    function onNewTab(url: string) {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
@@ -239,6 +247,15 @@ const serpModule = function () {
             return;
         }
     }
+
+    window.addEventListener("DOMContentLoaded", function () {
+        determinePageValues();
+    });
+
+    window.addEventListener("load", function () {
+        determinePageValues();
+        pageValues.pageLoaded = true;
+    });
 
     webScience.pageManager.onPageVisitStart.addListener(() => {
         pageValues.resetTracking();

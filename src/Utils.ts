@@ -1,6 +1,6 @@
 /**
- * This module provides utilities for handling tracked search engine URLs and getting
- * history query data for the tracked search engines.
+ * This module provides various utilities used by background modules. The initialize function must be called
+ * before any of the other exported functions in this module.
  */
 
 import * as webScience from "@mozilla/web-science";

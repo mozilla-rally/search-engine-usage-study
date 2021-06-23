@@ -1,7 +1,7 @@
 /**
  * This module provides functionality for conducting the second stage of modal interventions.
- * The first stage of the modal intervention is the choice screen shown to the user.
- * The second stage is the modal dialog that is displayed upon a generated search
+ * The first stage of the modal intervention is the choice screen shown to the user and is handled
+ * in the Intervention module. The second stage is the modal dialog that is displayed upon a search
  * with the newly selected engine from the choice screen.
  */
 
@@ -89,7 +89,8 @@ export async function start(storage_in) {
     // Modal functionality should only run if:
     //  1. This intervention has not already been completed.
     //  2. The participant's intervention group is one of the two modal intervention groups
-    //  3. The choice screen stage of the modal intervention was completed successfully.
+    //  3. The choice screen stage of the modal intervention was completed successfully (engineChangedFrom
+    //     and engineChangedTo will only be set if the participant selected an option on the choice screen).
     //  4. The engine that the participant chose on the choice screen is different from their
     //     their original engine. It does not make sense to popup the modal dialog if the participant's
     //     default was originally Google and they proceeded to select Google on the choice screen.

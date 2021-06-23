@@ -1,4 +1,4 @@
-import { PageValues, ElementType } from "../common.js"
+import { PageValues } from "../common.js"
 import * as Utils from "../Utils.js"
 import { timing } from "@mozilla/web-science";
 
@@ -6,10 +6,11 @@ import { timing } from "@mozilla/web-science";
  * Content Script for DuckDuckGo SERP
  */
 const serpModule = function () {
+    // Create a pageValues object to track data for the SERP page
     const pageValues = new PageValues("DuckDuckGo", onNewTab);
 
     /**
-     * Get whether the page is a basic SERP page.
+     * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
      */
     function getPageIsCorrect(): boolean {
         return !!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") &&
@@ -19,7 +20,10 @@ const serpModule = function () {
     }
 
     /**
-     * Determine the page number of the given element
+     * DuckDuckGo uses a continuous scroll on its SERP pages and so multiple pages of results can be in the same window.
+     * This function can be used to determine which page of results an organic result is part of.
+     * @param {Element} element - An organic search result element
+     * @returns {number} The page number of the given element.
      */
     function getPageNumForElement(element: Element) {
         while (element) {
@@ -31,15 +35,21 @@ const serpModule = function () {
         return 1
     }
 
+    /**
+     * @returns {OrganicDetail[]} An array of details for each of the organic search results.
+     */
     function getOrganicDetails(): OrganicDetail[] {
         const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
         const organicDetails: OrganicDetail[] = []
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getNextElementTopHeight(organicResult), PageNum: getPageNumForElement(organicResult) })
+            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: getPageNumForElement(organicResult) })
         }
         return organicDetails;
     }
 
+    /**
+     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
+     */
     function getOrganicLinkElements(): Element[][] {
         const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
         const organicLinkElements: Element[][] = []
@@ -50,12 +60,15 @@ const serpModule = function () {
     }
 
     /**
-     * @returns {Array} An array of all the ad results on the page
+     * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
         return document.querySelectorAll(".badge--ad").length;
     }
 
+    /**
+     * @returns {Element[]} An array of ad link elements on the page.
+     */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
 
@@ -78,7 +91,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the top of the search area.
+     * @returns {number} The number of pixels between the top of the page and the top of the search area.
      */
     function getSearchAreaTopHeight(): number {
         try {
@@ -89,7 +102,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the number of pixels between the top of the page and the bottom of the search area.
+     * @returns {number} The number of pixels between the top of the page and the bottom of the search area.
      */
     function getSearchAreaBottomHeight(): number {
         try {
@@ -102,7 +115,7 @@ const serpModule = function () {
     }
 
     /**
-     * Get the page number.
+     * @returns {number} The page number.
      */
     function getPageNum(): number {
         const pageElement = Utils.getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
@@ -117,17 +130,19 @@ const serpModule = function () {
         determinePageValues(timing.now());
     });
 
-    // Returns the href if it is an internal link
-    // Returns empty string if the click was in the search area but there was no link
-    // Returns null otherwise
+    /**
+     * @param {Element} target - the target of a click event.
+     * @returns {string} A link if the target was an internal link element in the search area.
+     * An empty string if it was a possible internal link element. null otherwise.
+     */
     function getInternalLink(target: Element): string {
         if (target.matches("#zero_click_wrapper *, #vertical_wrapper *, #web_content_wrapper *")) {
             const hrefElement = target.closest("[href]");
             if (hrefElement) {
                 const href = (hrefElement as any).href;
-                if (Utils.isLinkToDifferentPage(href)) {
+                if (Utils.isValidLinkToDifferentPage(href)) {
                     const url = new URL(href);
-                    if (url.hostname === window.location.hostname) {
+                    if (url.hostname.includes("duckduckgo.com")) {
                         return href;
                     }
                 } else {
@@ -141,14 +156,19 @@ const serpModule = function () {
     }
 
     /**
-     * Determine all the page values and send the query to the background page
+     * Determines the page values and adds listeners
      */
     function determinePageValues(timeStamp: number): void {
         const newPageIsCorrect = getPageIsCorrect();
+
+        // DuckDuckGo uses History API when navigating between different search types
+        // for the same SERP query. We report results when going from a web SERP page
+        // to a different type of SERP page (ie. images or maps)
         if (pageValues.pageIsCorrect && !newPageIsCorrect) {
             pageValues.reportResults(timeStamp);
             pageValues.resetTracking();
         }
+
         pageValues.pageIsCorrect = newPageIsCorrect;
         pageValues.pageNum = getPageNum();
         pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
@@ -166,16 +186,12 @@ const serpModule = function () {
         }
     }
 
-    window.addEventListener("DOMContentLoaded", (event) => {
-        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
-    });
-
-    window.addEventListener("load", (event) => {
-        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
-        pageValues.pageLoaded = true;
-    });
-
-    function onNewTab(url) {
+    /**
+     * A callback that will be passed the string URL of new tabs opened from the page. It should
+     * determine if the new tab corresponds with an ad click, organic click, or internal click.
+     * @param {string} url - the url string of a new tab opened from the page.
+     */
+    function onNewTab(url: string) {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
@@ -199,6 +215,15 @@ const serpModule = function () {
             return;
         }
     }
+
+    window.addEventListener("DOMContentLoaded", (event) => {
+        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
+    });
+
+    window.addEventListener("load", (event) => {
+        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
+        pageValues.pageLoaded = true;
+    });
 
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         determinePageValues(timeStamp);

@@ -1,23 +1,21 @@
-/**
- * This module enables collection of data that will occur once upon
- * initial startup of the study.
- */
-
 import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
 
 /**
- * Run initial collection
+ * Run initial data collection
  * @async
  **/
 export async function run(storage) {
-  const date30DaysAgo = (new Date(new Date().setDate(new Date().getDate() - 30))).valueOf();
+  // Gets a timeStamp from 30 days ago
+  // Current timeStamp - (30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
+  const timeStamp30DaysAgo = webScience.timing.now() - (30 * 24 * 60 * 60 * 1000);
+
   const initialData = {
     SurveyId: await webScience.userSurvey.getSurveyId(),
     Engine: await Privileged.getSearchEngine(),
-    HistoryQueries: await Utils.getHistoryData(date30DaysAgo),
-    Time: Date.now(),
+    HistoryQueries: await Utils.getHistoryData(timeStamp30DaysAgo),
+    Time: webScience.timing.now(),
     TimeOffset: new Date().getTimezoneOffset()
   };
 

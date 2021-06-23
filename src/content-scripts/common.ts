@@ -1,15 +1,6 @@
 import { timing } from "@mozilla/web-science";
 
 /**
- * An enum of the different types of elements tracked
- */
-export enum ElementType {
-  Organic,
-  Internal,
-  Ad,
-}
-
-/**
  * A class to track page values for SERP pages
  */
 export class PageValues {
@@ -29,7 +20,7 @@ export class PageValues {
   pageIsCorrect = false;
 
   /**
-   * How long the page has had the user's attention.
+   * How long the page has had the participant's attention.
    */
   attentionDuration = 0;
 
@@ -86,22 +77,22 @@ export class PageValues {
   /**
    * An array of the listeners tracking internal clicks on the page.
    */
-  internalListeners: { document: Document, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void }[] = [];
+  internalListeners: InternalListener[] = [];
 
   /**
    * An array of the listeners tracking organic clicks on the page.
    */
-  organicListeners: { element: Element, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void }[] = [];
+  organicListeners: OrganicListener[] = [];
 
   /**
    * An array of the listeners tracking advertisement clicks on the page.
    */
-  adListeners: { element: Element, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void, }[] = [];
+  adListeners: AdListener[] = [];
 
   /**
    * Details about the element that most recently had the mousedown event fired for it.
    */
-  mostRecentMousedown: { type: ElementType, href: string, index: number };
+  mostRecentMousedown: RecentMousedown;
 
   /**
    * When the most recent recorded click occurred. This is used to ignore new tabs opened from the page if the 
@@ -122,7 +113,7 @@ export class PageValues {
    * @param {callback} onNewTab - A callback that will be passed the url if a new tab is opened
    * from this page and determine if a click occurred
    */
-  constructor(searchEngine: string, onNewTab: (url) => void) {
+  constructor(searchEngine: string, onNewTab: (url: string) => void) {
     this.searchEngine = searchEngine;
     this.pageId = webScience.pageManager.pageId;
 
@@ -183,7 +174,7 @@ export class PageValues {
 
   /**
    * Add listeners to track organic clicks.
-   * @param {Element[][]} organicLinkElements - For each index organic search results, an array
+   * @param {Element[][]} organicLinkElements - For each organic search result, an array
    * of the organic link elements for that result.
    **/
   addOrganicListeners(organicLinkElements: Element[][]) {
@@ -271,8 +262,8 @@ export class PageValues {
 
   /**
    * Add listeners to track internal clicks.
-   * @param {callback} getInternalLink - A callback function that returns a URL if the element is
-   * is an internal link element and the href of the element is the link to the internal page. It returns
+   * @param {callback} getInternalLink - A callback function that returns a URL if the target element is
+   * an internal link element and the href of the element is a link to an internal page. It returns
    * an empty string if the element was possibly an internal link element. Otherwise, returns null.
    **/
   addInternalListeners(getInternalLink: (target: Element) => string) {

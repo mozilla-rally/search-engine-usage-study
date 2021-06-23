@@ -1,21 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare let webScience: {
-  pageManager: {
-    pageId,
-    url,
-    referrer,
-    onPageVisitStart,
-    onPageVisitStop,
-    onPageAttentionUpdate,
-    onPageAudioUpdate,
-    pageHasAttention,
-    pageHasAudio,
-    pageVisitStarted,
-    pageVisitStartTime
-  }
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+enum ElementType {
+  Organic,
+  Internal,
+  Ad,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface OrganicDetail {
   // Number of pixels between the top of the page and the top of the organic result.
   TopHeight: number,
@@ -26,7 +16,6 @@ interface OrganicDetail {
   PageNum: number,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface OrganicClick {
   // The ranking of the selected organic result.
   Ranking: number,
@@ -34,4 +23,28 @@ interface OrganicClick {
   AttentionDuration: number,
   // If the whole page had loaded, including all dependent resources such as stylesheets and images when the selection occurred.
   PageLoaded: boolean,
+}
+
+interface InternalListener {
+  document: Document,
+  clickListener: (event: MouseEvent) => void,
+  mousedownListener: (event: MouseEvent) => void
+}
+
+interface OrganicListener {
+  element: Element,
+  clickListener: (event: MouseEvent) => void,
+  mousedownListener: (event: MouseEvent) => void
+}
+
+interface AdListener {
+  element: Element,
+  clickListener: (event: MouseEvent) => void,
+  mousedownListener: (event: MouseEvent) => void
+}
+
+interface RecentMousedown {
+  type: ElementType,
+  href: string,
+  index: number
 }
