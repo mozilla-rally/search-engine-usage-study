@@ -11,6 +11,52 @@ import resolve from "@rollup/plugin-node-resolve";
 import globby from "globby";
 import typescript from '@rollup/plugin-typescript';
 import webScienceRollupPlugin from "@mozilla/web-science/rollup-plugin";
+import svelte from 'rollup-plugin-svelte';
+import html from "@rollup/plugin-html"
+import fs from "fs";
+import copy from 'rollup-plugin-copy'
+require("svelte/register");
+
+function makeTemplate(templateData, svelteComponent, props, scriptSrc) {
+  return ({ attributes, bundle, files, publicPath, title }) => {
+    const body = svelteComponent.render(props).html;
+    return templateData.replace("%%BODY%%", body).replace("%%TITLE%%", title).replace("%%SCRIPT%%", scriptSrc);
+  };
+}
+
+const choiceScreenHtmlPages = [];
+[ "Default", "HiddenDescription", "VisibleDescription", "Extended" ].forEach((type, index) => {
+  choiceScreenHtmlPages.push(
+    html({
+      fileName: `pages/choice_screen_${index + 1}.html`,
+      title: "Search Engine Choice Screen",
+      template: makeTemplate(
+        fs.readFileSync("./pages/template.html", "utf8"),
+        require("./pages/components/choice_screen/ChoiceScreen.svelte").default,
+        { type },
+        "assets/js/choice_screen.js"
+      ),
+    })
+  )
+});
+
+const noticeHtmlPages = [];
+[ false, true ].forEach((revert, index) => {
+  noticeHtmlPages.push(
+    html({
+      fileName: `pages/notice_${index + 1}.html`,
+      title: "Search Engine Change Notice",
+      template: makeTemplate(
+        fs.readFileSync("./pages/template.html", "utf8"),
+        require("./pages/components/notice/Notice.svelte").default,
+        { revert },
+        "assets/js/notice.js"
+      ),
+    })
+  )
+});
+
+const htmlPages = choiceScreenHtmlPages.concat(noticeHtmlPages)
 
 /**
  * Helper to detect developer mode.
@@ -47,6 +93,17 @@ export default (cliArgs) => {
         commonjs(),
         typescript(),
         webScienceRollupPlugin(),
+        svelte({
+          compilerOptions: {
+            hydratable: true,
+          }
+        }),
+        ...htmlPages,
+        copy({
+          targets: [
+            { src: 'pages/static/*', dest: 'dist/pages/assets' },
+          ]
+        })
       ],
     }
   ];

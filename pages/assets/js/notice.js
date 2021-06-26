@@ -52,7 +52,7 @@ window.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("engine-description").textContent = engineDetails[ response.newEngine ];
 
                     const logo = document.getElementById("notice-logo")
-                    logo.src = `logos/${response.newEngine.toLowerCase()}.png`
+                    logo.src = `assets/logos/${response.newEngine.toLowerCase()}.png`
                     logo.alt = `${response.newEngine} logo`
                 }
             }

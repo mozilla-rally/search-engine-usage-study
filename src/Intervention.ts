@@ -162,7 +162,7 @@ async function noticeIntervention(noticeType: number) {
   browser.windows.create({
     allowScriptsToClose: true,
     type: "popup",
-    url: `/pages/notice_${noticeType}.html`,
+    url: `/dist/pages/notice_${noticeType}.html`,
     width: 1024,
     height: 768
   });
@@ -275,7 +275,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
   browser.windows.create({
     allowScriptsToClose: true,
     type: "popup",
-    url: `/pages/choice_screen_${choiceScreenDesign}.html`,
+    url: `/dist/pages/choice_screen_${choiceScreenDesign}.html`,
     width: 1024,
     height: 768
   });
