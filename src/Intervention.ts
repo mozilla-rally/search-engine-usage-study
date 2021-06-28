@@ -211,7 +211,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
 
   // If the choice screen has previously been displayed, get the order the search engines
   // were displayed in.
-  const engines_ordering = await storage.get("ChoiceScreenEngineOrdering");
+  let engines_ordering = await storage.get("ChoiceScreenEngineOrdering");
 
   // A listener that will be messaged by the choice screen and respond with whether the homepage
   // will be changed to the default upon selection on the choice screen and the ordering of engines
@@ -227,6 +227,7 @@ async function choiceScreenIntervention(choiceScreenDesign: number) {
   // the choice screen.
   webScience.messaging.onMessage.addListener(message => {
     storage.set("ChoiceScreenEngineOrdering", message.engines_ordering);
+    engines_ordering = message.engines_ordering;
   }, {
     type: "ChoiceScreenEngineOrdering",
     schema: {
