@@ -9,11 +9,8 @@ import * as PostIntervention from "./PostIntervention.js";
 import * as AttributionTracking from "./AttributionTracking.js";
 import * as InitialCollection from "./InitialCollection.js";
 import * as HistoryRemovalTracking from "./HistoryRemovalTracking";
-import * as SerpVisitCollection from "./SerpVisitCollection.js";
-import * as Survey from "./Survey.js";
 import * as webScience from "@mozilla/web-science";
 import * as Utils from "./Utils.js";
-import * as Privileged from "./Privileged.js";
 
 /**
  * A persistent key-value storage object for the study
@@ -36,24 +33,13 @@ export async function startStudy(rallyArg): Promise<void> {
   rally = rallyArg;
   console.log(rally);
 
-  Privileged.changeSearchEngine("Yandex");
-  return;
-
   storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
   await webScience.pageManager.initialize();
   Utils.initializeMatchPatterns();
   AttributionTracking.initializeAttributionTracking();
-
   HistoryRemovalTracking.run();
-  SerpVisitCollection.initializeCollection(storage);
-  return;
-
-  Survey.initializeSurvey(storage);
-
-  return;
 
   const interventionType = await InitialCollection.run(storage);
-
 
   // If intervention is not complete, run intervention.
   // Otherwise, run post-intervention functionality.
