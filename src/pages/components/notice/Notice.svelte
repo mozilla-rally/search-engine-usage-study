@@ -1,5 +1,5 @@
 <script>
-    export let revert;
+    export let revertOption;
 </script>
 
 <div id="page-container">
@@ -10,32 +10,44 @@
                     <h1 class="notice-title">
                         <strong>
                             Your search engine was changed
-                            <span id="engine_change" />
+                            <span id="engineChange" />
                         </strong>
                     </h1>
-                    <div id="engine-info" style="display: none;">
+                    <div id="engine-info" class="hiding">
                         <!-- svelte-ignore a11y-missing-attribute -->
                         <img id="notice-logo" />
                         <!-- svelte-ignore a11y-missing-content -->
                         <h2 id="engine-description" />
                     </div>
                     <div style="padding-bottom: 2rem;">
-                        <h2 id="homepage_change" style="display: none;">
-                            Your homepage was changed to the Firefox Default as
-                            well.
-                        </h2>
-                        <h2>
-                            You can always select another search engine later in
-                            Firefox settings.
-                            <a
-                                href="https://support.mozilla.org/en-US/kb/change-your-default-search-settings-firefox"
-                                target="_blank">Learn More.</a
-                            >
-                        </h2>
-                        {#if revert}
+                        <div id="homepageChangeDescription" class="hiding">
+                            <h2>
+                                Your homepage was changed to Firefox Home as
+                                well.
+                            </h2>
+                            <h2>
+                                You can always change your search engine and
+                                homepage later in Firefox settings.
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/firefox-options-preferences-and-settings"
+                                    target="_blank">Learn More.</a
+                                >
+                            </h2>
+                        </div>
+                        <div id="noHomepageChangeDescription">
+                            <h2>
+                                You can always change your search engine later
+                                in Firefox settings.
+                                <a
+                                    href="https://support.mozilla.org/en-US/kb/change-your-default-search-settings-firefox"
+                                    target="_blank">Learn More.</a
+                                >
+                            </h2>
+                        </div>
+                        {#if revertOption}
                             <h2>
                                 You can also choose to revert <span
-                                    id="revert_plural">this change</span
+                                    id="revertPlural">this change</span
                                 > now.
                             </h2>
                             <div style="padding-top: 1rem;">

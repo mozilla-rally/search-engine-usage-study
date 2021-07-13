@@ -74,9 +74,6 @@ p {
   -webkit-transform:rotate(180deg);
   transform:rotate(180deg);
 }
-.showing {
-  display: block;
-}
 .hiding {
   display: none;
 }
@@ -149,10 +146,10 @@ p {
   padding-bottom: 2rem;
 }
 
-.choice-screen-wrapper {
+.choice-ballot-wrapper {
   margin-bottom: 80px;
 }
 
-.choice-screen-description{
+.choice-ballot-description{
   padding-bottom: 10px;
 }
