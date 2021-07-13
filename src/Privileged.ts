@@ -1,11 +1,13 @@
 /**
  * This module provides access to privileged functionality for getting/setting
  * the browser's default search engine and homepage.
+ * 
+ * @module Privileged
  */
 
 /**
- * @async
  * @return {Promise<string>} The name of the current default search engine.
+ * @async
  */
 export async function getSearchEngine(): Promise<string> {
   try {
@@ -17,8 +19,8 @@ export async function getSearchEngine(): Promise<string> {
 }
 
 /**
+ * @return {Promise<string>} a "|" separated string of the homepage URLs.
  * @async
- * @return {Promise<string>} The url of the current homepage.
  */
 export async function getHomepage(): Promise<string> {
   try {
@@ -31,9 +33,9 @@ export async function getHomepage(): Promise<string> {
 
 /**
  * Changes the current default search engine.
- * @async
  * @param {string} searchEngine - the search engine that the default will be changed to.
- * Should be either Google, DuckDuckGo, Yahoo, Bing, Ecosia, Yandex, Baidu, or Ask
+ * Should be either "Google", "DuckDuckGo", "Yahoo", "Bing", "Ecosia", "Yandex", "Baidu", or "Ask".
+ * @async
  */
 export async function changeSearchEngine(searchEngine: string): Promise<void> {
   try {
@@ -44,13 +46,13 @@ export async function changeSearchEngine(searchEngine: string): Promise<void> {
 }
 
 /**
- * Changes the current homepage.
+ * Changes the current homepages.
+ * @param {string} homepages - a "|" separated string of the URLs that the homepages should be changed to.
  * @async
- * @param {string} homepage - the url that the homepage should be changed to.
  */
-export async function changeHomepage(homepage: string): Promise<void> {
+export async function changeHomepage(homepages: string): Promise<void> {
   try {
-    await browser.experimental.changeHomepage(homepage);
+    await browser.experimental.changeHomepage(homepages);
   } catch (error) {
     console.error(error);
   }

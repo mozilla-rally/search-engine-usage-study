@@ -1,20 +1,11 @@
+import { id } from "@mozilla/web-science";
+
 /**
- * Content Scripts for Ask SERP
+ * Content Scripts for Ask SERP iFrames
  */
-
 (async function () {
-    const id = randomStringID(10);
+    const frameId = id.generateId();
     const bodyObserver = new MutationObserver(() => {
-        reportAds();
-        const adBlocks = document.querySelectorAll("#adBlock");
-
-        adBlockObserver.disconnect();
-        for (let i = 0; i < adBlocks.length; i++) {
-            adBlockObserver.observe(adBlocks[i], { childList: true });
-        }
-    });
-
-    const adBlockObserver = new MutationObserver(() => {
         reportAds();
     });
 
@@ -29,19 +20,9 @@
         parent.postMessage({
             type: "numAds",
             numAds: count,
-            frameID: id,
+            frameID: frameId,
         }, "*");
         addElementsAndListeners(adResults);
-    }
-
-    function randomStringID(length) {
-        const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz".split("");
-
-        let str = "";
-        for (let i = 0; i < length; i++) {
-            str += chars[Math.floor(Math.random() * chars.length)];
-        }
-        return str;
     }
 
     function getAds() {
@@ -68,25 +49,25 @@
         adResults: Element[]) {
         // Removes any existing listeners from ad elements that we previously added
         for (const adLinkWithListeners of adLinksWithListeners) {
-            adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener);
+            adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener, true);
+        }
+
+        function adClickListener(event: MouseEvent) {
+            if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
+                parent.postMessage({
+                    type: "adClick",
+                }, "*");
+            }
         }
 
         // For each ad element, adds mousedown and click listeners to any elements with an href attribute
         // Also adds the listeners to a list so that we can later remove them if we want to refresh these listeners  
         for (const adResult of adResults) {
-            adResult.querySelectorAll("[href]").forEach(adLinkElement => {
-
-                function adClickListener(event: MouseEvent) {
-                    if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-                        parent.postMessage({
-                            type: "adClick",
-                        }, "*");
-                    }
-                }
-
-                adLinkElement.addEventListener("click", adClickListener);
-                adLinksWithListeners.push({ element: adLinkElement, clickListener: adClickListener })
-            });
+            const adLinkElements = adResult.querySelectorAll("[href]");
+            for (const adLinkElement of adLinkElements) {
+                adLinkElement.addEventListener("click", adClickListener, true);
+                adLinksWithListeners.push({ element: adLinkElement, clickListener: adClickListener });
+            }
         }
     }
 

@@ -1,36 +1,33 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Scripts for Bing SERP
  */
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Bing", onNewTab);
+    const pageValues = new PageValues("Bing", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+
+    /**
+    * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
+    */
+    function getIsWebSerpPage(): boolean {
+        return true;
+    }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
         const organicResults = document.querySelectorAll("#b_results > li.b_algo");
         const organicDetails: OrganicDetail[] = []
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
-        }
-        return organicDetails;
-    }
-
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = document.querySelectorAll("#b_results > li.b_algo");
-        const organicLinkElements: Element[][] = []
-        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
@@ -47,23 +44,23 @@ const serpModule = function () {
         const adLinkElements: Element[] = [];
 
         // Get link elements from ad carousels
-        document.querySelectorAll(".adsMvCarousel").forEach(adElement => {
-            if (adElement.parentElement.parentElement.querySelector(".b_adSlug")) {
-                adLinkElements.push(...adElement.querySelectorAll(".slide:not(.see_more) [href]"));
+        const adCarousels = document.querySelectorAll(".adsMvCarousel");
+        for (const adCarousel of adCarousels) {
+            if (adCarousel.parentElement.parentElement.querySelector(".b_adSlug")) {
+                adLinkElements.push(...adCarousel.querySelectorAll(".slide:not(.see_more) [href]"));
             }
-        });
+        }
 
         // Get standard ad link elements
         const adElements = Array.from(document.querySelectorAll(".b_ad > ul > li, .b_adLastChild")).filter(adElement => {
             return !adElement.querySelector(".adsMvCarousel");
         });
-        adElements.forEach(adElement => {
-            Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
-                if (!adLinkElement.matches('.b_adcaret, .b_adcaret *, .b_adinfo, .b_adinfo *')) {
-                    adLinkElements.push(adLinkElement);
-                }
-            });
-        });
+
+        for (const adElement of adElements) {
+            adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
+                return !adLinkElement.matches('.b_adcaret, .b_adcaret *, .b_adinfo, .b_adinfo *');
+            }));
+        }
 
         return adLinkElements;
     }
@@ -84,7 +81,7 @@ const serpModule = function () {
      */
     function getSearchAreaBottomHeight(): number {
         const element = (document.querySelector(".b_pag") as HTMLElement);
-        return Utils.getElementTopHeight(element);
+        return getElementTopHeight(element);
     }
 
     /**
@@ -92,11 +89,7 @@ const serpModule = function () {
      */
     function getPageNum(): number {
         const pageElement = document.querySelector(".sb_pagS_bp")
-        if (pageElement) {
-            return Number(pageElement.textContent);
-        } else {
-            return -1;
-        }
+        return Number(pageElement.textContent);
     }
 
     /**
@@ -112,7 +105,7 @@ const serpModule = function () {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isValidLinkToDifferentPage(href)) {
+                    if (isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
                         if (url.hostname.includes("bing.com")) {
                             // If the link URL is a valid link to a different page and the hostname includes
@@ -133,21 +126,6 @@ const serpModule = function () {
     }
 
     /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(): void {
-        pageValues.pageIsCorrect = true;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.numAdResults = getNumAdResults();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
-        pageValues.addInternalListeners(getInternalLink);
-    }
-
-    /**
      * A callback that will be passed the string URL of new tabs opened from the page. It should
      * determine if the new tab corresponds with an ad click, organic click, or internal click.
      * @param {string} url - the url string of a new tab opened from the page.
@@ -158,50 +136,41 @@ const serpModule = function () {
             return;
         }
 
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
+        const normalizedUrl: string = getNormalizedUrl(url);
 
         // If the URL is for a redirect, get the URL it redirects to
         let redirectUrl = null;
         if (normalizedUrl.includes("bing.com/newtabredir")) {
-            redirectUrl = Utils.getQueryVariable(url, "url")
+            redirectUrl = getQueryVariable(url, "url")
         }
 
-        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("bing.com/aclk") ||
-                pageValues.mostRecentMousedown.href === url ||
-                (redirectUrl && pageValues.mostRecentMousedown.href === redirectUrl)) {
+                pageValues.mostRecentMousedown.Link === url ||
+                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
-            if (pageValues.mostRecentMousedown.href === url ||
-                (redirectUrl && pageValues.mostRecentMousedown.href === redirectUrl)) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
+            if (pageValues.mostRecentMousedown.Link === url ||
+                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
-            if (pageValues.mostRecentMousedown.href === url ||
-                (redirectUrl && (pageValues.mostRecentMousedown.href === redirectUrl || redirectUrl[0] === "/"))) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
+            if (pageValues.mostRecentMousedown.Link === url ||
+                (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/"))) {
                 pageValues.numInternalClicks++;
             }
             return
         }
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
     window.addEventListener("unload", (event) => {
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)

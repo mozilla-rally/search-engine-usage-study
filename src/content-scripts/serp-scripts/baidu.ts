@@ -1,21 +1,21 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 
 /**
  * Content Scripts for Baidu SERP
  */
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Baidu", onNewTab);
+    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
 
     /**
      * @returns {boolean} Whether the page is a Baidu web SERP page.
      */
-    function getPageIsCorrect(): boolean {
+    function getIsWebSerpPage(): boolean {
         const url = new URL(window.location.href)
         if (url.hostname === "baidu.com" || url.hostname === "www.baidu.com") {
             if (window.location.pathname === "/s") {
-                const tn = Utils.getQueryVariable(window.location.href, "tn")
+                const tn = getQueryVariable(window.location.href, "tn")
                 if (!tn || (tn === "baidu")) {
                     return true;
                 }
@@ -27,32 +27,22 @@ const serpModule = function () {
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
         const organicResults = document.querySelectorAll("#content_left > .result");
         const organicDetails: OrganicDetail[] = []
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
-        }
-        return organicDetails;
-    }
-
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = document.querySelectorAll("#content_left > .result");
-        const organicLinkElements: Element[][] = []
-        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return Utils.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]").length;
+        return getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]").length;
     }
 
     /**
@@ -60,13 +50,13 @@ const serpModule = function () {
      */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
-        const adElements = Utils.getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]");
-        adElements.forEach(adElement => {
+        const adElements = getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]");
+        for (const adElement of adElements) {
             adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
                 const href = (adLinkElement as any).href;
                 return href && !href.includes("javascript");
             }));
-        });
+        }
         return adLinkElements;
     }
 
@@ -76,7 +66,7 @@ const serpModule = function () {
     function getSearchAreaTopHeight(): number {
         try {
             const element = (document.querySelector("#s_tab") as HTMLElement)
-            return element.offsetHeight + Utils.getElementTopHeight(element)
+            return element.offsetHeight + getElementTopHeight(element)
         } catch (error) {
             return null;
         }
@@ -88,7 +78,7 @@ const serpModule = function () {
     function getSearchAreaBottomHeight(): number {
         try {
             const element = (document.querySelector("#container") as HTMLElement)
-            return element.offsetHeight + Utils.getElementTopHeight(element);
+            return element.offsetHeight + getElementTopHeight(element);
         } catch (error) {
             return null;
         }
@@ -99,7 +89,7 @@ const serpModule = function () {
      */
     function getPageNum(): number {
         const pageNumElement = document.querySelector("strong > .pc")
-        return pageNumElement ? Number(pageNumElement.textContent) : -1;
+        return Number(pageNumElement.textContent);
     }
 
     /**
@@ -112,8 +102,8 @@ const serpModule = function () {
             const hrefElement = target.closest("[href]");
             if (hrefElement) {
                 const href = (hrefElement as any).href;
-                if (Utils.isValidLinkToDifferentPage(href)) {
-                    const normalizedUrl = Utils.getNormalizedUrl(href);
+                if (isValidLinkToDifferentPage(href)) {
+                    const normalizedUrl = getNormalizedUrl(href);
                     if (normalizedUrl.includes("baidu.com") &&
                         !normalizedUrl.includes("baidu.com/link") &&
                         !normalizedUrl.includes("baidu.com/baidu.php")) {
@@ -130,22 +120,6 @@ const serpModule = function () {
     }
 
     /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(): void {
-        pageValues.pageIsCorrect = getPageIsCorrect();
-        if (!pageValues.pageIsCorrect) return;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.numAdResults = getNumAdResults();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
-        pageValues.addInternalListeners(getInternalLink);
-    }
-
-    /**
      * A callback that will be passed the string URL of new tabs opened from the page. It should
      * determine if the new tab corresponds with an ad click, organic click, or internal click.
      * @param {string} url - the url string of a new tab opened from the page.
@@ -154,23 +128,23 @@ const serpModule = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
-        const normalizedRecentUrl: string = Utils.getNormalizedUrl(pageValues.mostRecentMousedown.href)
-        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+        const normalizedUrl: string = getNormalizedUrl(url);
+        const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedRecentUrl === normalizedUrl) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
-            if ((pageValues.mostRecentMousedown.href === url) ||
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
+            if ((pageValues.mostRecentMousedown.Link === url) ||
                 (normalizedUrl.includes("baidu.com/link") && normalizedRecentUrl.includes("baidu.com/link") &&
-                    Utils.getQueryVariable(url, "url") === Utils.getQueryVariable(pageValues.mostRecentMousedown.href, "url"))) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                    getQueryVariable(url, "url") === getQueryVariable(pageValues.mostRecentMousedown.Link, "url"))) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl) {
                 pageValues.numInternalClicks++;
             }
@@ -178,22 +152,13 @@ const serpModule = function () {
         }
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
     // Observer that looks for the #wrapper_wrapper element that contains
     // page content
     const documentObserver = new MutationObserver(function (_, observer) {
         const container = document.querySelector("#wrapper_wrapper")
         if (container) {
             const domObserver = new MutationObserver(function () {
-                determinePageValues();
+                pageValues.determinePageValues();
             });
             const config = { childList: true };
             domObserver.observe(container, config);
@@ -203,9 +168,9 @@ const serpModule = function () {
     const bodyConfig = { childList: true, subtree: true };
     documentObserver.observe(document, bodyConfig);
 
-    webScience.pageManager.onPageVisitStart.addListener(() => {
-        pageValues.resetTracking();
-        determinePageValues();
+    webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
+        pageValues.resetTracking(timeStamp);
+        pageValues.determinePageValues();
     });
 
     webScience.pageManager.onPageVisitStop.addListener(({ timeStamp }) => {
@@ -213,4 +178,4 @@ const serpModule = function () {
     });
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)

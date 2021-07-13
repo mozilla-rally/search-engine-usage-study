@@ -1,36 +1,34 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Script for Ecosia SERP
  */
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ecosia", onNewTab);
+    const pageValues = new PageValues("Ecosia", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+
+
+    /**
+    * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
+    */
+    function getIsWebSerpPage(): boolean {
+        return true;
+    }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
         const organicResults = document.querySelectorAll("div.card-web > div.result");
-        const organicDetails: OrganicDetail[] = []
+        const organicDetails: OrganicDetail[] = [];
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
-        }
-        return organicDetails;
-    }
-
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = document.querySelectorAll("div.card-web > div.result");
-        const organicLinkElements: Element[][] = []
-        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
@@ -55,7 +53,7 @@ const serpModule = function () {
     function getSearchAreaTopHeight(): number {
         try {
             const element = document.querySelector(".navbar-row") as HTMLElement;
-            return element.offsetHeight + Utils.getElementTopHeight(element);
+            return element.offsetHeight + getElementTopHeight(element);
         } catch (error) {
             return null;
         }
@@ -67,7 +65,7 @@ const serpModule = function () {
     function getSearchAreaBottomHeight(): number {
         try {
             const element = document.querySelector(".pagination").previousElementSibling as HTMLElement;
-            return element.offsetHeight + Utils.getElementTopHeight(element);
+            return element.offsetHeight + getElementTopHeight(element);
         } catch (error) {
             return null;
         }
@@ -78,7 +76,7 @@ const serpModule = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = Utils.getQueryVariable(window.location.href, "p");
+        const pageNumFromUrl = getQueryVariable(window.location.href, "p");
         return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
     }
 
@@ -93,7 +91,7 @@ const serpModule = function () {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isValidLinkToDifferentPage(href)) {
+                    if (isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
                         if (url.hostname.includes("ecosia.org")) {
                             return href;
@@ -110,21 +108,6 @@ const serpModule = function () {
     }
 
     /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(): void {
-        pageValues.pageIsCorrect = true;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.numAdResults = getNumAdResults();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
-        pageValues.addInternalListeners(getInternalLink);
-    }
-
-    /**
      * A callback that will be passed the string URL of new tabs opened from the page. It should
      * determine if the new tab corresponds with an ad click, organic click, or internal click.
      * @param {string} url - the url string of a new tab opened from the page.
@@ -133,39 +116,30 @@ const serpModule = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
-        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
-            if (normalizedUrl.includes("bing.com/aclick") || pageValues.mostRecentMousedown.href === url) {
+        const normalizedUrl: string = getNormalizedUrl(url);
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
+            if (normalizedUrl.includes("bing.com/aclick") || pageValues.mostRecentMousedown.Link === url) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
-            if (pageValues.mostRecentMousedown.href === url) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
+            if (pageValues.mostRecentMousedown.Link === url) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
-            if (pageValues.mostRecentMousedown.href === url) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
+            if (pageValues.mostRecentMousedown.Link === url) {
                 pageValues.numInternalClicks++;
             }
             return;
         }
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
     window.addEventListener("unload", (event) => {
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)

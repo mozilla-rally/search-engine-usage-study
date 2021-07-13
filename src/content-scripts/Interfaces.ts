@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-enum ElementType {
-  Organic,
-  Internal,
-  Ad,
-}
-
 interface OrganicDetail {
   // Number of pixels between the top of the page and the top of the organic result.
   TopHeight: number,
@@ -25,26 +19,8 @@ interface OrganicClick {
   PageLoaded: boolean,
 }
 
-interface InternalListener {
-  document: Document,
-  clickListener: (event: MouseEvent) => void,
-  mousedownListener: (event: MouseEvent) => void
-}
-
-interface OrganicListener {
+interface ElementListeners {
   element: Element,
   clickListener: (event: MouseEvent) => void,
   mousedownListener: (event: MouseEvent) => void
-}
-
-interface AdListener {
-  element: Element,
-  clickListener: (event: MouseEvent) => void,
-  mousedownListener: (event: MouseEvent) => void
-}
-
-interface RecentMousedown {
-  type: ElementType,
-  href: string,
-  index: number
 }

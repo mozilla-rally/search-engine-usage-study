@@ -5,63 +5,63 @@
       {
         "name": "createPopup",
         "type": "function",
-        "description": "Create popup",
+        "description": "Pops up a modal dialog notifying the participant that their search engine has been changed and asks the participant if they would like to change it back.",
         "async": true,
         "parameters": [
           {
             "name": "searchEngineOld",
             "type": "string",
-            "description": "The engine that the default search was changed from."
+            "description": "The name of the search engine that their default was changed from."
           },
           {
             "name": "searchEngineNew",
             "type": "string",
-            "description": "The engine that the default search was changed to."
+            "description": "The name of the search engine that their default was changed to."
           },
           {
             "name": "modalPrimaryRevert",
             "type": "boolean",
-            "description": "Whether the revert button is the primary button on the modal dialog."
+            "description": "Whether the option to change their search engine back on the modal dialog will be the primary button."
           }
         ]
       },
       {
         "name": "changeSearchEngine",
         "type": "function",
-        "description": "Change the user's default search engine",
+        "description": "Changes the participant's default search engine.",
         "async": true,
         "parameters": [
           {
             "name": "searchEngineName",
             "type": "string",
-            "description": "name of search engine to make default"
+            "description": "The name of the search engine to make default. Should be either 'Google', 'DuckDuckGo', 'Yahoo', 'Bing', 'Ecosia', 'Yandex', 'Baidu', or 'Ask'."
           }
         ]
       },
       {
         "name": "getSearchEngine",
         "type": "function",
-        "description": "Get the user's current search engine",
+        "description": "Get the participant's current default search engine in the browser.",
         "async": true,
         "parameters": []
       },
       {
         "name": "changeHomepage",
         "type": "function",
-        "description": "Change the user's homepage",
+        "description": "Changes the participant's current homepages in the browser.",
         "async": false,
         "parameters": [
           {
-            "name": "newHomepage",
+            "name": "homepages",
             "type": "string",
-            "description": "url of the new homepage"
+            "description": "A '|' separated string of the URLs that the homepages should be changed to."
           }
         ]
       },
       {
         "name": "getHomepage",
         "type": "function",
-        "description": "Get the user's homepage",
+        "description": "A promise for the participant's current '|' separated homepage URLs.",
         "async": true,
         "parameters": []
       }

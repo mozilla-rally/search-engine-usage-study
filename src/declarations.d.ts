@@ -5,6 +5,8 @@ declare let webScience: {
         pageId,
         url,
         referrer,
+        isHistoryChange,
+        webNavigationTimeStamp,
         onPageVisitStart,
         onPageVisitStop,
         onPageAttentionUpdate,
@@ -12,6 +14,9 @@ declare let webScience: {
         pageHasAttention,
         pageHasAudio,
         pageVisitStarted,
-        pageVisitStartTime
+        pageVisitStartTime,
+        sendMessage,
     }
 }
+
+declare const __ENABLE_DEVELOPER_MODE__;

@@ -2,51 +2,53 @@
  * This module enables survey functionality for the study. There are two surveys in this study.
  * The initial survey starts immediately after completion of the Intervention module functionality
  * and the second survey starts 20 days after that.
+ * 
+ * @module Survey
  */
 
 import * as webScience from "@mozilla/web-science";
 
 const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
-const surveyRemindPeriodDays = 3;
+// const surveyRemindPeriodDays = 3;
 const daysUntilFinalSurvey = 20;
 
 
 // TODO: update this object
 /**
- * @type {Object}
  * An object describing the survey options for the initial and final surveys.
+ * @type {Object}
  */
 const surveyConfigData = {
   initial: {
     surveyName: "initial",
-    popupNoPromptMessage: "There are currently no available surveys for the study.",
+    popupNoPromptMessage: "You are currently participating in the Search Engine Usage Study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
     popupPromptMessage: "Please complete the following survey for Political & COVID-19 News Information.",
     popupIcon: "icons/PrincetonShieldLarge.png",
     reminderIcon: "icons/PrincetonShieldLarge.png",
-    reminderInterval: surveyRemindPeriodDays * secondsPerDay,
+    reminderInterval: 2,
     reminderMessage: "reminderMessage 1",
     reminderTitle: "reminderTitle 1",
     surveyCompletionUrl: "https://citpsearch.cs.princeton.edu/searchengine/initial/thankyou",
-    surveyUrl: "surveyUrl initial",
+    surveyUrl: "https://www.google.com/",
   },
   final: {
     surveyName: "final",
-    popupNoPromptMessage: "There are currently no available surveys for the study.",
+    popupNoPromptMessage: "You are currently participating in the Search Engine Usage Study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
     popupPromptMessage: "Please complete the following survey for Political & COVID-19 News Information.",
     popupIcon: "icons/PrincetonShieldLarge.png",
     reminderIcon: "icons/PrincetonShieldLarge.png",
-    reminderInterval: surveyRemindPeriodDays * secondsPerDay,
+    reminderInterval: 2,
     reminderMessage: "reminderMessage 2",
     reminderTitle: "reminderTitle 2",
     surveyCompletionUrl: "https://citpsearch.cs.princeton.edu/searchengine/final/thankyou",
-    surveyUrl: "surveyUrl final",
+    surveyUrl: "https://www.google.com/",
   }
 };
 
 /**
- * @type {Object}
  * A persistent key-value storage object for the study
+ * @type {Object}
  */
 let storage;
 
@@ -61,11 +63,11 @@ async function startFinalSurvey() {
 
 /**
  * Starts user survey functionality
- * @async
  * @param {Object} storage - A persistent key-value storage object for the study
+ * @async
  **/
-export async function start(storageIn): Promise<void> {
-  storage = storageIn;
+export async function initializeSurvey(storageArg): Promise<void> {
+  storage = storageArg;
 
   const currentTime = webScience.timing.now();
 

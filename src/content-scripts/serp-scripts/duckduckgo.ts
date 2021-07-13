@@ -1,22 +1,22 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElement, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Script for DuckDuckGo SERP
  */
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("DuckDuckGo", onNewTab);
+    const pageValues = new PageValues("DuckDuckGo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, extraCallback);
 
     /**
      * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
      */
-    function getPageIsCorrect(): boolean {
+    function getIsWebSerpPage(): boolean {
         return !!document.querySelector("#duckbar_static li:first-child .is-active, #duckbar_new .is-active") &&
-            !!Utils.getQueryVariable(window.location.href, "ia") &&
-            !Utils.getQueryVariable(window.location.href, "iax") &&
-            !Utils.getQueryVariable(window.location.href, "iaxm");
+            !!getQueryVariable(window.location.href, "ia") &&
+            !getQueryVariable(window.location.href, "iax") &&
+            !getQueryVariable(window.location.href, "iaxm");
     }
 
     /**
@@ -30,7 +30,7 @@ const serpModule = function () {
             if (element.classList.contains("has-pagenum")) {
                 return Number(element.querySelector(".result__pagenum").textContent)
             }
-            element = element.previousElementSibling
+            element = element.previousElementSibling;
         }
         return 1
     }
@@ -38,25 +38,15 @@ const serpModule = function () {
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
         const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
         const organicDetails: OrganicDetail[] = []
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: getPageNumForElement(organicResult) })
-        }
-        return organicDetails;
-    }
-
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
-        const organicLinkElements: Element[][] = []
-        for (const organicResult of organicResults) {
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: getPageNumForElement(organicResult) })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
@@ -108,7 +98,7 @@ const serpModule = function () {
         try {
             const resultElements = document.querySelectorAll("#links > div:not(.js-result-hidden-el):not(.is-hidden):not(.result--more)");
             const element = resultElements[resultElements.length - 1] as HTMLElement;
-            return element.offsetHeight + Utils.getElementTopHeight(element)
+            return element.offsetHeight + getElementTopHeight(element)
         } catch (error) {
             return null;
         }
@@ -118,7 +108,7 @@ const serpModule = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageElement = Utils.getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
+        const pageElement = getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
         if (pageElement) {
             return Number(pageElement.textContent);
         } else {
@@ -127,7 +117,7 @@ const serpModule = function () {
     }
 
     const domObserver = new MutationObserver(function () {
-        determinePageValues(timing.now());
+        pageValues.determinePageValues();
     });
 
     /**
@@ -140,7 +130,7 @@ const serpModule = function () {
             const hrefElement = target.closest("[href]");
             if (hrefElement) {
                 const href = (hrefElement as any).href;
-                if (Utils.isValidLinkToDifferentPage(href)) {
+                if (isValidLinkToDifferentPage(href)) {
                     const url = new URL(href);
                     if (url.hostname.includes("duckduckgo.com")) {
                         return href;
@@ -155,30 +145,7 @@ const serpModule = function () {
         return null;
     }
 
-    /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(timeStamp: number): void {
-        const newPageIsCorrect = getPageIsCorrect();
-
-        // DuckDuckGo uses History API when navigating between different search types
-        // for the same SERP query. We report results when going from a web SERP page
-        // to a different type of SERP page (ie. images or maps)
-        if (pageValues.pageIsCorrect && !newPageIsCorrect) {
-            pageValues.reportResults(timeStamp);
-            pageValues.resetTracking();
-        }
-
-        pageValues.pageIsCorrect = newPageIsCorrect;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.numAdResults = getNumAdResults();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
-        pageValues.addInternalListeners(getInternalLink);
-
+    function extraCallback(): void {
         domObserver.disconnect();
         const container = document.querySelector("#links")
         if (container) {
@@ -195,38 +162,38 @@ const serpModule = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
-        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
-            if (normalizedUrl.includes("duckduckgo.com/y.js") || pageValues.mostRecentMousedown.href === url) {
+        const normalizedUrl: string = getNormalizedUrl(url);
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
+            if (normalizedUrl.includes("duckduckgo.com/y.js") || pageValues.mostRecentMousedown.Link === url) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
-            if (pageValues.mostRecentMousedown.href === url) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
+            if (pageValues.mostRecentMousedown.Link === url) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
-            if (pageValues.mostRecentMousedown.href === url) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
+            if (pageValues.mostRecentMousedown.Link === url) {
                 pageValues.numInternalClicks++;
             }
             return;
         }
     }
 
-    window.addEventListener("DOMContentLoaded", (event) => {
-        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
-    });
-
-    window.addEventListener("load", (event) => {
-        determinePageValues(timing.fromMonotonicClock(event.timeStamp, true));
-        pageValues.pageLoaded = true;
-    });
-
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
-        determinePageValues(timeStamp);
+        const newPageIsCorrect = getIsWebSerpPage();
+
+        // DuckDuckGo uses History API when navigating between different search types
+        // for the same SERP query. We report results when going from a web SERP page
+        // to a different type of SERP page (ie. images or maps)
+        if (pageValues.isWebSerpPage && !newPageIsCorrect) {
+            pageValues.reportResults(timeStamp);
+            pageValues.resetTracking(timeStamp);
+        }
+        pageValues.determinePageValues();
     });
 
     window.addEventListener("unload", (event) => {
@@ -234,4 +201,4 @@ const serpModule = function () {
     });
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)

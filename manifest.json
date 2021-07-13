@@ -1,5 +1,5 @@
 {
-  "description": "A study to assess how individuals interact with their search engines.",
+  "description": "This study measures how individuals interact with their search engines.",
   "author": "Kartikeya Kandula",
   "manifest_version": 2,
   "name": "Search Engine Usage Study",
@@ -46,7 +46,7 @@
   "browser_action": {
     "browser_style": true,
     "default_icon": {
-      "16": "icons/princeton_university_shield_book_gray.svg"
+      "16": "icons/search.svg"
     }
   }
 }

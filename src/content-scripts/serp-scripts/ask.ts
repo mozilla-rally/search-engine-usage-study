@@ -1,37 +1,39 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Scripts for Google SERP
  */
 let internalListeners: { document: Document, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void }[] = [];
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ask", onNewTab);
+    const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback);
+
+    /**
+    * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
+    */
+    function getIsWebSerpPage(): boolean {
+        return true;
+    }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+        // The organic results are .PartialSearchResults-item elements.
         const organicResults = document.querySelectorAll(".PartialSearchResults-item");
-        const organicDetails: OrganicDetail[] = []
-        for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
-        }
-        return organicDetails;
-    }
 
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = document.querySelectorAll(".PartialSearchResults-item");
-        const organicLinkElements: Element[][] = []
+        const organicDetails: OrganicDetail[] = []
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
+            // Get the details of all the organic elements.
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null });
+
+            // Get all the links (elements with an "href" attribute).
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
@@ -40,9 +42,9 @@ const serpModule = function () {
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
         const adElements = document.querySelectorAll(".display-ad-block");
-        adElements.forEach(adElement => {
+        for (const adElement of adElements) {
             adLinkElements.push(...adElement.querySelectorAll("[href]"));
-        });
+        }
         return adLinkElements;
     }
 
@@ -51,7 +53,7 @@ const serpModule = function () {
      */
     function getSearchAreaTopHeight(): number {
         try {
-            return Utils.getElementTopHeight(document.querySelector(".main"));
+            return getElementTopHeight(document.querySelector(".main"));
         } catch (error) {
             return null;
         }
@@ -62,7 +64,7 @@ const serpModule = function () {
      */
     function getSearchAreaBottomHeight(): number {
         try {
-            return Utils.getElementTopHeight(document.querySelector(".PartialWebPagination "));
+            return getElementTopHeight(document.querySelector(".PartialWebPagination "));
         } catch (error) {
             return null;
         }
@@ -72,7 +74,7 @@ const serpModule = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = Utils.getQueryVariable(window.location.href, "page");
+        const pageNumFromUrl = getQueryVariable(window.location.href, "page");
         return pageNumFromUrl ? Number(pageNumFromUrl) : 1;
     }
 
@@ -87,7 +89,7 @@ const serpModule = function () {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isValidLinkToDifferentPage(href)) {
+                    if (isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
                         if (url.hostname.includes("ask.com")) {
                             return href;
@@ -128,9 +130,9 @@ const serpModule = function () {
                 const href = getInternalLink(event.target as Element);
                 if (href) {
                     pageValues.mostRecentMousedown = {
-                        type: ElementType.Internal,
-                        href: href,
-                        index: null
+                        Type: ElementType.Internal,
+                        Link: href,
+                        Ranking: null
                     }
                 }
             }
@@ -141,17 +143,7 @@ const serpModule = function () {
         internalListeners.push({ document: document, clickListener: internalClickListener, mousedownListener: internalMousedownListener });
     }
 
-    /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(): void {
-        pageValues.pageIsCorrect = true;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
+    function extraCallback(): void {
         addInternalListeners(getInternalLink);
     }
 
@@ -161,7 +153,7 @@ const serpModule = function () {
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
+        const normalizedUrl: string = getNormalizedUrl(url);
         if (normalizedUrl.includes("g.doubleclick.net") ||
             normalizedUrl.includes("google.com/aclk") ||
             normalizedUrl.includes("revjet") ||
@@ -172,14 +164,14 @@ const serpModule = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-        const normalizedRecentUrl: string = Utils.getNormalizedUrl(pageValues.mostRecentMousedown.href)
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
+        const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedRecentUrl === normalizedUrl) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl ||
                 normalizedUrl.includes("ask.com")) {
                 pageValues.numInternalClicks++;
@@ -187,15 +179,6 @@ const serpModule = function () {
             return;
         }
     }
-
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
 
     window.addEventListener("unload", (event) => {
         // Get the number of ads from iFrames
@@ -227,4 +210,4 @@ const serpModule = function () {
     }, false);
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)

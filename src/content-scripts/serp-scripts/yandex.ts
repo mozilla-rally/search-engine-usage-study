@@ -1,51 +1,51 @@
-import { PageValues } from "../common.js"
-import * as Utils from "../Utils.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, ElementType } from "../common.js"
+import { getQueryVariable } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Scripts for Yandex SERP
  */
-const serpModule = function () {
+const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Yandex", onNewTab);
+    const pageValues = new PageValues("Yandex", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
 
     /**
      * @returns {boolean} Whether the page is a Yandex web SERP page.
      */
-    function getPageIsCorrect(): boolean {
-        const url = new URL(window.location.href)
-        return !url.pathname.includes("direct")
+    function getIsWebSerpPage(): boolean {
+        const url = new URL(window.location.href);
+
+        // Make sure the page is not a search for ads (ie. https://direct.yandex.com/search/?text=hello&lr=110509)
+        return !url.pathname.includes("direct");
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetails(): OrganicDetail[] {
-        const organicResults = Utils.getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]");
-        const organicDetails: OrganicDetail[] = []
-        for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: Utils.getElementTopHeight(organicResult), BottomHeight: Utils.getElementBottomHeight(organicResult), PageNum: null })
-        }
-        return organicDetails;
-    }
+    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+        // The organic results are .serp-item elements that have a child .organic element and do not have 
+        // a descendant with an advertisement tag (an element with text "ad", "advertising", or "реклама")
+        const organicResults = getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]");
 
-    /**
-     * @returns {Element[][]} An array of the organic link elements for each of the organic search results.
-     */
-    function getOrganicLinkElements(): Element[][] {
-        const organicResults = Utils.getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]");
-        const organicLinkElements: Element[][] = []
+        const organicDetails: OrganicDetail[] = []
+        const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
+            // Get the details of all the organic elements.
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null });
+
+            // Get all the links (elements with an "href" attribute).
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return organicLinkElements;
+        return { details: organicDetails, linkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return Utils.getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]").length;
+        // The organic results are .serp-item elements that have a descendant 
+        // with an advertisement tag (an element with text "ad", "advertising", or "реклама")
+        return getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]").length;
     }
 
     /**
@@ -53,10 +53,15 @@ const serpModule = function () {
      */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
-        const adElements = Utils.getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]");
-        adElements.forEach(adElement => {
+
+        // The organic results are .serp-item elements that have a descendant 
+        // with an advertisement tag (an element with text "ad", "advertising", or "реклама")
+        const adElements = getXPathElements("//li[contains(@class, 'serp-item') and descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама']]");
+
+        for (const adElement of adElements) {
+            // Get all the links (elements with an "href" attribute).
             adLinkElements.push(...adElement.querySelectorAll("[href]"));
-        });
+        }
         return adLinkElements;
     }
 
@@ -78,7 +83,7 @@ const serpModule = function () {
         try {
             const contentElements = document.querySelectorAll(".main__content .content__left > *:not([class*='pager'])")
             const element = contentElements[contentElements.length - 1] as HTMLElement
-            return element.offsetHeight + Utils.getElementTopHeight(element)
+            return element.offsetHeight + getElementTopHeight(element)
         } catch (error) {
             return null;
         }
@@ -89,7 +94,7 @@ const serpModule = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = Utils.getQueryVariable(window.location.href, "p");
+        const pageNumFromUrl = getQueryVariable(window.location.href, "p");
         return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
     }
 
@@ -104,7 +109,7 @@ const serpModule = function () {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
-                    if (Utils.isValidLinkToDifferentPage(href)) {
+                    if (isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
                         if (url.hostname.includes("yandex.ru") || url.hostname.includes("yandex.com")) {
                             if (!url.hostname.includes("yabs.yandex")) {
@@ -123,22 +128,6 @@ const serpModule = function () {
     }
 
     /**
-     * Determines the page values and adds listeners
-     */
-    function determinePageValues(): void {
-        pageValues.pageIsCorrect = getPageIsCorrect();
-        if (!pageValues.pageIsCorrect) return;
-        pageValues.pageNum = getPageNum();
-        pageValues.searchAreaBottomHeight = getSearchAreaBottomHeight();
-        pageValues.searchAreaTopHeight = getSearchAreaTopHeight();
-        pageValues.numAdResults = getNumAdResults();
-        pageValues.organicResults = getOrganicDetails();
-        pageValues.addAdListeners(getAdLinkElements());
-        pageValues.addOrganicListeners(getOrganicLinkElements());
-        pageValues.addInternalListeners(getInternalLink);
-    }
-
-    /**
      * A callback that will be passed the string URL of new tabs opened from the page. It should
      * determine if the new tab corresponds with an ad click, organic click, or internal click.
      * @param {string} url - the url string of a new tab opened from the page.
@@ -147,22 +136,22 @@ const serpModule = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-        const normalizedUrl: string = Utils.getNormalizedUrl(url);
-        const normalizedRecentUrl: string = Utils.getNormalizedUrl(pageValues.mostRecentMousedown.href)
-        if (pageValues.mostRecentMousedown.type === ElementType.Ad) {
+        const normalizedUrl: string = getNormalizedUrl(url);
+        const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("yabs.yandex.ru") ||
                 normalizedUrl === normalizedRecentUrl) {
                 pageValues.numAdClicks++;
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Organic) {
-            if (normalizedRecentUrl === normalizedUrl) {
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.index, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+        if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
+            if (normalizedUrl === normalizedRecentUrl) {
+                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
-        if (pageValues.mostRecentMousedown.type === ElementType.Internal) {
+        if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl) {
                 pageValues.numInternalClicks++;
             }
@@ -170,18 +159,9 @@ const serpModule = function () {
         }
     }
 
-    window.addEventListener("DOMContentLoaded", function () {
-        determinePageValues();
-    });
-
-    window.addEventListener("load", function () {
-        determinePageValues();
-        pageValues.pageLoaded = true;
-    });
-
     window.addEventListener("unload", (event) => {
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 };
 
-Utils.waitForPageManagerLoad(serpModule)
+waitForPageManagerLoad(serpScript)
