@@ -10,39 +10,37 @@ import * as webScience from "@mozilla/web-science";
 
 const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
-// const surveyRemindPeriodDays = 3;
+const surveyRemindPeriodDays = 3;
 const daysUntilFinalSurvey = 20;
 
-
-// TODO: update this object
 /**
  * An object describing the survey options for the initial and final surveys.
  * @type {Object}
  */
 const surveyConfigData = {
   initial: {
-    surveyName: "initial",
+    surveyName: "Initial",
     popupNoPromptMessage: "You are currently participating in the Search Engine Usage Study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
-    popupPromptMessage: "Please complete the following survey for Political & COVID-19 News Information.",
+    popupPromptMessage: "You are currently participating in the Search Engine Usage Study. Please answer a few survey questions for the study.",
     popupIcon: "icons/PrincetonShieldLarge.png",
-    reminderIcon: "icons/PrincetonShieldLarge.png",
-    reminderInterval: 2,
-    reminderMessage: "reminderMessage 1",
-    reminderTitle: "reminderTitle 1",
-    surveyCompletionUrl: "https://citpsearch.cs.princeton.edu/searchengine/initial/thankyou",
-    surveyUrl: "https://www.google.com/",
+    reminderIcon: "",
+    reminderInterval: surveyRemindPeriodDays * secondsPerDay,
+    reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
+    reminderTitle: "Rally survey available",
+    surveyCompletionUrl: "http://initial-survey-thank-you.s3-website-us-east-1.amazonaws.com",
+    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_daN8Y3MgSvl33BI/",
   },
   final: {
-    surveyName: "final",
+    surveyName: "Final",
     popupNoPromptMessage: "You are currently participating in the Search Engine Usage Study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
-    popupPromptMessage: "Please complete the following survey for Political & COVID-19 News Information.",
+    popupPromptMessage: "You are currently participating in the Search Engine Usage Study. Please answer a few survey questions for the study.",
     popupIcon: "icons/PrincetonShieldLarge.png",
-    reminderIcon: "icons/PrincetonShieldLarge.png",
-    reminderInterval: 2,
-    reminderMessage: "reminderMessage 2",
-    reminderTitle: "reminderTitle 2",
-    surveyCompletionUrl: "https://citpsearch.cs.princeton.edu/searchengine/final/thankyou",
-    surveyUrl: "https://www.google.com/",
+    reminderIcon: "",
+    reminderInterval: surveyRemindPeriodDays * secondsPerDay,
+    reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
+    reminderTitle: "Rally survey available",
+    surveyCompletionUrl: "http://final-survey-thank-you.s3-website-us-east-1.amazonaws.com",
+    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_eJagJBzv5u2quWO/",
   }
 };
 
