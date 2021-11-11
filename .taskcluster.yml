@@ -19,7 +19,7 @@ tasks:
               branch: taskgraph
               revision: 8051b20c975711d4ce09537285cef7451d043d8b
           template:
-              repo: https://github.com/mozilla-rally/search-engine-usage-study
+              repo: https://github.com/mozilla-extensions/search-engine-usage-study
               branch: main
           trustDomain: xpi
       in:
