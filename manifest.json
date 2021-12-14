@@ -48,5 +48,9 @@
     "default_icon": {
       "16": "icons/search.svg"
     }
+  },
+  "options_ui": {
+    "page": "public/options.html",
+    "open_in_tab": true
   }
 }
