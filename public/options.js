@@ -41,28 +41,23 @@ document.getElementById("download").addEventListener("click", async () => {
     // TODO we can pull this from glean more directly in the future.
     const storage = await browser.storage.local.get(null);
 
-    const pageNavigationData = [];
-    const pixelData = [];
+    const enrollmentPingData = [];
 
     for (const [key, value] of Object.entries(storage)) {
-        if (key.startsWith("pageNavigationPing")) {
-            pageNavigationData.push(value);
-            await browser.storage.local.remove(key);
-        } else if (key.startsWith("pixelPing")) {
-            pixelData.push(value);
+        if (key.startsWith("enrollmentPing")) {
+            console.debug("value:", value.metrics);
+            enrollmentPingData.push(value);
             await browser.storage.local.remove(key);
         }
     }
 
-    if (!(pixelData && pageNavigationData)) {
+    if (!(enrollmentPingData)) {
         throw new Error("No test data present to export, yet");
     }
 
-    console.debug("Converting pixel data JSON to CSV:", pixelData);
-    console.debug("Converting page navigation JSON to CSV:", pageNavigationData);
+    console.debug("Converting enrollment JSON to CSV:", enrollmentPingData);
 
-    exportDataAsCsv(pageNavigationData, "pageNavigations");
-    exportDataAsCsv(pixelData, "pixels");
+    exportDataAsCsv(enrollmentPingData, "enrollmentPings");
 });
 
 function exportDataAsCsv(data, name) {
@@ -104,6 +99,6 @@ function exportDataAsCsv(data, name) {
 
     const downloadLink = document.getElementById("downloadLink");
     downloadLink.setAttribute("href", dataUrl);
-    downloadLink.setAttribute("download", `facebook-pixel-hunt-${name}.csv`);
+    downloadLink.setAttribute("download", `search-engine-usage-${name}.csv`);
     downloadLink.click();
 }
