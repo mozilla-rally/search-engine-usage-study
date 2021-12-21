@@ -1,5 +1,0 @@
-
-User-agent: *
-Disallow: 
-
-# Sitemap: https://rally.mozilla.org/sitemap.xml
