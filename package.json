@@ -2,8 +2,9 @@
   "name": "rally-study-template",
   "version": "0.4.0",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c --config-enable-developer-mode",
+    "build": "rollup -c && npm run tailwind",
+    "tailwind": "tailwindcss -o dist/tailwind.css",
+    "dev": "rollup -c --config-enable-developer-mode && npm run tailwind",
     "lint": "eslint . && web-ext lint",
     "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\"",
     "start": "npm run build && web-ext run --browser-console",
@@ -35,7 +36,7 @@
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-svelte": "^7.1.0",
     "selenium-webdriver": "^4.0.0-beta.3",
-    "tailwindcss": "^3.0.2",
+    "tailwindcss": "^2.2.16",
     "web-ext": "^6.1.0",
     "webextension-polyfill": "^0.8.0"
   },

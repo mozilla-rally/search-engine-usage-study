@@ -3,6 +3,19 @@
 import { Rally, runStates } from "@mozilla/rally";
 import { startStudy } from "./StudyModule.js";
 
+async function stateChangeCallback(newState: string) {
+    console.debug("newState", newState);
+    if (newState === "resume") {
+        console.log("The study can run.");
+        // Initialize the study and start it.
+        startStudy(rally);
+        await browser.storage.local.set({ "state": runStates.RUNNING });
+    } else {
+        console.log("The study must stop.");
+        await browser.storage.local.set({ "state": runStates.PAUSED });
+    }
+}
+
 // Initialize the Rally API.
 const rally = new Rally();
 rally.initialize(
@@ -19,19 +32,32 @@ rally.initialize(
     // The following constant is automatically provided by
     // the build system.
     __ENABLE_DEVELOPER_MODE__,
-    (newState) => {
-        console.debug("newState", newState);
-        if (newState === runStates.RUNNING) {
-            console.log("The study can run.");
-        } else {
-            console.log("The study must stop.");
-        }
-    }
+    stateChangeCallback,
 ).then(_resolve => {
     // The Rally API has been initialized.
-    // Initialize the study and start it.
+    // When in developer mode, open the options page with the playtest controls.
+    if (__ENABLE_DEVELOPER_MODE__) {
+        browser.runtime.onMessage.addListener((m, s) => {
+            console.debug(m, s);
+            if (!("type" in m && m.type.startsWith("rally-sdk"))) {
+                // Only listen for messages from the rally-sdk.
+                return;
+            }
+            if (m.data.state === "resume") {
+                stateChangeCallback("resume")
+            } else if (m.data.state === "pause") {
+                stateChangeCallback("pause")
+            } else {
+                throw new Error(`Unknown state: ${m.data.state}`);
+            }
+        });
 
-    startStudy(rally);
+        browser.storage.local.set({ "state": runStates.PAUSED }).then(() =>
+            browser.storage.local.set({ "initialized": true }).then(() =>
+                browser.runtime.openOptionsPage()
+            )
+        );
+    }
 }, _reject => {
     // Do not start the study in this case. Something
     // went wrong.

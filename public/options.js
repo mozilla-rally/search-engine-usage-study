@@ -1,17 +1,18 @@
-const RUNNING = 0;
-const PAUSED = 1;
+const RUNNING = "running";
+const PAUSED = "paused";
 
 function changeState(state) {
+    console.debug("state:", state);
     if (state === RUNNING) {
         document.getElementById("status").textContent = "RUNNING";
         document.getElementById("toggleEnabled").checked = true;
-        document.getElementById("status").classList.remove("bg-red-300");
-        document.getElementById("status").classList.add("bg-green-300");
+        document.getElementById("status").classList.remove("bg-red-500");
+        document.getElementById("status").classList.add("bg-green-500");
     } else if (state === PAUSED || state === undefined) {
         document.getElementById("status").textContent = "PAUSED";
         document.getElementById("toggleEnabled").checked = false;
-        document.getElementById("status").classList.remove("bg-green-300");
-        document.getElementById("status").classList.add("bg-red-300");
+        document.getElementById("status").classList.remove("bg-green-500");
+        document.getElementById("status").classList.add("bg-red-500");
     } else {
         console.error("Unknown state:", state);
     }
@@ -21,7 +22,11 @@ function changeState(state) {
 browser.storage.local.get("state").then(storage => changeState(storage.state));
 
 // Listen for state changes.
-browser.storage.onChanged.addListener((changes) => changeState(changes.state.newValue));
+browser.storage.onChanged.addListener((changes) => {
+    if (changes.state) {
+        changeState(changes.state.newValue);
+    }
+});
 
 document.getElementById("toggleEnabled").addEventListener("click", async event => {
     if (event.target.checked === true) {
@@ -33,18 +38,40 @@ document.getElementById("toggleEnabled").addEventListener("click", async event =
 
 document.getElementById("download").addEventListener("click", async () => {
     // Get all data from local storage.
-    const data = await browser.storage.local.get(null);
-    console.debug("Converting JSON to CSV:", data);
+    // TODO we can pull this from glean more directly in the future.
+    const storage = await browser.storage.local.get(null);
 
-    // Extract all object keys to use as CSV headers.
-    const headerSet = new Set();
-    for (const [key, val] of Object.entries(data)) {
-        // Ignore bookeeping information.
-        if (!["initialized", "state"].includes(key)) {
-            for (const [header] of Object.entries(val)) {
-                headerSet.add(header);
-            }
+    const pageNavigationData = [];
+    const pixelData = [];
+
+    for (const [key, value] of Object.entries(storage)) {
+        if (key.startsWith("pageNavigationPing")) {
+            pageNavigationData.push(value);
+            await browser.storage.local.remove(key);
+        } else if (key.startsWith("pixelPing")) {
+            pixelData.push(value);
+            await browser.storage.local.remove(key);
         }
+    }
+
+    if (!(pixelData && pageNavigationData)) {
+        throw new Error("No test data present to export, yet");
+    }
+
+    console.debug("Converting pixel data JSON to CSV:", pixelData);
+    console.debug("Converting page navigation JSON to CSV:", pageNavigationData);
+
+    exportDataAsCsv(pageNavigationData, "pageNavigations");
+    exportDataAsCsv(pixelData, "pixels");
+});
+
+function exportDataAsCsv(data, name) {
+    // Extract all keys from the first object present, to use as CSV headers.
+    // TODO if we want to bundle different types of pings in the same CSV, then we should iterate over all objects.
+    // TODO if not, then we should figure out how to bundle different types of pings into different CSVs.
+    const headerSet = new Set();
+    for (const header of Object.keys(data[0])) {
+        headerSet.add(header);
     }
     const headers = Array.from(headerSet);
 
@@ -60,17 +87,15 @@ document.getElementById("download").addEventListener("click", async () => {
         }
     }
 
-    // Print the value for eachs measurement, in the same order as the headers on the first line.
-    for (const [key, val] of Object.entries(data)) {
-        // Ignore bookeeping information.
-        if (!["initialized", "state"].includes(key)) {
-            for (const [i, header] of headers.entries()) {
-                csvData += `${val[header]}`;
-                if (i == headers.length - 1) {
-                    csvData += `\n`;
-                } else {
-                    csvData += `,`;
-                }
+    // Print the value for each measurement, in the same order as the headers on the first line.
+    for (const ping of data) {
+        for (const [i, header] of headers.entries()) {
+            const value = ping[header];
+            csvData += JSON.stringify(value);
+            if (i == headers.length - 1) {
+                csvData += `\n`;
+            } else {
+                csvData += `,`;
             }
         }
     }
@@ -79,6 +104,6 @@ document.getElementById("download").addEventListener("click", async () => {
 
     const downloadLink = document.getElementById("downloadLink");
     downloadLink.setAttribute("href", dataUrl);
-    downloadLink.setAttribute("download", "rally-study-template.csv");
+    downloadLink.setAttribute("download", `facebook-pixel-hunt-${name}.csv`);
     downloadLink.click();
-});
+}
