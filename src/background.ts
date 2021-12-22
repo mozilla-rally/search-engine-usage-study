@@ -24,7 +24,7 @@ async function stateChangeCallback(newState: string) {
         console.log("The study can run.");
         // The all-0 Rally ID indicates developer mode, in case data is accidentally sent.
         // let rallyId = enableDevMode ? "00000000-0000-0000-0000-000000000000" : rally._rallyId;
-        let rallyId = "b79cb3ba-745e-5d9a-8903-4a02327a7e09";
+        let rallyId = "00000000-0000-0000-0000-000000000000";
 
         // The all-1 Rally ID means that there was an error with the Rally ID.
         if (!rallyId) {
