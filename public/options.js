@@ -45,8 +45,9 @@ document.getElementById("download").addEventListener("click", async () => {
 
     for (const [key, value] of Object.entries(storage)) {
         if (key.startsWith("enrollmentPing")) {
-            console.debug("value:", value);
-            enrollmentPingData.push(value);
+            const ping = JSON.parse(value);
+            console.debug("value:", ping.metrics);
+            enrollmentPingData.push(ping.metrics);
             await browser.storage.local.remove(key);
         }
     }

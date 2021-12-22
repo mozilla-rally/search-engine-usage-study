@@ -7,8 +7,8 @@ import Glean from "@mozilla/glean/webext";
 import PingEncryptionPlugin from "@mozilla/glean/plugins/encryption";
 import { Uploader, UploadResult, UploadResultStatus } from "@mozilla/glean/uploader";
 
-import * as rallyManagementMetrics from "../src/generated/rally.js";
-import * as searchUsagePings from "../src/generated/pings.js";
+import * as rallyManagementMetrics from "../src/generated/rally";
+import * as searchUsagePings from "../src/generated/pings";
 
 const publicKey = {
     "kty": "EC",

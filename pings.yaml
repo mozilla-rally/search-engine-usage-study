@@ -19,3 +19,14 @@ study-enrollment:
     - TODO
   notification_emails:
     - than@mozilla.com
+
+serp-visit:
+  description: |
+    This ping is sent when there is a visit to a search engine results page.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com

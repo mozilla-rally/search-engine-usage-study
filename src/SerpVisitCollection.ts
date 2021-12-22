@@ -11,6 +11,9 @@ import * as AttributionTracking from "./AttributionTracking.js"
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
 
+import * as serpVisitMetrics from "../src/generated/serpVisit";
+import * as searchUsagePings from "../src/generated/pings";
+
 /**
  * For each of the search engines, maps queries to the last time the query was made on the engine.
  * @type {Object}
@@ -105,7 +108,26 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     CurrentDefaultEngine: await Privileged.getSearchEngine()
   }
 
+  serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine);
+  serpVisitMetrics.attentionDuration.set(pageVisitData.attentionDuration);
+  serpVisitMetrics.pageNumber.set(pageVisitData.pageNum);
+  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : null);
+  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : null);
+  // serpVisitMetrics.transition.set(attributionDetailsEngineMatches ? attributionDetails.transition : null);
+  // serpVisitMetrics.organicDetails;
+  // serpVisitMetrics.organicClicks;
+  serpVisitMetrics.numAds.set(pageVisitData.numAdResults);
+  serpVisitMetrics.numAd.set(pageVisitData.numAdClicks);
+  serpVisitMetrics.numInternal.set(pageVisitData.numInternalClicks);
+  serpVisitMetrics.searchAreaTopHeight.set(pageVisitData.searchAreaTopHeight);
+  serpVisitMetrics.searchAreaBottomHeight.set(pageVisitData.searchAreaBottomHeight);
+  serpVisitMetrics.timeSinceSameQuery.set(timeSinceSameQuery === -1 ? -1 : Utils.getCoarsenedTimeStamp(timeSinceSameQuery));
+  // serpVisitMetrics.pageVisitStartTime.set(Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime));
+  serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine());
+
+
   console.log(serpVisitData);
+  searchUsagePings.serpVisit.submit();
 }
 
 /** 
