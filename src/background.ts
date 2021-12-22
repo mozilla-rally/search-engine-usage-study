@@ -24,8 +24,7 @@ async function stateChangeCallback(newState: string) {
     if (newState === "resume") {
         console.log("The study can run.");
         // The all-0 Rally ID indicates developer mode, in case data is accidentally sent.
-        // let rallyId = enableDevMode ? "00000000-0000-0000-0000-000000000000" : rally._rallyId;
-        let rallyId = "00000000-0000-0000-0000-000000000000";
+        let rallyId = enableDevMode ? "00000000-0000-0000-0000-000000000000" : rally._rallyId;
 
         // The all-1 Rally ID means that there was an error with the Rally ID.
         if (!rallyId) {
@@ -33,16 +32,16 @@ async function stateChangeCallback(newState: string) {
         }
         console.info(`Study running with Rally ID: ${rallyId}`);
 
-        // const storage = await browser.storage.local.get("enrolled");
-        // if (storage.enrolled !== true) {
-        console.info("Recording enrollment.");
-        rallyManagementMetrics.id.set(rallyId);
-        searchUsagePings.studyEnrollment.submit();
+        const storage = await browser.storage.local.get("enrolled");
+        if (storage.enrolled !== true) {
+            console.info("Recording enrollment.");
+            rallyManagementMetrics.id.set(rallyId);
+            searchUsagePings.studyEnrollment.submit();
 
-        browser.storage.local.set({
-            enrolled: true,
-        });
-        // }
+            browser.storage.local.set({
+                enrolled: true,
+            });
+        }
         // Initialize the study and start it.
         startStudy(rally);
         await browser.storage.local.set({ "state": runStates.RUNNING });
