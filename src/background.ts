@@ -8,7 +8,7 @@ import PingEncryptionPlugin from "@mozilla/glean/plugins/encryption";
 import { Uploader, UploadResult, UploadResultStatus } from "@mozilla/glean/uploader";
 
 import * as rallyManagementMetrics from "../src/generated/rally.js";
-import * as pixelHuntPings from "../src/generated/pings.js";
+import * as searchUsagePings from "../src/generated/pings.js";
 
 const publicKey = {
     "kty": "EC",
@@ -36,7 +36,7 @@ async function stateChangeCallback(newState: string) {
         // if (storage.enrolled !== true) {
             console.info("Recording enrollment.");
             rallyManagementMetrics.id.set(rallyId);
-            pixelHuntPings.studyEnrollment.submit();
+            searchUsagePings.studyEnrollment.submit();
 
             browser.storage.local.set({
                 enrolled: true,
