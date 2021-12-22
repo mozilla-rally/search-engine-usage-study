@@ -21,7 +21,6 @@ const publicKey = {
 };
 
 async function stateChangeCallback(newState: string) {
-    console.debug("newState", newState);
     if (newState === "resume") {
         console.log("The study can run.");
         // The all-0 Rally ID indicates developer mode, in case data is accidentally sent.
@@ -88,7 +87,6 @@ if (__ENABLE_DEVELOPER_MODE__) {
         debug: { logPings: true },
         httpClient: new GetPingsUploader(),
     });
-    console.debug("glean init");
 } else {
     Glean.initialize("my-app-id", true, {
         plugins: [
@@ -113,7 +111,6 @@ rally.initialize(
     // When in developer mode, open the options page with the playtest controls.
     if (__ENABLE_DEVELOPER_MODE__) {
         browser.runtime.onMessage.addListener((m, s) => {
-            console.debug(m, s);
             if (!("type" in m && m.type.startsWith("rally-sdk"))) {
                 // Only listen for messages from the rally-sdk.
                 return;
