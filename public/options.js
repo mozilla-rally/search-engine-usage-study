@@ -41,24 +41,28 @@ document.getElementById("download").addEventListener("click", async () => {
     // TODO we can pull this from glean more directly in the future.
     const storage = await browser.storage.local.get(null);
 
-    const enrollmentPingData = [];
+    const serpVisitPing = [];
 
     for (const [key, value] of Object.entries(storage)) {
-        if (key.startsWith("enrollmentPing")) {
+        if (key.startsWith("serpVisitPing")) {
             const ping = JSON.parse(value);
-            console.debug("value:", ping.metrics);
-            enrollmentPingData.push(ping.metrics);
+            const result = {};
+            for (const [_type, kv] of Object.entries(ping.metrics)) {
+                console.debug("CSV export discarding type:", _type, "for value:", kv);
+                Object.assign(result, kv);
+            }
+            serpVisitPing.push(result);
             await browser.storage.local.remove(key);
         }
     }
 
-    if (!(enrollmentPingData)) {
+    if (!(serpVisitPing)) {
         throw new Error("No test data present to export, yet");
     }
 
-    console.debug("Converting enrollment JSON to CSV:", enrollmentPingData);
+    console.debug("Converting enrollment JSON to CSV:", serpVisitPing);
 
-    exportDataAsCsv(enrollmentPingData, "enrollmentPings");
+    exportDataAsCsv(serpVisitPing, "serpVisitPing");
 });
 
 function exportDataAsCsv(data, name) {

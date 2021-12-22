@@ -58,9 +58,8 @@ class GetPingsUploader extends Uploader {
     async post(_url: string, body: string | Uint8Array): Promise<UploadResult> {
         const ping = new TextDecoder().decode(pako.inflate(body));
 
-        // TODO store in local storage, in form options.js CSV exporter understands.
-        console.debug("glean upload:", ping);
-        await browser.storage.local.set({ "enrollmentPing": ping });
+        console.debug("Dev mode, storing glean ping instead of sending:", ping, _url);
+        await browser.storage.local.set({ "serpVisitPing": ping });
 
         // Tell Glean upload went fine. Glean will then clear the ping from storage.
         return {
