@@ -3,6 +3,8 @@
 import { Rally, runStates } from "@mozilla/rally";
 import { startStudy } from "./StudyModule.js";
 
+import * as webScience from "@mozilla/web-science";
+
 import Glean from "@mozilla/glean/webext";
 import PingEncryptionPlugin from "@mozilla/glean/plugins/encryption";
 import { Uploader, UploadResult, UploadResultStatus } from "@mozilla/glean/uploader";
@@ -34,13 +36,13 @@ async function stateChangeCallback(newState: string) {
 
         // const storage = await browser.storage.local.get("enrolled");
         // if (storage.enrolled !== true) {
-            console.info("Recording enrollment.");
-            rallyManagementMetrics.id.set(rallyId);
-            searchUsagePings.studyEnrollment.submit();
+        console.info("Recording enrollment.");
+        rallyManagementMetrics.id.set(rallyId);
+        searchUsagePings.studyEnrollment.submit();
 
-            browser.storage.local.set({
-                enrolled: true,
-            });
+        browser.storage.local.set({
+            enrolled: true,
+        });
         // }
         // Initialize the study and start it.
         startStudy(rally);
@@ -51,15 +53,27 @@ async function stateChangeCallback(newState: string) {
     }
 }
 
-// FIXME move to dynamic import
+// TODO move to dynamic import, and only load in dev mode.
 import pako from "pako";
 
 class GetPingsUploader extends Uploader {
-    async post(_url: string, body: string | Uint8Array): Promise<UploadResult> {
+    async post(url: string, body: string | Uint8Array): Promise<UploadResult> {
+        if (!url.includes("/serp-visit/")) {
+            console.warn("Not recording non-serp-visit ping:", url);
+            // Tell Glean upload went fine. Glean will then clear the ping from storage.
+            return {
+                status: 200,
+                result: UploadResultStatus.Success
+            };
+        }
+
         const ping = new TextDecoder().decode(pako.inflate(body));
 
-        console.debug("Dev mode, storing glean ping instead of sending:", ping, _url);
-        await browser.storage.local.set({ "serpVisitPing": ping });
+        console.debug("Dev mode, storing glean ping instead of sending:", ping, url);
+
+        // Use a random suffix, so each ping is stored under its own local storage key.
+        const key = `serpVisitPing-${webScience.id.generateId()}`
+        await browser.storage.local.set({ [key]: ping });
 
         // Tell Glean upload went fine. Glean will then clear the ping from storage.
         return {
