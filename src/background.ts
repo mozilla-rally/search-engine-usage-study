@@ -24,7 +24,7 @@ async function stateChangeCallback(newState: string) {
     if (newState === "resume") {
         console.log("The study can run.");
         // The all-0 Rally ID indicates developer mode, in case data is accidentally sent.
-        let rallyId = enableDevMode ? "00000000-0000-0000-0000-000000000000" : rally._rallyId;
+        let rallyId = __ENABLE_DEVELOPER_MODE__ ? "00000000-0000-0000-0000-000000000000" : rally._rallyId;
 
         // The all-1 Rally ID means that there was an error with the Rally ID.
         if (!rallyId) {
@@ -109,17 +109,16 @@ rally.initialize(
     // The Rally API has been initialized.
     // When in developer mode, open the options page with the playtest controls.
     if (__ENABLE_DEVELOPER_MODE__) {
-        browser.runtime.onMessage.addListener((m, s) => {
-            if (!("type" in m && m.type.startsWith("rally-sdk"))) {
+        browser.runtime.onMessage.addListener((message, sender) => {
+            console.debug(message, sender);
+            if (!("type" in message && message.type.startsWith("rally-sdk") && sender.id === browser.runtime.id)) {
                 // Only listen for messages from the rally-sdk.
                 return;
             }
-            if (m.data.state === "resume") {
-                stateChangeCallback("resume")
-            } else if (m.data.state === "pause") {
-                stateChangeCallback("pause")
+            if (["resume", "pause"].includes(message.data.state)) {
+                stateChangeCallback(message.data.state)
             } else {
-                throw new Error(`Unknown state: ${m.data.state}`);
+                throw new Error(`Unknown state: ${message.data.state}`);
             }
         });
 
