@@ -1,53 +1,68 @@
 /**
- * Starts the search engine usage study.
+ * Starts the Search Engine Usage and Result Quality study.
  * 
  * @module StudyModule
  */
 
 import * as Intervention from "./Intervention.js";
-import * as PostIntervention from "./PostIntervention.js";
 import * as AttributionTracking from "./AttributionTracking.js";
 import * as InitialCollection from "./InitialCollection.js";
-import * as HistoryRemovalTracking from "./HistoryRemovalTracking";
+import * as HistoryRemovalTracking from "./HistoryRemovalTracking.js";
 import * as webScience from "@mozilla/web-science";
 import * as Utils from "./Utils.js";
+import * as Survey from "./Survey.js"
+import * as SerpVisitCollection from "./SerpVisitCollection.js"
+import * as ModalPopup from "./ModalPopup.js"
 
 /**
- * A persistent key-value storage object for the study
- * @type {Object}
- */
-let storage;
-
-/**
- * Rally study object, used for sending data pings.
- * @type {Object}
- */
-let rally;
-
-/**
- * Start a search engine usage study
+ * Start the Search Engine Usage and Result Quality study
  * @param {Object} rally - Rally study object, used for sending data pings.
  * @async
  **/
-export async function startStudy(rallyArg): Promise<void> {
-  rally = rallyArg;
+export async function startStudy(rally): Promise<void> {
   console.log(rally);
 
-  storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
-  await webScience.pageManager.initialize();
-  Utils.initializeMatchPatterns();
-  AttributionTracking.initializeAttributionTracking();
-  HistoryRemovalTracking.run();
+  const isStageOne = true;
 
-  const interventionType = await InitialCollection.run(storage);
+  /**
+   * A persistent key-value storage object for the study
+   * @type {Object}
+   */
+  const storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
 
-  // If intervention is not complete, run intervention.
-  // Otherwise, run post-intervention functionality.
-  const interventionComplete = await storage.get("InterventionComplete");
-  if (!interventionComplete) {
-    Intervention.conductIntervention(interventionType, storage);
+  // Get the start time of the initial survey from storage.
+  // If the value does not exist in storage, then this is the start time of the 
+  // initial survey and we set the value in storage.
+  let initialSurveyStartTime = await storage.get("InitialSurveyStartTime");
+  if (!initialSurveyStartTime) {
+    initialSurveyStartTime = webScience.timing.now();
+    storage.set("InitialSurveyStartTime", initialSurveyStartTime);
   }
-  else {
-    PostIntervention.initializeCollection(interventionType, storage);
+
+  const interventionStartTime = await storage.get("InterventionStartTime");
+  Survey.initializeSurvey(interventionStartTime);
+
+
+  if (!isStageOne) {
+    SerpVisitCollection.initializeCollection(storage);
+
+    await webScience.pageManager.initialize();
+    Utils.initializeMatchPatterns();
+    AttributionTracking.initializeAttributionTracking();
+    HistoryRemovalTracking.startHistoryRemovalTracking();
+
+    const interventionType = await InitialCollection.run(storage);
+
+    // If intervention is not complete, run intervention.
+    // Otherwise, run modal dialog treatment functionality.
+    const interventionComplete = await storage.get("InterventionComplete");
+    if (!interventionComplete) {
+      Intervention.conductIntervention(interventionType, storage);
+    }
+    else {
+      ModalPopup.initializeModalIntervention(interventionType, storage);
+    }
   }
+
+
 }

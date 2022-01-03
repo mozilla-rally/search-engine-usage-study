@@ -8,7 +8,7 @@
 
 import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
-import * as PostIntervention from "./PostIntervention.js"
+import * as ModalPopup from "./ModalPopup.js"
 import * as Utils from "./Utils.js"
 
 enum NoticeType {
@@ -307,5 +307,5 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
  */
 function completeIntervention() {
   storage.set("InterventionComplete", true);
-  PostIntervention.initializeCollection(interventionType, storage);
+  ModalPopup.initializeModalIntervention(interventionType, storage);
 }

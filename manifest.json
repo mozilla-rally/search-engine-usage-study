@@ -2,7 +2,7 @@
   "description": "This study measures how individuals interact with their search engines.",
   "author": "Kartikeya Kandula",
   "manifest_version": 2,
-  "name": "Search Engine Usage Study",
+  "name": "Search Engine Usage and Result Quality Study",
   "version": "0.4.0",
   "homepage_url": "https://github.com/mozilla-ion/ion-basic-study",
   "applications": {
