@@ -8,7 +8,6 @@
 
 import * as webScience from "@mozilla/web-science";
 
-const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
 
 /**
@@ -19,13 +18,6 @@ const secondsPerDay = 86400;
  */
 const surveyRemindPeriodDays = 3;
 
-/**
- * How many days to wait after the start of the treatment before
- * starting the followup survey.
- * @type {number}
- * @private
- */
-const daysUntilFollowupSurvey = 20;
 
 /**
  * An object describing the survey options for the initial and followup surveys.
@@ -59,45 +51,10 @@ const surveyConfigData = {
 };
 
 /**
- * Ends the initial survey and starts the followup survey
- * @async
- **/
-async function startFollowupSurvey() {
-  await webScience.userSurvey.endSurvey();
-  webScience.userSurvey.setSurvey(surveyConfigData.followup);
-}
-
-/**
  * Starts user survey functionality
  * @param {Object} treatmentStartTime - The start time of the treatment
  * @async
  **/
-export async function initializeSurvey(treatmentStartTime): Promise<void> {
-
-  const currentTime = webScience.timing.now();
-
-  if (treatmentStartTime) {
-    // Get the start time of the followup survey
-    const followupSurveyStartTime = treatmentStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilFollowupSurvey);
-
-    const currentSurvey = await webScience.userSurvey.getSurveyName();
-    if (!currentSurvey ||
-      (currentSurvey === surveyConfigData.initial.surveyName && currentTime <= followupSurveyStartTime)) {
-      // If there is no current survey or the current survey is the initial survey
-      // and the current time is before the time to start the followup survey, we set
-      // the current survey to be the initial survey and set a timeout to start the followup survey.
-      webScience.userSurvey.setSurvey(surveyConfigData.initial);
-      setTimeout(startFollowupSurvey, followupSurveyStartTime - currentTime);
-    } else if (currentSurvey === surveyConfigData.initial.surveyName) {
-      // If the current survey is the initial survey but the current time is after the start
-      // time of the followup survey, we start the followup survey.
-      startFollowupSurvey();
-    } else {
-      // Set the survey to the current survey.
-      // We only reach here if the current survey is the followup survey.
-      webScience.userSurvey.setSurvey(surveyConfigData[currentSurvey]);
-    }
-  } else {
-    webScience.userSurvey.setSurvey(surveyConfigData.initial);
-  }
+export async function initializeSurvey(): Promise<void> {
+  webScience.userSurvey.setSurvey(surveyConfigData.initial);
 }
