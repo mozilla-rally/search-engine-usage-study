@@ -1,7 +1,7 @@
 /**
  * This module enables survey functionality for the study. There are two surveys in this study.
- * The initial survey starts immediately after completion of the Intervention module functionality
- * and the second survey starts 20 days after that.
+ * The initial survey starts upon installation of the study and the followup survey occurs 20 days
+ * after the start of the treatment condition.
  * 
  * @module Survey
  */
@@ -20,7 +20,7 @@ const secondsPerDay = 86400;
 const surveyRemindPeriodDays = 3;
 
 /**
- * How many days to wait after the start of the intervention before
+ * How many days to wait after the start of the treatment before
  * starting the followup survey.
  * @type {number}
  * @private
@@ -69,16 +69,16 @@ async function startFollowupSurvey() {
 
 /**
  * Starts user survey functionality
- * @param {Object} interventionStartTime - The start time of the intervention
+ * @param {Object} treatmentStartTime - The start time of the treatment
  * @async
  **/
-export async function initializeSurvey(interventionStartTime): Promise<void> {
+export async function initializeSurvey(treatmentStartTime): Promise<void> {
 
   const currentTime = webScience.timing.now();
 
-  if (interventionStartTime) {
+  if (treatmentStartTime) {
     // Get the start time of the followup survey
-    const followupSurveyStartTime = interventionStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilFollowupSurvey);
+    const followupSurveyStartTime = treatmentStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilFollowupSurvey);
 
     const currentSurvey = await webScience.userSurvey.getSurveyName();
     if (!currentSurvey ||

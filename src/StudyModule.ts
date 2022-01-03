@@ -39,8 +39,9 @@ export async function startStudy(rally): Promise<void> {
     storage.set("InitialSurveyStartTime", initialSurveyStartTime);
   }
 
-  const interventionStartTime = await storage.get("InterventionStartTime");
-  Survey.initializeSurvey(interventionStartTime);
+  // Get the start time of the treatment to pass to survey module.
+  const treatmentStartTime = await storage.get("TreatmentStartTime");
+  Survey.initializeSurvey(treatmentStartTime);
 
 
   if (!isStageOne) {
