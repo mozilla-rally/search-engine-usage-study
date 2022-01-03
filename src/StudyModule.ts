@@ -20,9 +20,12 @@ import * as ModalPopup from "./ModalPopup.js"
  * @async
  **/
 export async function startStudy(rally): Promise<void> {
+  // Printing because this variable is currently unused
   console.log(rally);
 
-  const isStageOne = true;
+  // Whether the study is in the first phase where participants are only offered
+  // the initial survey.
+  const isPhaseOne = true;
 
   /**
    * A persistent key-value storage object for the study
@@ -44,7 +47,7 @@ export async function startStudy(rally): Promise<void> {
   Survey.initializeSurvey(treatmentStartTime);
 
 
-  if (!isStageOne) {
+  if (!isPhaseOne) {
     SerpVisitCollection.initializeCollection(storage);
 
     await webScience.pageManager.initialize();
