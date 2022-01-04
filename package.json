@@ -1,5 +1,5 @@
 {
-  "name": "rally-study-template",
+  "name": "search-engine-usage-study",
   "version": "0.4.0",
   "scripts": {
     "build": "rollup -c && web-ext --config=web-ext-config.js build --overwrite-dest && mv web-ext-artifacts/*.zip web-ext-artifacts/search_engine_usage_study.xpi",
@@ -8,7 +8,7 @@
     "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\"",
     "start": "npm run build && web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
-    "test-integration": "npm run package && mv web-ext-artifacts/*.zip web-ext-artifacts/study.xpi && mocha --timeout 30000 \"./tests/integration/*.js\"",
+    "test-integration": "npm run --silent skip-taskcluste || (npm run package && mv web-ext-artifacts/*.zip web-ext-artifacts/study.xpi && mocha --timeout 30000 \"./tests/integration/*.js\")",
     "watch": "npm-run-all --parallel watch-raw watch-bundled",
     "watch-raw": "npm run dev -- -w",
     "watch-bundled": "web-ext run --browser-console --watch-file dist/background.js",
