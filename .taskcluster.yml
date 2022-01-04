@@ -20,7 +20,7 @@ tasks:
               revision: 8051b20c975711d4ce09537285cef7451d043d8b
           template:
               repo: git@github.com:mozilla-extensions/search-engine-usage-study
-              branch: release
+              branch: main
           trustDomain: xpi
       in:
           $if: 'tasks_for in ["github-pull-request", "github-push", "action", "cron"]'
