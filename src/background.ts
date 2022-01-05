@@ -11,6 +11,28 @@ const publicKey = {
     "kid": "Public key used in JWS spec Appendix A.3 example"
 };
 
+/**
+ * Callback for handling changes in study running state from the Rally SDK.
+ *
+ * Studies which are running should install listeners and start data collection,
+ * and studies which are paused should stop data collection and remove listeners.
+ *
+ * @param newState {string} - either "resume" or "pause", representing the new state.
+ */
+async function stateChangeCallback(newState: string) {
+    switch (newState) {
+        case ("resume"): {
+            console.debug("Study running.");
+            startStudy(rally);
+            break;
+        }
+        case ("pause"): {
+            // TODO stop study on pause
+            break;
+        }
+    }
+}
+
 // Initialize the Rally API.
 const rally = new Rally();
 rally.initialize(
@@ -21,11 +43,13 @@ rally.initialize(
     // The following constant is automatically provided by
     // the build system.
     __ENABLE_DEVELOPER_MODE__,
-    (() => { return; }),
+    stateChangeCallback,
 ).then(_resolve => {
     // The Rally API has been initialized.
-    startStudy(rally);
-}, _reject => {
+    // The Rally Core Add-on expects the extension to automatically start.
+    stateChangeCallback("resume");
+}, reject => {
     // Do not start the study in this case. Something
     // went wrong.
+    console.error("Study could not start:", reject);
 });
