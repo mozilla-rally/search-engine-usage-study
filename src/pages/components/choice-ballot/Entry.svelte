@@ -2,7 +2,6 @@
     import EntryNoDescription from "./EntryNoDescription.svelte";
     import EntryVisibleDescription from "./EntryVisibleDescription.svelte";
     import EntryHiddenDescription from "./EntryHiddenDescription.svelte";
-    import RadioButton from "./RadioButton.svelte";
     export let engine;
     export let engineDisplayName;
     export let description;
@@ -10,22 +9,28 @@
 </script>
 
 <div class="engine-container" id={engine}>
-    <div class="columns is-mobile">
-        {#if choiceBallotType === "NoDescription"}
-            <EntryNoDescription {engine} {engineDisplayName} {description} />
+    <div class="columns is-flex is-centered">
+        <div class="column is-2 is-2-mobile logo-div">
+            <img
+                src="assets/logos/{engine}.png"
+                alt="{engineDisplayName} logo"
+                class="logo"
+            />
+        </div>
+        {#if choiceBallotType === "Default"}
+            <EntryNoDescription {engineDisplayName} {description} />
         {:else if choiceBallotType === "HiddenDescription"}
-            <EntryHiddenDescription
-                {engine}
-                {engineDisplayName}
-                {description}
-            />
+            <EntryHiddenDescription {engineDisplayName} {description} />
         {:else}
-            <EntryVisibleDescription
-                {engine}
-                {engineDisplayName}
-                {description}
-            />
+            <EntryVisibleDescription {engineDisplayName} {description} />
         {/if}
-        <RadioButton {engine} />
+        <div class="column is-2 is-2-mobile radio-container">
+            <input
+                type="radio"
+                name="engine-select"
+                value={engine}
+                class="radio-button"
+            />
+        </div>
     </div>
 </div>

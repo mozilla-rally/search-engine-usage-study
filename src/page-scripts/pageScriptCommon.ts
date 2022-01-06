@@ -64,3 +64,7 @@ export function getAttentionDuration(): number {
         return attentionDuration;
     }
 }
+
+export function getDwellTime(timeStamp: number): number {
+    return timing.fromMonotonicClock(timeStamp, true) - timing.fromMonotonicClock(window.performance.timeOrigin, false);
+}
