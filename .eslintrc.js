@@ -48,7 +48,6 @@ module.exports = {
     "node/no-unpublished-import": "off",
     "node/no-unpublished-require": "off",
     "node/no-unsupported-features/es-syntax": "off",
-
     "no-multi-spaces": "error",
     "no-unused-vars": [ "error", { vars: "all", args: "none", ignoreRestSiblings: false } ],
     "no-var": "warn",

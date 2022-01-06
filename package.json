@@ -1,21 +1,22 @@
 {
   "name": "search_engine_usage_study",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "scripts": {
     "build": "rollup -c && web-ext --config=web-ext-config.js build --overwrite-dest && mv web-ext-artifacts/*.zip web-ext-artifacts/search_engine_usage_study.xpi",
     "dev": "rollup -c --config-enable-developer-mode",
     "lint": "eslint . && npm run --silent skip-taskcluster || (web-ext lint)",
     "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\"",
-    "start": "npm run build && web-ext run --browser-console",
+    "start": "web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
     "test-integration": "npm run --silent skip-taskcluster || (npm run package && mv web-ext-artifacts/*.zip web-ext-artifacts/study.xpi && mocha --timeout 30000 \"./tests/integration/*.js\")",
+    "test": "mocha --timeout 30000 \"./tests/integration/*.js\"",
     "watch": "npm-run-all --parallel watch-raw watch-bundled",
     "watch-raw": "npm run dev -- -w",
     "watch-bundled": "web-ext run --browser-console --watch-file dist/background.js",
     "skip-taskcluster": "node -e \"process.exit(!('TASK_ID' in process.env))\""
   },
   "devDependencies": {
-    "@mozilla/rally": "^0.6.0",
+    "@mozilla/rally": "^0.7.1",
     "@mozilla/web-science": "^0.4.0",
     "@rollup/plugin-commonjs": "^19.0.0",
     "@rollup/plugin-html": "^0.2.4",

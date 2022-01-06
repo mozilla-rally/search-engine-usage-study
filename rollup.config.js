@@ -8,57 +8,8 @@
 import commonjs from "@rollup/plugin-commonjs";
 import replace from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
-import globby from "globby";
 import typescript from '@rollup/plugin-typescript';
 import webScienceRollupPlugin from "@mozilla/web-science/rollup-plugin";
-import svelte from 'rollup-plugin-svelte';
-import html from "@rollup/plugin-html"
-import fs from "fs";
-import copy from 'rollup-plugin-copy'
-require("svelte/register");
-
-function makeTemplate(templateData, svelteComponent, props, scriptSrc) {
-  return ({ attributes, bundle, files, publicPath, title }) => {
-    const body = svelteComponent.render(props).html;
-    return templateData.replace("%%BODY%%", body).replace("%%TITLE%%", title).replace("%%SCRIPT%%", scriptSrc);
-  };
-}
-
-const htmlPages = [];
-
-const choiceBallotTypes = [ "Default", "HiddenDescription", "VisibleDescription", "Extended" ];
-for(let index = 0; index < choiceBallotTypes.length; index++) {
-  const choiceBallotType = choiceBallotTypes[ index ];
-  htmlPages.push(
-    html({
-      fileName: `pages/choice_ballot_${index + 1}.html`,
-      title: "Search Engine Choice Ballot",
-      template: makeTemplate(
-        fs.readFileSync("./src/pages/template.html", "utf8"),
-        require("./src/pages/components/choice-ballot/ChoiceBallot.svelte").default,
-        { choiceBallotType },
-        "assets/js/choiceBallot.js"
-      ),
-    })
-  );
-}
-
-const revertOptions = [ false, true ];
-for(let index = 0; index < revertOptions.length; index++) {
-  const revertOption = revertOptions[ index ];
-  htmlPages.push(
-    html({
-      fileName: `pages/notice_${index + 1}.html`,
-      title: "Search Engine Change Notice",
-      template: makeTemplate(
-        fs.readFileSync("./src/pages/template.html", "utf8"),
-        require("./src/pages/components/notice/Notice.svelte").default,
-        { revertOption },
-        "assets/js/notice.js"
-      ),
-    })
-  );
-}
 
 /**
  * Helper to detect developer mode.
@@ -95,60 +46,9 @@ export default (cliArgs) => {
         commonjs(),
         typescript(),
         webScienceRollupPlugin(),
-        svelte({
-          compilerOptions: {
-            hydratable: true,
-          }
-        }),
-        ...htmlPages,
-        copy({
-          targets: [
-            { src: 'src/pages/assets/*', dest: 'dist/pages/assets' },
-          ]
-        })
       ],
     }
   ];
-
-  const pageScriptPaths = globby.sync([ `src/page-scripts/choiceBallot.ts`, `src/page-scripts/notice.ts` ]);
-  for(const pageScriptPath of pageScriptPaths) {
-    rollupConfig.push({
-      input: pageScriptPath,
-      output: {
-        file: `dist/pages/assets/js/${pageScriptPath.slice("src/page-scripts/".length, -3)}.js`,
-        format: "iife",
-        sourcemap: isDevMode(cliArgs) ? "inline" : false,
-      },
-      plugins: [
-        webScienceRollupPlugin(),
-        resolve({
-          browser: true,
-        }),
-        typescript(),
-        commonjs(),
-      ],
-    });
-  }
-
-  const contentScriptPaths = globby.sync([ `src/content-scripts/serp-scripts/*.ts` ]);
-  for(const contentScriptPath of contentScriptPaths) {
-    rollupConfig.push({
-      input: contentScriptPath,
-      output: {
-        file: `dist/${contentScriptPath.slice("src/".length, -3)}.js`,
-        format: "iife",
-        sourcemap: isDevMode(cliArgs) ? "inline" : false,
-      },
-      plugins: [
-        webScienceRollupPlugin(),
-        resolve({
-          browser: true,
-        }),
-        typescript(),
-        commonjs(),
-      ],
-    });
-  }
 
   return rollupConfig;
 }
