@@ -33,8 +33,8 @@ const surveyConfigData = {
     reminderInterval: surveyRemindPeriodDays * secondsPerDay,
     reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
     reminderTitle: "Rally survey available",
-    surveyCompletionUrl: "http://initial-survey-thank-you.s3-website-us-east-1.amazonaws.com",
-    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_daN8Y3MgSvl33BI/",
+    surveyCompletionUrl: "https://rally-search-study-survey.com/",
+    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_4UVzt0GInkrNazc/",
   },
   followup: {
     surveyName: "Followup",
@@ -45,7 +45,7 @@ const surveyConfigData = {
     reminderInterval: surveyRemindPeriodDays * secondsPerDay,
     reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
     reminderTitle: "Rally survey available",
-    surveyCompletionUrl: "http://followup-survey-thank-you.s3-website-us-east-1.amazonaws.com",
+    surveyCompletionUrl: "https://rally-search-study-survey.com/",
     surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_eJagJBzv5u2quWO/",
   }
 };
