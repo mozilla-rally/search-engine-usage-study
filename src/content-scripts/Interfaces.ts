@@ -24,3 +24,11 @@ interface ElementListeners {
   clickListener: (event: MouseEvent) => void,
   mousedownListener: (event: MouseEvent) => void
 }
+
+interface ReplacementData {
+  header: string,
+  link: string,
+  description: string,
+  cite: string,
+  citeSpan: string,
+}

@@ -20,3 +20,4 @@ declare let webScience: {
 }
 
 declare const __ENABLE_DEVELOPER_MODE__;
+declare const __SELF_PREFERENCING_TYPE__;

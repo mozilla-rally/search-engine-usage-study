@@ -1,5 +1,6 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, getXPathElement, ElementType } from "../common.js"
 import { getQueryVariable } from "../../Utils.js"
+import { removeSelfPreferencedResults, replaceSelfPreferencedResults } from "../selfPreferencing.js";
 
 /**
  * Content Scripts for Google SERP
@@ -237,3 +238,14 @@ const serpScript = function () {
 };
 
 waitForPageManagerLoad(serpScript)
+
+const selfPreferencingType = __SELF_PREFERENCING_TYPE__;
+if (selfPreferencingType === "Replace") {
+    window.addEventListener("load", () => {
+        replaceSelfPreferencedResults();
+    });
+} else if (selfPreferencingType === "Remove") {
+    window.addEventListener("load", () => {
+        removeSelfPreferencedResults();
+    });
+}
