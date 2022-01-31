@@ -1,41 +1,32 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, ElementType } from "../common.js"
-import { getQueryVariable } from "../../Utils.js"
+import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 
 /**
  * Content Scripts for Baidu SERP
  */
 const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     /**
      * @returns {boolean} Whether the page is a Baidu web SERP page.
      */
     function getIsWebSerpPage(): boolean {
-        const url = new URL(window.location.href)
-        if (url.hostname === "baidu.com" || url.hostname === "www.baidu.com") {
-            if (window.location.pathname === "/s") {
-                const tn = getQueryVariable(window.location.href, "tn")
-                if (!tn || (tn === "baidu")) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return searchEnginesMetadata["Baidu"].getIsSerpPage(window.location.href);
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+    function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         const organicResults = document.querySelectorAll("#content_left > .result");
         const organicDetails: OrganicDetail[] = []
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null })
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return { details: organicDetails, linkElements: organicLinkElements };
+        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
@@ -132,6 +123,7 @@ const serpScript = function () {
         const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedRecentUrl === normalizedUrl) {
+                console.log("AD CLICK")
                 pageValues.numAdClicks++;
             }
             return;
@@ -140,12 +132,14 @@ const serpScript = function () {
             if ((pageValues.mostRecentMousedown.Link === url) ||
                 (normalizedUrl.includes("baidu.com/link") && normalizedRecentUrl.includes("baidu.com/link") &&
                     getQueryVariable(url, "url") === getQueryVariable(pageValues.mostRecentMousedown.Link, "url"))) {
+                console.log("ORGANIC CLICK")
                 pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl) {
+                console.log("INTERNAL CLICK")
                 pageValues.numInternalClicks++;
             }
             return;

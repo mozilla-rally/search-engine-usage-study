@@ -32,7 +32,7 @@ this.experimental = class extends ExtensionAPI {
                         Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_1;
 
                     const modalTitle = `Change back to ${searchEngineOld} Search?`;
-                    const modalText = `Your search engine has been changed to use ${searchEngineNew}.`;
+                    const modalText = ` The "Search Engine Usage and Result Quality" extension changed search to use ${searchEngineNew.toLowerCase()}.com`;
 
                     const keepEngineButtonText = "Keep it";
                     const revertEngineButtonText = "Change it back";

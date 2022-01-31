@@ -17,13 +17,13 @@ let storage;
  * The name of the engine that was the participant's default prior to their choice ballot selection.
  * @type {string}
  */
-let engineChangedFrom;
+let oldEngine;
 
 /**
  * The name of the engine that the participant selected on the choice ballot and had their default changed to.
  * @type {string}
  */
-let engineChangedTo;
+let newEngine;
 
 /**
  * Whether the revert button on the modal dialog will be the primary button.
@@ -41,31 +41,29 @@ async function webNavigationOnCommittedListener(details) {
     // The modal dialog should be displayed on a generated search if the current engine is the same
     // as the engine that the participant selected on the choice ballot.
     const currentEngine = await Privileged.getSearchEngine();
-    if (details.transitionType === "generated" && currentEngine === engineChangedTo) {
-        // Gets the number of times the modal dialog has been displayed
-        const modalAttemptsCounter = await webScience.storage.createCounter("ModalAttempts");
-        const modalAttempts = await modalAttemptsCounter.incrementAndGet();
-
-        // Remove this listener, the modal dialog should only be displayed a maximum of one time per
-        // browser session.
+    if (details.transitionType === "generated" && currentEngine === newEngine) {
+        // Remove this listener, the modal dialog should only be displayed one time.
         browser.webNavigation.onCommitted.removeListener(webNavigationOnCommittedListener);
 
+        // Set the completion status of the modal intervention to true so that it won't be shown again.
+        storage.set("ModalInterventionCompleted", true);
+
+        const treatmentStartTime = webScience.timing.now();
+
         // Display the modal dialog and get the participant's selection.
-        const revertChosen = await browser.experimental.createPopup(engineChangedFrom, engineChangedTo, modalPrimaryRevert);
+        const revertChosen = await browser.experimental.createPopup(oldEngine, newEngine, modalPrimaryRevert);
 
         // If the participant chooses to revert, then change their search engine back to the engine that the choice ballot
         // stage of the intervention changed it from.
         if (revertChosen) {
-            Privileged.changeSearchEngine(engineChangedFrom);
+            Privileged.changeSearchEngine(oldEngine);
         }
-
-        // Set the completion status of the modal intervention to true.
-        storage.set("ModalInterventionCompleted", true);
 
         // Report modal intervention data.
         const modalInterventionData = {
-            ModalAttempts: modalAttempts,
-            Revert: revertChosen
+            RevertSelected: revertChosen,
+            TreatmentTime: treatmentStartTime,
+            PingTime: webScience.timing.now(),
         };
 
         console.log(modalInterventionData);
@@ -81,23 +79,23 @@ export async function initializeModalIntervention(interventionType, storageArg) 
     storage = storageArg;
 
     const modalInterventionCompleted = await storage.get("ModalInterventionCompleted");
-    engineChangedFrom = await storage.get("EngineChangedFrom");
-    engineChangedTo = await storage.get("EngineChangedTo");
+    oldEngine = await storage.get("OldEngine");
+    newEngine = await storage.get("NewEngine");
     modalPrimaryRevert = interventionType === "ModalPrimaryRevert";
 
     // Modal functionality should only run if:
     //  1. This intervention has not already been completed.
     //  2. The participant's intervention group is one of the two modal intervention groups
-    //  3. The choice ballot stage of the modal intervention was completed successfully (engineChangedFrom
-    //     and engineChangedTo will only be set if the participant selected an option on the choice ballot).
+    //  3. The choice ballot stage of the modal intervention was completed successfully (oldEngine
+    //     and newEngine will only be set if the participant selected an option on the choice ballot).
     //  4. The engine that the participant chose on the choice ballot is different from their
     //     their original engine. It does not make sense to popup the modal dialog if the participant's
     //     default was originally Google and they proceeded to select Google on the choice ballot.
     if (!modalInterventionCompleted &&
         (interventionType === "ModalPrimaryRevert" || interventionType === "ModalSecondaryRevert") &&
-        engineChangedFrom && engineChangedTo &&
-        !engineChangedTo.toLowerCase().includes(engineChangedFrom.toLowerCase()) &&
-        !engineChangedFrom.toLowerCase().includes(engineChangedTo.toLowerCase())) {
+        oldEngine && newEngine &&
+        !newEngine.toLowerCase().includes(oldEngine.toLowerCase()) &&
+        !oldEngine.toLowerCase().includes(newEngine.toLowerCase())) {
         browser.webNavigation.onCommitted.addListener(webNavigationOnCommittedListener);
     }
 }

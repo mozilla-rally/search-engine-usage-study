@@ -1,3 +1,4 @@
+import { timing } from "@mozilla/web-science";
 import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
 
 /**
@@ -17,10 +18,6 @@ const engineDetails = {
     Bing: {
         displayName: "Bing",
         description: "Microsoft Bing helps you find trusted search results fast."
-    },
-    Yahoo: {
-        displayName: "Yahoo!",
-        description: "Yahoo! Search helps you find the information you need."
     }
 };
 
@@ -88,6 +85,7 @@ window.addEventListener("DOMContentLoaded", async function () {
             revert: revert,
             attentionDuration: getAttentionDuration(),
             dwellTime: getDwellTime(event.timeStamp),
+            completionTime: timing.fromMonotonicClock(event.timeStamp, true),
         });
     });
 });

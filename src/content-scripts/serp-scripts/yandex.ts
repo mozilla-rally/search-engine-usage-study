@@ -1,5 +1,5 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, ElementType } from "../common.js"
-import { getQueryVariable } from "../../Utils.js"
+import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
@@ -7,22 +7,19 @@ import { timing } from "@mozilla/web-science";
  */
 const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Yandex", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+    const pageValues = new PageValues("Yandex", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     /**
      * @returns {boolean} Whether the page is a Yandex web SERP page.
      */
     function getIsWebSerpPage(): boolean {
-        const url = new URL(window.location.href);
-
-        // Make sure the page is not a search for ads (ie. https://direct.yandex.com/search/?text=hello&lr=110509)
-        return !url.pathname.includes("direct");
+        return searchEnginesMetadata["Yandex"].getIsSerpPage(window.location.href);
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+    function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         // The organic results are .serp-item elements that have a child .organic element and do not have 
         // a descendant with an advertisement tag (an element with text "ad", "advertising", or "реклама")
         const organicResults = getXPathElements("//li[contains(@class, 'serp-item') and div[contains(@class, 'organic') and not(descendant::*[normalize-space(text()) = 'ad' or normalize-space(text()) = 'advertising' or normalize-space(text()) = 'реклама'])]]");
@@ -31,12 +28,12 @@ const serpScript = function () {
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
             // Get the details of all the organic elements.
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null });
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" });
 
             // Get all the links (elements with an "href" attribute).
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return { details: organicDetails, linkElements: organicLinkElements };
+        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
@@ -141,18 +138,21 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("yabs.yandex.ru") ||
                 normalizedUrl === normalizedRecentUrl) {
+                console.log("AD CLICK")
                 pageValues.numAdClicks++;
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedUrl === normalizedRecentUrl) {
+                console.log("ORGANIC CLICK")
                 pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl) {
+                console.log("INTERNAL CLICK")
                 pageValues.numInternalClicks++;
             }
             return;

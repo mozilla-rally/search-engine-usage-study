@@ -140,41 +140,6 @@ export default (cliArgs) => {
         sourcemap: isDevMode(cliArgs) ? "inline" : false,
       },
       plugins: [
-        replace({
-          preventAssignment: true,
-          // In Developer Mode, the study does not submit data and
-          // gracefully handles communication errors with the Core
-          // Add-on.
-          __SELF_PREFERENCING_TYPE__: null,
-        }),
-        webScienceRollupPlugin(),
-        resolve({
-          browser: true,
-        }),
-        typescript(),
-        commonjs(),
-      ],
-    });
-  }
-
-  const selfPreferencingTypes = [ "Remove", "Replace" ];
-  const googleScriptPath = `src/content-scripts/serp-scripts/google.ts`;
-  for(const selfPreferencingType of selfPreferencingTypes) {
-    rollupConfig.push({
-      input: googleScriptPath,
-      output: {
-        file: `dist/${googleScriptPath.slice("src/".length, -3)}${selfPreferencingType}.js`,
-        format: "iife",
-        sourcemap: isDevMode(cliArgs) ? "inline" : false,
-      },
-      plugins: [
-        replace({
-          preventAssignment: true,
-          // In Developer Mode, the study does not submit data and
-          // gracefully handles communication errors with the Core
-          // Add-on.
-          __SELF_PREFERENCING_TYPE__: `"${selfPreferencingType}"`,
-        }),
         webScienceRollupPlugin(),
         resolve({
           browser: true,

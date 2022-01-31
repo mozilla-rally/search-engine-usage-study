@@ -35,6 +35,8 @@ let storage;
  */
 let interventionType;
 
+let treatmentStartTimes: number[] = null;
+
 /**
  * Conducts intervention functionality.
  * @param {Object} storage - A persistent key-value storage object for the study
@@ -43,6 +45,20 @@ let interventionType;
 export async function conductIntervention(interventionTypeArg, storageArg): Promise<void> {
   storage = storageArg;
   interventionType = interventionTypeArg;
+
+  const interventionComplete = await storage.get("InterventionComplete");
+  if (interventionComplete) {
+    ModalPopup.initializeModalIntervention(interventionType, storage);
+    return;
+  }
+
+  treatmentStartTimes = await storage.get("TreatmentStartTimes");
+  if (!treatmentStartTimes) {
+    treatmentStartTimes = [webScience.timing.now()];
+    storage.set("TreatmentStartTimes", treatmentStartTimes);
+  } else {
+    treatmentStartTimes.push(webScience.timing.now());
+  }
 
   // Conducts the randomly selected intervention.
   if (interventionType === "NoticeDefault") {
@@ -69,16 +85,21 @@ export async function conductIntervention(interventionTypeArg, storageArg): Prom
 /**
  * Report notice data and complete the notice intervention.
  * @param {number} attentionDuration - How long the notice page has had the participant's attention.
+ * @param {number} dwellTime - How long the notice page was open.
  * @param {boolean} revertSelected - Whether the participant selected the option to revert the changes.
- * @param {string} originalEngine - The search engine that the participant's default was changed from.
+ * @param {string} oldEngine - The search engine that the participant's default was changed from.
  * @param {string} newEngine - The search engine that the participant's default was changed to.
  */
-function reportNoticeData(attentionDuration: number, revertSelected: boolean, originalEngine: string, newEngine: string) {
+function reportNoticeData(attentionDuration: number, dwellTime: number, revertSelected: boolean, oldEngine: string, newEngine: string, treatmentCompletionTime: number) {
   const noticeInterventionData = {
     AttentionDuration: attentionDuration,
+    DwellTime: dwellTime,
     RevertSelected: revertSelected,
-    OriginalEngine: originalEngine,
+    OldEngine: oldEngine,
     NewEngine: newEngine,
+    TreatmentTime: treatmentStartTimes[0],
+    TreatmentCompletionTime: treatmentCompletionTime,
+    PingTime: webScience.timing.now()
   };
 
   console.log(noticeInterventionData);
@@ -96,19 +117,19 @@ async function noticeIntervention(noticeType: NoticeType) {
   // If the notice has been shown already, then the intervention is complete.
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
-    reportNoticeData(-1, false, await storage.get("EngineChangedFrom"), await storage.get("EngineChangedTo"));
+    reportNoticeData(-1, -1, false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
     return;
   }
 
   // Determine the participant's original search engine and homepage
-  const originalEngine: string = await Privileged.getSearchEngine();
+  const oldEngine: string = await Privileged.getSearchEngine();
   const originalHomepage: string = await Privileged.getHomepage();
 
   // Creates a list of options for a new default search engine (excluding the participant's current default)
   let newSearchEngineOptions = Utils.getPrimarySearchEngineNames();
-  if (originalEngine) {
+  if (oldEngine) {
     newSearchEngineOptions = newSearchEngineOptions.filter(engineOption => {
-      return !originalEngine.toLowerCase().includes(engineOption.toLowerCase());
+      return !oldEngine.toLowerCase().includes(engineOption.toLowerCase());
     })
   }
 
@@ -118,17 +139,18 @@ async function noticeIntervention(noticeType: NoticeType) {
 
   // If the current home page is a search engine page, change it to the default Firefox homepage
   const homepageChange = Utils.getHomepageChangeNeeded(originalHomepage);
+
   if (homepageChange) {
     Utils.changeHomepageToDefault();
   }
 
-  storage.set("EngineChangedFrom", originalEngine);
-  storage.set("EngineChangedTo", newEngine);
+  storage.set("OldEngine", oldEngine);
+  storage.set("NewEngine", newEngine);
 
-  // Register a listener that will send a response to the notice page with the name of the original engine, new engine,
-  // and if their homepage was changed so that they can be notified of changes.
+  // Register a listener that will send a response to the notice page with the name of the new engine
+  // and if their homepage was changed so that the participant can be notified of changes.
   webScience.messaging.onMessage.addListener((_message, _sender, sendResponse) => {
-    sendResponse({ originalEngine, newEngine, homepageChange: homepageChange });
+    sendResponse({ newEngine, homepageChange: homepageChange });
   }, {
     type: "NoticeDetails",
     schema: {}
@@ -139,14 +161,15 @@ async function noticeIntervention(noticeType: NoticeType) {
     // If the participant clicked on the button to revert the change, we restore their original default search engine and homepage
     if (message.revert) {
       Privileged.changeHomepage(originalHomepage);
-      Privileged.changeSearchEngine(originalEngine);
+      Privileged.changeSearchEngine(oldEngine);
     }
 
-    reportNoticeData(message.attentionDuration, message.revert, originalEngine, newEngine);
+    reportNoticeData(message.attentionDuration, message.dwellTime, message.revert, oldEngine, newEngine, message.completionTime);
   }, {
     type: "NoticeResponse",
     schema: {
       attentionDuration: "number",
+      dwellTime: "number",
       revert: "boolean"
     }
   });
@@ -163,28 +186,35 @@ async function noticeIntervention(noticeType: NoticeType) {
 
 /**
  * Report notice data and complete the notice intervention.
- * @param {number} attentionDuration - How long the notice page has had the participant's attention.
+ * @param {number} attentionDurationList - How long the notice page has had the participant's attention on each ballot attempt.
+ * @param {number} dwellTimeList - How long the notice page was open on each ballot attempt.
  * @param {boolean} revertSelected - Whether the participant selected the option to revert the changes.
- * @param {string} originalEngine - The search engine that the participant's default was changed from.
+ * @param {string} OldEngine - The search engine that the participant's default was changed from.
  * @param {string} newEngine - The search engine that the participant's default was changed to.
  */
 function reportChoiceBallotData(
   attentionDurationList: number[],
-  originalEngine: string,
+  dwellTimeList: number[],
+  oldEngine: string,
   newEngine: string,
   seeMoreSelected: boolean,
   ordering: string[],
   detailsExpanded: string[],
-  attempts: number) {
+  attempts: number,
+  treatmentCompletionTime: number) {
 
   const choiceBallotInterventionData = {
     AttentionDurationList: attentionDurationList,
-    OriginalEngine: originalEngine,
+    DwellTimeList: dwellTimeList,
+    OldEngine: oldEngine,
     NewEngine: newEngine,
     SeeMoreSelected: seeMoreSelected,
     Ordering: ordering,
     DetailsExpanded: detailsExpanded,
-    Attempts: attempts
+    Attempts: attempts,
+    TreatmentTime: treatmentStartTimes,
+    TreatmentCompletionTime: treatmentCompletionTime,
+    PingTime: webScience.timing.now()
   };
 
   console.log(choiceBallotInterventionData);
@@ -206,6 +236,12 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
     choiceBallotAttentionList = []
   }
 
+  // An array of the attention times for each attempt of the choice ballot
+  let choiceBallotDwellTimeList: number[] = await storage.get("ChoiceBallotDwellTimeList");
+  if (!choiceBallotDwellTimeList) {
+    choiceBallotDwellTimeList = []
+  }
+
   // If the choice ballot has previously been displayed, get the order the search engines
   // were displayed in.
   let enginesOrdering = await storage.get("ChoiceBallotEngineOrdering");
@@ -216,7 +252,7 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
   const choiceBallotAttemptsCounter = await webScience.storage.createCounter("ChoiceBallotAttempts");
   let choiceBallotAttempts = choiceBallotAttemptsCounter.get();
   if (choiceBallotAttempts >= 3) {
-    reportChoiceBallotData(choiceBallotAttentionList, await Privileged.getSearchEngine(), "", false, enginesOrdering, null, 4);
+    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, null, 4, webScience.timing.now());
     return;
   }
 
@@ -224,7 +260,7 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
   choiceBallotAttempts = await choiceBallotAttemptsCounter.incrementAndGet();
 
   // Determine the participant's original search engine and homepage
-  const originalEngine = await Privileged.getSearchEngine();
+  const oldEngine = await Privileged.getSearchEngine();
   const homepageChangeNeeded = Utils.getHomepageChangeNeeded(await Privileged.getHomepage());
 
   // A listener that will be messaged by the choice ballot and respond with whether the homepage
@@ -249,47 +285,38 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
     }
   });
 
-  // A listener that will be messaged by the choice ballot upon selection of an engine.
-  webScience.messaging.onMessage.addListener(async (message) => {
-    storage.set("EngineChangedFrom", originalEngine);
-    storage.set("EngineChangedTo", message.engine);
+  // Register a listener that will get the ballot data upon unload.
+  webScience.messaging.onMessage.addListener((message) => {
+    choiceBallotAttentionList.push(message.attentionDuration);
+    storage.set("ChoiceBallotAttentionList", choiceBallotAttentionList);
 
-    // Modify the participant's default search engine to their choice ballot response
-    Privileged.changeSearchEngine(message.engine);
+    choiceBallotDwellTimeList.push(message.dwellTime);
+    storage.set("ChoiceBallotDwellTimeList", choiceBallotDwellTimeList);
 
-    // If the current home page is a search engine page, change it to the default Firefox homepage
-    if (homepageChangeNeeded) {
-      Utils.changeHomepageToDefault();
+    if (message.ballotCompleted) {
+      storage.set("OldEngine", oldEngine);
+      storage.set("NewEngine", message.newEngine);
+
+      // Modify the participant's default search engine to their choice ballot response
+      Privileged.changeSearchEngine(message.newEngine);
+
+      // If the current home page is a search engine page, change it to the default Firefox homepage
+      if (homepageChangeNeeded) {
+        Utils.changeHomepageToDefault();
+      }
+
+      reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, oldEngine, message.newEngine, message.seeMoreClicked, message.enginesOrdering, message.detailsExpanded, choiceBallotAttempts, message.completionTime);
     }
-
-    // Update the attention duration list
-    choiceBallotAttentionList[choiceBallotAttentionList.length - 1] = message.attentionDuration;
-
-    reportChoiceBallotData(choiceBallotAttentionList, originalEngine, message.engine, message.seeMoreClicked, message.enginesOrdering, message.detailsExpanded, choiceBallotAttempts);
   }, {
-    type: "ChoiceBallotResponse",
+    type: "ChoiceBallotData",
     schema: {
       engine: "string",
       attentionDuration: "number",
+      dwellTime: "number",
+      detailsExpanded: "object",
       seeMoreClicked: "boolean",
       enginesOrdering: "object",
-      detailsExpanded: "object",
-    }
-  });
-
-
-  // Add an element to the attention duration list for the current attempt.
-  choiceBallotAttentionList.push(-1);
-  storage.set("ChoiceBallotAttentionList", choiceBallotAttentionList);
-
-  // Register a listener that will get the attention duration of the current attempt upon unload.
-  webScience.messaging.onMessage.addListener((message) => {
-    choiceBallotAttentionList[choiceBallotAttentionList.length - 1] = message.attentionDuration;
-    storage.set("ChoiceBallotAttentionList", choiceBallotAttentionList);
-  }, {
-    type: "ChoiceBallotAttention",
-    schema: {
-      attentionDuration: "number",
+      ballotCompleted: "boolean"
     }
   });
 
@@ -303,7 +330,7 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
 
 /**
  * Called when an intervention is complete. Sets the value of InterventionComplete to true
- * in storage and starts the post-intervention data collection stage of the study.
+ * in storage and starts the modal dialog treatment functionality.
  */
 function completeIntervention() {
   storage.set("InterventionComplete", true);

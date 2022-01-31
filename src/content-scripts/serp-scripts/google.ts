@@ -1,41 +1,63 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, getXPathElement, ElementType } from "../common.js"
-import { getQueryVariable } from "../../Utils.js"
-import { removeSelfPreferencedResults, replaceSelfPreferencedResults } from "../selfPreferencing.js";
+import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
+import { onlineServices } from "../../OnlineServiceVisitCollection.js";
 
 /**
  * Content Scripts for Google SERP
  */
 const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, selfPreferencingType, getSerpQueryVertical);
 
     /**
      * @returns {boolean} Whether the page is a Google web SERP page.
      */
     function getIsWebSerpPage(): boolean {
-        const tbm = getQueryVariable(window.location.href, "tbm")
-        if (!tbm) {
-            const tbs = getQueryVariable(window.location.href, "tbs")
-            if (!tbs || tbs.startsWith("qdr") || tbs.startsWith("li") || tbs.startsWith("cdr")) {
-                return true;
+        return searchEnginesMetadata["Google"].getIsSerpPage(window.location.href);
+    }
+
+    /**
+     * @returns {string} The category of online content the search query is for
+     * (flights, hotels, other travel, maps, lyrics, weather, shopping, or other direct answer).
+     */
+    function getSerpQueryVertical(): string {
+        return document.querySelector("[aria-current='page']").nextElementSibling.textContent;
+    }
+
+    /**
+     * Determines what tracked online service an organic result is for.
+     * @param {Element} organicResult - the organic result.
+     * @returns {string} If the organic result was for one of the tracked online services, the name of the online service. Otherwise, an empty string.
+     */
+    function getOnlineServiceFromOrganicResult(organicResult: Element): string {
+        try {
+            const citeText = (organicResult.querySelector("a cite") as HTMLElement).innerText.toLowerCase();
+            for (const onlineService in onlineServices) {
+                const onlineServiceDomainStrings = onlineServices[onlineService];
+                for (const onlineServiceDomainString of onlineServiceDomainStrings) {
+                    if (citeText.includes(onlineServiceDomainString))
+                        return onlineServiceDomainString
+                }
             }
+        } catch (error) {
+            return "";
         }
-        return false;
+        return "";
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp)");
+    function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
+        const organicResults = document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)");
         const organicDetails: OrganicDetail[] = [];
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null });
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: getOnlineServiceFromOrganicResult(organicResult) });
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')));
 
         }
-        return { details: organicDetails, linkElements: organicLinkElements };
+        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
@@ -114,7 +136,6 @@ const serpScript = function () {
         } catch (error) {
             return null;
         }
-
     }
 
     /**
@@ -187,7 +208,7 @@ const serpScript = function () {
 
     /**
      * A callback that will be passed the string URL of new tabs opened from the page. It should
-     * determine if the new tab corresponds with an ad click, organic click, or internal click.
+     * determine if the new tab corresponds with an ad click, organic click, internal click, or self preferencing click.
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
@@ -220,8 +241,26 @@ const serpScript = function () {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/") ||
                     normalizedUrl.includes("google.com/search"))) {
-                console.log("INTERNAL CLICK")
+                console.log("INTERNAL CLICK");
                 pageValues.numInternalClicks++;
+            }
+            return;
+        }
+        if (pageValues.mostRecentMousedown.Type === ElementType.SelfPreferenced) {
+            if (pageValues.mostRecentMousedown.Link === url ||
+                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
+                console.log("SELF PREFERENCED CLICK")
+                pageValues.numSelfPreferencedClicks++;
+
+                try {
+                    const urlObject = new URL(redirectUrl ? redirectUrl : url);
+                    if (urlObject.hostname.includes("google.com")) {
+                        console.log("INTERNAL CLICK");
+                        pageValues.numInternalClicks++;
+                    }
+                } catch (error) {
+                    // Not internal link
+                }
             }
             return;
         }
@@ -237,15 +276,4 @@ const serpScript = function () {
     });
 };
 
-waitForPageManagerLoad(serpScript)
-
-const selfPreferencingType = __SELF_PREFERENCING_TYPE__;
-if (selfPreferencingType === "Replace") {
-    window.addEventListener("load", () => {
-        replaceSelfPreferencedResults();
-    });
-} else if (selfPreferencingType === "Remove") {
-    window.addEventListener("load", () => {
-        removeSelfPreferencedResults();
-    });
-}
+waitForPageManagerLoad(serpScript);

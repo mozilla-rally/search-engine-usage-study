@@ -110,7 +110,8 @@ export function initializeAttributionTracking(): void {
       // (ie. Ctrl+clicking on the forward/back button or a history item from right clicking on the forward/back button) 
       // or reloading in a new tab (ie. Ctrl+clicking on reload button) does copy the history of the opener tab to the new tab.
       if (pageTransitionDataEvent.isOpenedTab) {
-        tabHistoryPageIds[pageTransitionDataEvent.tabId] = { ...tabHistoryPageIds[pageTransitionDataEvent.openerTabId] };
+        // Make a deep copy
+        tabHistoryPageIds[pageTransitionDataEvent.tabId] = JSON.parse(JSON.stringify(tabHistoryPageIds[pageTransitionDataEvent.openerTabId]));
       }
 
       // If the participant used the forward or back button to trigger the navigation, then we continue the attribution 
@@ -203,6 +204,7 @@ export function initializeAttributionTracking(): void {
       };
     }
 
+    // Store the page ID as the most recent page visit to this page URL on the respective tab.
     if (!tabHistoryPageIds[pageTransitionDataEvent.tabId]) tabHistoryPageIds[pageTransitionDataEvent.tabId] = {}
     tabHistoryPageIds[pageTransitionDataEvent.tabId][pageUrl] = pageIdToAttributionData[pageId];
   },

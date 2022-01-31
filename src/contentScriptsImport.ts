@@ -10,12 +10,6 @@
 export const serpScripts = [
   {
     args: {
-      matches: ["*://*.google.com/search?*"],
-      js: [{ file: "dist/content-scripts/serp-scripts/google.js" }]
-    }
-  },
-  {
-    args: {
       matches: ["*://*.duckduckgo.com/*"],
       js: [{ file: "dist/content-scripts/serp-scripts/duckduckgo.js" }]
     }
@@ -50,6 +44,7 @@ export const serpScripts = [
       js: [{ file: "dist/content-scripts/serp-scripts/ask.js" }]
     }
   },
+  // This is the content scripts for advertisements on Ask.com SERPs.
   {
     args: {
       matches: ["*://*.google.com/afs/ads*"],
@@ -64,3 +59,27 @@ export const serpScripts = [
     }
   },
 ]
+
+// Content script for Google that does not modify self preferenced results
+export const googleDefaultScript = {
+  args: {
+    matches: ["*://*.google.com/search?*"],
+    js: [{ code: "const selfPreferencingType = null;" }, { file: "dist/content-scripts/serp-scripts/google.js" }]
+  }
+};
+
+// Content script for Google that removes self preferenced results
+export const googleRemoveScript = {
+  args: {
+    matches: ["*://*.google.com/search?*"],
+    js: [{ code: "const selfPreferencingType = 'Remove';" }, { file: "dist/content-scripts/serp-scripts/google.js" }]
+  }
+};
+
+// Content script for Google that replaces self preferenced results
+export const googleReplaceScript = {
+  args: {
+    matches: ["*://*.google.com/search?*"],
+    js: [{ code: "const selfPreferencingType = 'Replace';" }, { file: "dist/content-scripts/serp-scripts/google.js" }]
+  }
+};

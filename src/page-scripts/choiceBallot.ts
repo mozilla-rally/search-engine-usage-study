@@ -1,3 +1,4 @@
+import { timing } from "@mozilla/web-science";
 import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
 
 // Randomly shuffles the input array in place.
@@ -162,13 +163,14 @@ window.addEventListener("DOMContentLoaded", async function () {
         const selectedEngine = checkedRadio ? checkedRadio.value : "";
         browser.runtime.sendMessage({
             type: "ChoiceBallotData",
-            engine: selectedEngine,
+            newEngine: selectedEngine,
             attentionDuration: getAttentionDuration(),
             dwellTime: getDwellTime(event.timeStamp),
             detailsExpanded: Array.from(detailsExpandedSet),
             seeMoreClicked,
             enginesOrdering,
             ballotCompleted,
+            completionTime: timing.fromMonotonicClock(event.timeStamp, true),
         });
     });
 });

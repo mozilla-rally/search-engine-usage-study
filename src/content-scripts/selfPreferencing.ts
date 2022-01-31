@@ -1,4 +1,4 @@
-import { getXPathElement, getXPathElements } from "./common.js";
+import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
 
 const replacementSERPData: {
     [type: string]: {
@@ -58,29 +58,124 @@ const replacementSERPData: {
     }
 }
 
-function generateReplacementResult(header: string, link: string, description: string, cite: string, citeSpan: string) {
+function getCreatedTemplateSER(): Element {
+    const organicResults = document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)");
+
+    const minHeight = 9999;
+    let templateElement: Element = null;
+    for (const organicResult of organicResults) {
+        const resultOffsetHeight = (organicResult as HTMLElement).offsetHeight;
+        if (resultOffsetHeight && resultOffsetHeight > 0 && resultOffsetHeight < minHeight) {
+            templateElement = organicResult;
+        }
+    }
+
+    if (!templateElement) {
+        return null;
+    }
+
+    // There are two types of organic SERs I have seen
+    //  1. The header and description containers are within a div element within another div element within
+    //     the encapsulating .g element
+    //  2. The header and description containers are within a div element within the encapsulating .g element
+
+    // Attempt to create type 1 organic SER
+    try {
+        const replacementElement = templateElement.cloneNode();
+
+        const templateInnerDiv = templateElement.querySelector('div');
+        const replacementInnerDiv = templateInnerDiv.cloneNode();
+        replacementElement.appendChild(replacementInnerDiv);
+
+        const templateInnerDivLevel2 = templateInnerDiv.querySelector('div');
+        const replacementInnerDivLevel2 = templateInnerDivLevel2.cloneNode();
+        replacementInnerDiv.appendChild(replacementInnerDivLevel2);
+
+        const templateInnerDivsLevel3 = templateInnerDivLevel2.querySelectorAll('div');
+        const templateHeaderDiv = templateInnerDivsLevel3[0];
+        const templateDescriptionDiv = templateInnerDivsLevel3[1];
+
+        const replacementHeaderDiv = templateHeaderDiv.cloneNode();
+        replacementInnerDivLevel2.appendChild(replacementHeaderDiv);
+        const replacementDescriptionDiv = templateDescriptionDiv.cloneNode();
+        replacementInnerDivLevel2.appendChild(replacementDescriptionDiv);
+
+        const templateHeader = templateHeaderDiv.querySelector('a');
+        const replacementHeader = templateHeader.cloneNode(true);
+        replacementHeaderDiv.appendChild(replacementHeader);
+
+        const templateDescription = templateDescriptionDiv.querySelector('div');
+        const replacementDescription = templateDescription.cloneNode();
+        replacementDescriptionDiv.appendChild(replacementDescription);
+
+        return replacementElement as Element;
+    } catch (error) {
+        // Creation of SER element type 1 did not work
+    }
+
+    // Attempt to create type 2 organic SER
+    try {
+        const replacementElement = templateElement.cloneNode();
+
+        const templateInnerDiv = templateElement.querySelector('div');
+        const replacementInnerDiv = templateInnerDiv.cloneNode();
+        replacementElement.appendChild(replacementInnerDiv);
+
+        const templateInnerDivsLevel2 = templateInnerDiv.querySelectorAll('div');
+        const templateHeaderDiv = templateInnerDivsLevel2[0];
+        const templateDescriptionDiv = templateInnerDivsLevel2[1];
+
+        const replacementHeaderDiv = templateHeaderDiv.cloneNode();
+        replacementInnerDiv.appendChild(replacementHeaderDiv);
+        const replacementDescriptionDiv = templateDescriptionDiv.cloneNode();
+        replacementInnerDiv.appendChild(replacementDescriptionDiv);
+
+        const templateHeader = templateHeaderDiv.querySelector('a');
+        const replacementHeader = templateHeader.cloneNode(true);
+        replacementHeaderDiv.appendChild(replacementHeader);
+
+        const templateDescription = templateDescriptionDiv.querySelector('div');
+        const replacementDescription = templateDescription.cloneNode();
+        replacementDescriptionDiv.appendChild(replacementDescription);
+
+        return replacementElement as Element;
+    } catch (error) {
+        // Creation of SER element type 2 did not work
+    }
+
+    return null;
+}
+
+function getDefaultTemplateSER(): HTMLDivElement {
     const replacementSER = document.createElement('div');
     replacementSER.classList.add('g');
     replacementSER.innerHTML = `
-    <div>
-        <div class="tF2Cxc">
-            <div class="yuRUbf">
-                <a href="">
-                    <br>
-                    <h3 class="LC20lb DKV0Md"></h3>
-                    <div class="TbwUpd NJjxre">
-                        <cite class="iUh30 Zu0yb qLRx3b tjvcx">
-                            <span class="dyjrff qzEoUe"></span>
-                        </cite>
-                    </div>
-                </a>
-            </div>
-            <div class="IsZvec">
-                <div class="VwiC3b yXK7lf MUxGbd yDYNvb lyLwlc lEBKkf" style="-webkit-line-clamp:2"><span></span></div>
-            </div>
-        </div>
-    </div>
+<div class="jtfYYd">
+	<div class="NJo7tc Z26q7c jGGQ5e" data-header-feature="0">
+		<div class="yuRUbf">
+			<a href="">
+				<br>
+				<h3 class="LC20lb MBeuO DKV0Md"></h3>
+				<div class="TbwUpd NJjxre">
+					<cite class="iUh30 qLRx3b tjvcx" role="text">
+						<span class="dyjrff qzEoUe" role="text"></span>
+					</cite>
+				</div>
+			</a>
+		</div>
+	</div>
+	<div class="NJo7tc Z26q7c uUuwM" data-content-feature="1">
+		<div class="VwiC3b yXK7lf MUxGbd yDYNvb lyLwlc lEBKkf">
+		</div>
+	</div>
+</div>
 `;
+    return replacementSER;
+}
+
+function generateReplacementResult(header: string, link: string, description: string, cite: string, citeSpan: string) {
+    let replacementSER = getCreatedTemplateSER();
+    if (!replacementSER) replacementSER = getDefaultTemplateSER();
 
     replacementSER.querySelector("h3").innerHTML = header;
     replacementSER.querySelector("a").href = link;
@@ -217,67 +312,185 @@ function getReplacementData(element, type): ReplacementData {
     return { header, link, description, cite, citeSpan };
 }
 
-function getSelfPreferencedResults(): Element[] {
-    return [].concat(
-        getThingsToDoResults(),
-        getHotelResults(),
-        getFlightResults(),
-        getVacationRentalResults(),
-        getMapResults(),
-        getLyricResults(),
-        getWeatherResults()
-    );
+const trackedElementClass = "rally-study-self-preferenced-tracking";
+function filterFunction(element: Element) {
+    return !element.classList.contains(trackedElementClass);
 }
 
-export function removeSelfPreferencedResults() {
-    const selfPreferencedResults: Element[] = getSelfPreferencedResults();
-    for (const selfPreferencedResult of selfPreferencedResults) {
-        (selfPreferencedResult as any).style.setProperty("display", "none");
+function getSelfPreferencedElements(noRepeats: boolean): {
+    [type: string]: Element[]
+} {
+    const selfPreferencedResults = {
+        thingsToDo: getThingsToDoResults(),
+        vacationRental: getVacationRentalResults(),
+        hotel: getHotelResults(),
+        map: getMapResults(),
+        flight: getFlightResults(),
+        lyric: getLyricResults(),
+        weather: getWeatherResults()
+    };
+
+    if (noRepeats) {
+        for (const selfPreferencedResultType in selfPreferencedResults) {
+            selfPreferencedResults[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].filter(filterFunction);
+        }
+
+        for (const selfPreferencedResultType in selfPreferencedResults) {
+            const elements = selfPreferencedResults[selfPreferencedResultType];
+            for (const element of elements) {
+                element.classList.add(trackedElementClass);
+            }
+        }
     }
 
+    return selfPreferencedResults;
+}
+
+const removedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+export function removeSelfPreferenced(): SelfPreferencedDetail[] {
     // Remove lyric tabs
     const lyricsTabs = getXPathElements("//span[@role='tab' and descendant::span[text()='Lyrics']]");
     for (const lyricsTab of lyricsTabs) {
         (lyricsTab as any).style.setProperty("display", "none");
     }
-}
 
-export function replaceSelfPreferencedResults() {
-    // Remove lyrics and weather results because Google does not offer
-    // its own service for these to replace with.
-    const lyricAndWeatherResults = [].concat(
-        getLyricResults(),
-        getWeatherResults()
-    );
-    for (const lyricAndWeatherResult of lyricAndWeatherResults) {
-        (lyricAndWeatherResult as any).style.setProperty("display", "none");
-    }
-
-    const flightResults = getFlightResults();
-    for (const flightResult of flightResults) {
-        const replacementData = getFlightReplacementData(flightResult);
-        const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
-
-        flightResult.parentElement.insertBefore(replacementResult, flightResult);
-        (flightResult as any).style.setProperty("display", "none");
-    }
-
-    const otherSelfPreferencedResults: {
+    const selfPreferencedResults: {
         [type: string]: Element[]
-    } = {
-        thingsToDo: getThingsToDoResults(),
-        vacationRental: getVacationRentalResults(),
-        hotel: getHotelResults(),
-        map: getMapResults(),
-    }
-    for (const typeOfSelfPreferencedResult in otherSelfPreferencedResults) {
-        for (const selfPreferencedResult of otherSelfPreferencedResults[typeOfSelfPreferencedResult]) {
-            const replacementData = getReplacementData(selfPreferencedResult, typeOfSelfPreferencedResult);
-            const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
+    } = getSelfPreferencedElements(true);
 
-            selfPreferencedResult.parentElement.insertBefore(replacementResult, selfPreferencedResult);
-            (selfPreferencedResult as any).style.setProperty("display", "none");
-
+    // Get details of all self preferenced results
+    for (const selfPreferencedResultType in selfPreferencedResults) {
+        const elements = selfPreferencedResults[selfPreferencedResultType];
+        for (const element of elements) {
+            removedSelfPreferencedElementDetails.push({
+                TopHeight: getElementTopHeight(element),
+                BottomHeight: getElementBottomHeight(element),
+                Type: selfPreferencedResultType
+            });
         }
     }
+
+    // Remove all self preferenced results
+    // This is in separate loop from the one above that gets the details so that
+    // any removal will not affect the heights
+    for (const selfPreferencedResultType in selfPreferencedResults) {
+        const elements = selfPreferencedResults[selfPreferencedResultType];
+        for (const element of elements) {
+            (element as any).style.setProperty("display", "none");
+        }
+    }
+
+    return removedSelfPreferencedElementDetails;
+}
+
+export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
+
+    const selfPreferencedResults: {
+        [type: string]: Element[]
+    } = getSelfPreferencedElements(false);
+
+    const selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+    const selfPreferencedElements: Element[] = [];
+
+    for (const selfPreferencedResultType in selfPreferencedResults) {
+        const elements = selfPreferencedResults[selfPreferencedResultType];
+        for (const element of elements) {
+            selfPreferencedElements.push(element);
+            selfPreferencedElementDetails.push({
+                TopHeight: getElementTopHeight(element),
+                BottomHeight: getElementBottomHeight(element),
+                Type: selfPreferencedResultType
+            });
+        }
+    }
+
+    return { selfPreferencedElementDetails, selfPreferencedElements };
+}
+
+
+
+
+
+
+
+
+
+const replacedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+const replacedSelfPreferencedElements: Element[] = [];
+export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
+    const selfPreferencedResults: {
+        [type: string]: Element[]
+    } = getSelfPreferencedElements(true);
+
+
+    const lyricAndWeatherResults: {
+        [type: string]: Element[]
+    } = {};
+    const selfPreferencedResultsToReplace: {
+        [type: string]: Element[]
+    } = {};
+
+    // Get all the lyrics and weather results, which will be removed because Google does not
+    // have a competing service, and all the other tracked self preferenced results, which will
+    // be replaced.
+    for (const selfPreferencedResultType in selfPreferencedResults) {
+        if (['lyric', 'weather'].includes(selfPreferencedResultType)) {
+            lyricAndWeatherResults[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType];
+        } else {
+            selfPreferencedResultsToReplace[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType];
+        }
+    }
+
+    // Get the details of all the lyrics and weather results.
+    for (const lyricAndWeatherResultType in lyricAndWeatherResults) {
+        const elements = lyricAndWeatherResults[lyricAndWeatherResultType];
+        for (const element of elements) {
+            replacedSelfPreferencedElementDetails.push({
+                TopHeight: getElementTopHeight(element),
+                BottomHeight: getElementBottomHeight(element),
+                Type: lyricAndWeatherResultType
+            });
+        }
+    }
+
+    // Remove all the lyrics and weather results.
+    for (const lyricAndWeatherResultType in lyricAndWeatherResults) {
+        const elements = lyricAndWeatherResults[lyricAndWeatherResultType];
+        for (const element of elements) {
+            (element as any).style.setProperty("display", "none");
+        }
+    }
+
+    const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, selfPreferencedElement: Element }[] = [];
+    for (const typeOfSelfPreferencedResultToReplace in selfPreferencedResultsToReplace) {
+        for (const selfPreferencedResultToReplace of selfPreferencedResultsToReplace[typeOfSelfPreferencedResultToReplace]) {
+            const replacementData = typeOfSelfPreferencedResultToReplace === "flight" ?
+                getFlightReplacementData(selfPreferencedResultToReplace) :
+                getReplacementData(selfPreferencedResultToReplace, typeOfSelfPreferencedResultToReplace);
+
+            const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
+
+            selfPreferencedResultToReplace.parentElement.insertBefore(replacementResult, selfPreferencedResultToReplace);
+            (selfPreferencedResultToReplace as any).style.setProperty("display", "none");
+
+            replacedSelfPreferencedElementsAndType.push({
+                selfPreferencedType: typeOfSelfPreferencedResultToReplace,
+                selfPreferencedElement: replacementResult,
+            })
+        }
+    }
+
+
+    for (const { selfPreferencedType, selfPreferencedElement } of replacedSelfPreferencedElementsAndType) {
+        replacedSelfPreferencedElementDetails.push({
+            TopHeight: getElementTopHeight(selfPreferencedElement),
+            BottomHeight: getElementBottomHeight(selfPreferencedElement),
+            Type: selfPreferencedType
+        });
+        replacedSelfPreferencedElements.push(selfPreferencedElement);
+    }
+
+    return {
+        selfPreferencedElementDetails: replacedSelfPreferencedElementDetails, selfPreferencedElements: replacedSelfPreferencedElements
+    };
 }
