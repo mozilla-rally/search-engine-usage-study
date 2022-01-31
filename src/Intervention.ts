@@ -55,10 +55,10 @@ export async function conductIntervention(interventionTypeArg, storageArg): Prom
   treatmentStartTimes = await storage.get("TreatmentStartTimes");
   if (!treatmentStartTimes) {
     treatmentStartTimes = [webScience.timing.now()];
-    storage.set("TreatmentStartTimes", treatmentStartTimes);
-  } else {
-    treatmentStartTimes.push(webScience.timing.now());
   }
+
+  treatmentStartTimes.push(webScience.timing.now());
+  storage.set("TreatmentStartTimes", treatmentStartTimes);
 
   // Conducts the randomly selected intervention.
   if (interventionType === "NoticeDefault") {
