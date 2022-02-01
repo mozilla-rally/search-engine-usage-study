@@ -1,0 +1,85 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# This file defines the pings that are recorded by the Glean SDK.
+# Their code APIs is automatically generated, at build time using,
+# the `glean_parser` PyPI package.
+
+---
+$schema: moz://mozilla.org/schemas/glean/pings/2-0-0
+
+study-enrollment:
+  description: |
+    This ping is sent when the user has consented to the study.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+study-initalization:
+  description: |
+    This ping is sent when the user joins the study.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+clear-browser-history:
+  description: |
+    This ping is sent when the user clears their browsing history.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+ballot-response:
+  description: |
+    This ping is sent for users in the search engine ballot treatment group   |
+    once they've made a selection, or if they have refused to make a          |
+    selection three times
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+notice-response:
+  description: |
+    This ping is sent for users in the notification treatment group once the  |
+    user interacts with the notice.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+modal-response:
+  description: |
+    This ping is sent for users in the modal treatment group once the user    |
+    interacts with the modal.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+serp-visit:
+  description: |
+    This ping is sent when there is a visit to a search engine results page.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com

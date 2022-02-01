@@ -113,3 +113,7 @@ compiled-ts/
 
 # Testing output files
 tests/output/
+
+# Glean-related files
+.venv/
+src/generated/
