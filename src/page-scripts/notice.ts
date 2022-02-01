@@ -1,4 +1,5 @@
-import { initializeAttentionTracking, getAttentionDuration } from "./pageScriptCommon.js";
+import { timing } from "@mozilla/web-science";
+import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
 
 /**
  * Description for each of the search engines that the participant's default can be changed to
@@ -6,10 +7,18 @@ import { initializeAttentionTracking, getAttentionDuration } from "./pageScriptC
  * @type {Object}
  */
 const engineDetails = {
-    DuckDuckGo: "DuckDuckGo doesn't store your personal information. Ever.",
-    Google: "Google is the world's most used search engine.",
-    Bing: "Microsoft Bing helps you find trusted search results fast.",
-    Yahoo: "Yahoo Search helps you find the information you need.",
+    DuckDuckGo: {
+        displayName: "DuckDuckGo",
+        description: "DuckDuckGo doesn't store your personal information. Ever."
+    },
+    Google: {
+        displayName: "Google",
+        description: "Google is the world's most used search engine."
+    },
+    Bing: {
+        displayName: "Bing",
+        description: "Microsoft Bing helps you find trusted search results fast."
+    }
 };
 
 window.addEventListener("DOMContentLoaded", async function () {
@@ -31,16 +40,23 @@ window.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    const closeButton = document.getElementById("close");
+    if (closeButton) {
+        closeButton.addEventListener("click", () => {
+            window.close();
+        });
+    }
+
     // Send a message to the background page to get information about the notice page.
     const noticeDetails = await browser.runtime.sendMessage({ type: "NoticeDetails" });
-    if (noticeDetails && noticeDetails.originalEngine && noticeDetails.newEngine) {
-        // Display what the participant's engine was changed from and to.
-        document.getElementById("engineChange").textContent = ` from ${noticeDetails.originalEngine} to ${noticeDetails.newEngine}`;
+    if (noticeDetails && noticeDetails.newEngine) {
+        // Display what the participant's engine was changed to.
+        document.getElementById("engineChange").textContent = `to ${engineDetails[noticeDetails.newEngine].displayName}`;
 
         if (noticeDetails.newEngine in engineDetails) {
             // Display the image and description for the engine that the participant's default was changed to.
             document.getElementById('engine-info').classList.remove("hiding");
-            document.getElementById("engine-description").textContent = engineDetails[noticeDetails.newEngine];
+            document.getElementById("engine-description").textContent = engineDetails[noticeDetails.newEngine].description;
             const logo = document.getElementById("notice-logo") as HTMLImageElement;
             logo.src = `assets/logos/${noticeDetails.newEngine}.png`;
             logo.alt = `${noticeDetails.newEngine} logo`;
@@ -63,7 +79,13 @@ window.addEventListener("DOMContentLoaded", async function () {
     }
 
     // Send the NoticeResponse message to the background upon unload.
-    window.addEventListener("unload", () => {
-        browser.runtime.sendMessage({ type: "NoticeResponse", revert: revert, attentionDuration: getAttentionDuration() });
+    window.addEventListener("unload", (event) => {
+        browser.runtime.sendMessage({
+            type: "NoticeResponse",
+            revert: revert,
+            attentionDuration: getAttentionDuration(),
+            dwellTime: getDwellTime(event.timeStamp),
+            completionTime: timing.fromMonotonicClock(event.timeStamp, true),
+        });
     });
 });

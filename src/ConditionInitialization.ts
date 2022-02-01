@@ -10,37 +10,13 @@ import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
 
 /**
- * The set of study interventions and their relative weights.
- * @type {ConditionSet}
- */
-const interventionSet = {
-  name: "InterventionSelection",
-  conditions: [
-    { name: "NoIntervention", weight: 10 },
-    { name: "NoticeDefault", weight: 20 },
-    { name: "NoticeRevert", weight: 20 },
-    { name: "ChoiceBallotDefault", weight: 1000000 },
-    { name: "ChoiceBallotHidden", weight: 10 },
-    { name: "ChoiceBallotDescriptions", weight: 10 },
-    { name: "ChoiceBallotExtended", weight: 20000000 },
-    { name: "ModalPrimaryRevert", weight: 10 },
-    { name: "ModalSecondaryRevert", weight: 10 },
-  ]
-};
-
-/**
- * Run initial data collection and return the selected intervention.
+ * Run initial data collection.
+ * @param {number} enrollmentTime - the time when the participant joined the study.
+ * @param {string} conditionType - the selected condition for the participant.
+ * @param {Object} storage - A persistent key-value storage object for the study
  * @async
  **/
-export async function run(storage): Promise<string> {
-  // Get the intervention type from storage.
-  // If the value does not exist in storage, then we randomly select
-  // an intervention type and save the selection to storage.
-  let interventionType = await storage.get("InterventionType");
-  if (!interventionType) {
-    interventionType = await webScience.randomization.selectCondition(interventionSet);
-    storage.set("InterventionType", interventionType);
-  }
+export async function run(enrollmentTime, conditionType, storage): Promise<void> {
 
   const initialDataReported = await storage.get("InitialDataReported");
   if (!initialDataReported) {
@@ -51,12 +27,13 @@ export async function run(storage): Promise<string> {
     const timeStamp30DaysAgo = currentTime - (30 * 24 * 60 * 60 * 1000);
 
     const initialData = {
-      InterventionType: interventionType,
+      ConditionType: conditionType,
       SurveyId: await webScience.userSurvey.getSurveyId(),
-      Engine: await Privileged.getSearchEngine(),
+      DefaultSearchEngine: await Privileged.getSearchEngine(),
       HistoryQueryCount: await getHistoryQueryCount(timeStamp30DaysAgo),
       HistoryAge: await getHistoryAge(currentTime, timeStamp30DaysAgo),
-      Time: Utils.getCoarsenedTimeStamp(currentTime),
+      EnrollmentTime: enrollmentTime,
+      PingTime: Utils.getCoarsenedTimeStamp(currentTime),
       TimeOffset: new Date().getTimezoneOffset()
     };
 
@@ -64,8 +41,6 @@ export async function run(storage): Promise<string> {
 
     storage.set("InitialDataReported", true);
   }
-
-  return interventionType;
 }
 
 

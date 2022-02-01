@@ -25,6 +25,7 @@ export const searchEnginesMetadata: {
     primary: boolean,
     // A list of domains for the search engine.
     domains: string[],
+    // The possible search query parameters in the URL
     searchQueryParameters: string[],
     /**
      * @param {string} url - a URL string.
@@ -79,7 +80,7 @@ export const searchEnginesMetadata: {
     },
   },
   Yahoo: {
-    primary: true,
+    primary: false,
     domains: ["yahoo.com"],
     searchQueryParameters: ["p", "q", "query"],
     getIsSerpPage: function (url: string): boolean {
@@ -128,13 +129,20 @@ export const searchEnginesMetadata: {
   },
 }
 
+/**
+ * @param {string} url - a URL string.
+ * @param {string} engine - a search engine.
+ * @returns {string} The search query parameter for url if it is a SERP page for engine. Otherwise, null.
+ */
 export function getSerpQuery(url: string, engine: string): string {
   if (!url || !engine) {
     return;
   }
 
+  // Get the possible search query parameters for the engine.
   const searchQueryParameters = searchEnginesMetadata[engine].searchQueryParameters;
 
+  // If any of the search query parameters are in the URL, return the query.
   for (const parameter of searchQueryParameters) {
     const query = getQueryVariable(url, parameter);
     if (query) {
@@ -232,16 +240,17 @@ export function getCoarsenedTimeStamp(timeStamp: number): number {
  */
 export function getHomepageChangeNeeded(homepages: string): boolean {
   const homepageList = homepages.split("|");
-
-  for (const homepage in homepageList) {
+  for (const homepage of homepageList) {
     if (homepage && getEngineFromURL(homepage)) {
       return true;
     }
   }
-
   return false;
 }
 
+/**
+ * Changes the default homepage to Firefox Home.
+ */
 export async function changeHomepageToDefault(): Promise<void> {
   await Privileged.changeHomepage("about:home");
 }

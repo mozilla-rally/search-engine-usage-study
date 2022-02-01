@@ -11,16 +11,17 @@ const serpScript = function () {
     const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback);
 
     /**
-    * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
+    * @returns {boolean} Whether the page is an Ask web SERP page.
     */
     function getIsWebSerpPage(): boolean {
+        // The content script match pattern handles this.
         return true;
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+    function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         // The organic results are .PartialSearchResults-item elements.
         const organicResults = document.querySelectorAll(".PartialSearchResults-item");
 
@@ -28,12 +29,12 @@ const serpScript = function () {
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
             // Get the details of all the organic elements.
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null });
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" });
 
             // Get all the links (elements with an "href" attribute).
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return { details: organicDetails, linkElements: organicLinkElements };
+        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
@@ -41,6 +42,9 @@ const serpScript = function () {
      */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
+
+        // The image ads on the side are .display-ad-block elements. The advertisements
+        // in the main search area are in iframes and handled by askgoogleads.js
         const adElements = document.querySelectorAll(".display-ad-block");
         for (const adElement of adElements) {
             adLinkElements.push(...adElement.querySelectorAll("[href]"));
@@ -116,6 +120,7 @@ const serpScript = function () {
             if (event.target instanceof Element) {
                 const href = getInternalLink(event.target as Element);
                 if (href) {
+                    console.log("INTERNAL CLICK")
                     pageValues.numInternalClicks++;
                     pageValues.mostRecentRecordedClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
                     pageValues.mostRecentMousedown = null;
@@ -158,6 +163,7 @@ const serpScript = function () {
             normalizedUrl.includes("google.com/aclk") ||
             normalizedUrl.includes("revjet") ||
             normalizedUrl.includes("googleadservices.com")) {
+            console.log("AD CLICK")
             pageValues.numAdClicks++;
             return;
         }
@@ -167,6 +173,7 @@ const serpScript = function () {
         const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedRecentUrl === normalizedUrl) {
+                console.log("ORGANIC CLICK")
                 pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
@@ -174,6 +181,7 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl ||
                 normalizedUrl.includes("ask.com")) {
+                console.log("INTERNAL CLICK")
                 pageValues.numInternalClicks++;
             }
             return;
@@ -201,6 +209,7 @@ const serpScript = function () {
             if ("type" in event.data && event.data.type === "numAds") {
                 askFrameToNumAdsObject[event.data.frameID] = event.data.numAds;
             } else if ("type" in event.data && event.data.type === "adClick") {
+                console.log("AD CLICK")
                 pageValues.numAdClicks++;
             }
         } catch (error) {

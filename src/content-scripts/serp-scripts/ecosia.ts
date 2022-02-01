@@ -7,28 +7,29 @@ import { timing } from "@mozilla/web-science";
  */
 const serpScript = function () {
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ecosia", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null);
+    const pageValues = new PageValues("Ecosia", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
 
     /**
-    * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
+    * @returns {boolean} Whether the page is an Ecosia web SERP page.
     */
     function getIsWebSerpPage(): boolean {
+        // The content script match pattern handles this.
         return true;
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
-    function getOrganicDetailsAndLinkElements(): { details: OrganicDetail[], linkElements: Element[][] } {
+    function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         const organicResults = document.querySelectorAll("div.card-web > div.result");
         const organicDetails: OrganicDetail[] = [];
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null })
+            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
-        return { details: organicDetails, linkElements: organicLinkElements };
+        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
@@ -119,18 +120,21 @@ const serpScript = function () {
         const normalizedUrl: string = getNormalizedUrl(url);
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("bing.com/aclick") || pageValues.mostRecentMousedown.Link === url) {
+                console.log("AD CLICK")
                 pageValues.numAdClicks++;
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
+                console.log("ORGANIC CLICK")
                 pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (pageValues.mostRecentMousedown.Link === url) {
+                console.log("INTERNAL CLICK");
                 pageValues.numInternalClicks++;
             }
             return;

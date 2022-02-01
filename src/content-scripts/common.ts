@@ -1,10 +1,12 @@
 import { timing, matching } from "@mozilla/web-science";
 import { getSerpQuery } from "../Utils";
+import { getSelfPreferencedDetailsAndElements, removeSelfPreferenced, replaceSelfPreferenced } from "./selfPreferencing";
 
 export enum ElementType {
   Organic,
   Internal,
   Ad,
+  SelfPreferenced,
 }
 
 /**
@@ -39,9 +41,20 @@ export class PageValues {
   readonly searchEngine: string;
 
   /**
+   * The self preferencing modification type for the page.
+   * This is only relevant for Google SERPs.
+   */
+  readonly selfPreferencingType: string;
+
+  /**
    * The search query for the SERP page
    */
   query: string;
+
+  /**
+   * The category of online content the search query is for (flights, hotels, other travel, maps, lyrics, weather, shopping, or other direct answer).
+   */
+  queryVertical: string;
 
   /**
    * The pageId for the page from webScience.pageManager
@@ -114,6 +127,16 @@ export class PageValues {
   organicDetails: Array<OrganicDetail> = [];
 
   /**
+   * Details of the organic results on the page.
+   */
+  selfPreferencedDetails: Array<SelfPreferencedDetail> = [];
+
+  /**
+   * The number of advertisement clicks.
+   */
+  numSelfPreferencedClicks = 0;
+
+  /**
    * An array of the listeners tracking elements on the page.
    */
   elementListenersList: ElementListeners[] = [];
@@ -141,10 +164,20 @@ export class PageValues {
   possibleInternalClickTimeStamp: number = null;
 
   /**
-   * The ID of the page value refresh interval that run after "DOMContentLoaded" until "load".
+   * The timestamp of the most recent click that was possibly on an internal link element. This is needed because of
+   * SERP pages having links that cannot be directly tracked because the link is through an event listener rather
+   * than an href attribute on the element.
+   */
+  possibleSelfPreferencedClickTimeStamp: number = null;
+
+  /**
+   * The ID of the page value refresh interval that runs until the document readyState is "complete.
    */
   beforeLoadPageValueRefreshIntervalId = null;
 
+  /**
+   * Callback to determine the page values for the current SERP page.
+   */
   determinePageValues: () => void = null;
 
   initializeDeterminePageValues(
@@ -154,18 +187,37 @@ export class PageValues {
     getSearchAreaTopHeight: () => number,
     getNumAdResults: () => number,
     getOrganicDetailsAndLinkElements: () => {
-      details: OrganicDetail[];
-      linkElements: Element[][];
+      organicDetails: OrganicDetail[];
+      organicLinkElements: Element[][];
     },
     getAdLinkElements: () => Element[],
     getInternalLink: (target: Element) => string,
-    extraCallback: () => void) {
+    extraCallback: () => void,
+    getSerpQueryVertical: () => string) {
 
     this.determinePageValues = () => {
       this.isWebSerpPage = getIsWebSerpPage();
       if (!this.isWebSerpPage) return;
 
+      let selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+      let selfPreferencedElements: Element[] = [];
+      if (this.searchEngine == "Google") {
+        if (this.selfPreferencingType == "Remove") {
+          selfPreferencedElementDetails = removeSelfPreferenced();
+        } else if (this.selfPreferencingType == "Replace") {
+          ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced());
+        } else {
+          ({ selfPreferencedElementDetails, selfPreferencedElements } = getSelfPreferencedDetailsAndElements());
+        }
+        console.log(selfPreferencedElementDetails);
+        console.log(selfPreferencedElements);
+      }
+
+      this.selfPreferencedDetails = selfPreferencedElementDetails;
+
       this.query = getSerpQuery(window.location.href, this.searchEngine);
+
+      this.queryVertical = getSerpQueryVertical ? getSerpQueryVertical() : null;
 
       this.pageNum = getPageNum();
       this.searchAreaBottomHeight = getSearchAreaBottomHeight();
@@ -173,26 +225,33 @@ export class PageValues {
 
       if (getNumAdResults) this.numAdResults = getNumAdResults();
 
-      const { details, linkElements } = getOrganicDetailsAndLinkElements();
-      this.organicDetails = details;
+      const { organicDetails, organicLinkElements } = getOrganicDetailsAndLinkElements();
+      this.organicDetails = organicDetails;
 
-      this.addListeners(linkElements, getAdLinkElements(), getInternalLink);
+      this.addListeners(organicLinkElements, getAdLinkElements(), getInternalLink, selfPreferencedElements);
 
       if (extraCallback) extraCallback();
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    if (document.readyState === "complete") {
+      console.log("COMPLETE")
       this.determinePageValues();
-      this.beforeLoadPageValueRefreshIntervalId = setInterval(() => {
+    } else {
+      if (document.readyState === "interactive") {
+        console.log("INTERACTIVE")
         this.determinePageValues();
+      }
+      this.beforeLoadPageValueRefreshIntervalId = setInterval(() => {
+        if (document.readyState !== "loading") {
+          console.log("INTERVAL")
+          this.determinePageValues();
+        }
+        if (document.readyState === "complete") {
+          this.pageLoaded = true;
+          clearInterval(this.beforeLoadPageValueRefreshIntervalId);
+        }
       }, beforeLoadPageValueRefreshInterval);
-    });
-
-    window.addEventListener("load", () => {
-      this.pageLoaded = true;
-      clearInterval(this.beforeLoadPageValueRefreshIntervalId);
-      this.determinePageValues();
-    });
+    }
 
 
   }
@@ -212,13 +271,18 @@ export class PageValues {
     getSearchAreaTopHeight: () => number,
     getNumAdResults: () => number,
     getOrganicDetailsAndLinkElements: () => {
-      details: OrganicDetail[];
-      linkElements: Element[][];
+      organicDetails: OrganicDetail[];
+      organicLinkElements: Element[][];
     },
     getAdLinkElements: () => Element[],
     getInternalLink: (target: Element) => string,
-    extraCallback: () => void) {
+    extraCallback: () => void = null,
+    selfPreferencingType = null,
+    getSerpQueryVertical: () => string = null) {
+
     this.searchEngine = searchEngine;
+    this.selfPreferencingType = selfPreferencingType;
+
     this.pageId = webScience.pageManager.pageId;
     this.pageVisitStartTime = webScience.pageManager.pageVisitStartTime;
 
@@ -230,7 +294,8 @@ export class PageValues {
       getOrganicDetailsAndLinkElements,
       getAdLinkElements,
       getInternalLink,
-      extraCallback);
+      extraCallback,
+      getSerpQueryVertical);
 
     // Receives messages from the background when the background receives 
     // onCreatedNavigationTarget messages with the tab of this page as the source.
@@ -273,18 +338,20 @@ export class PageValues {
   }
 
   /**
-   * Called to reset tracking if a new SERP page visit starts.
+   * Called to reset tracking if a new SERP page visit starts. Resets page values.
    */
   resetTracking(timeStamp) {
     this.pageVisitStartTime = timeStamp;
     this.attentionDuration = 0;
     this.lastAttentionUpdateTime = timeStamp;
     this.numInternalClicks = 0;
+    this.numSelfPreferencedClicks = 0;
     this.numAdClicks = 0;
     this.organicClicks = [];
     this.mostRecentMousedown = null;
     this.mostRecentRecordedClickTimeStamp = null;
     this.possibleInternalClickTimeStamp = null;
+    this.possibleSelfPreferencedClickTimeStamp = null;
   }
 
   /**
@@ -298,6 +365,17 @@ export class PageValues {
       } else if (type === ElementType.Ad) {
         console.log("AD CLICK")
         this.numAdClicks++;
+      } else if (type === ElementType.SelfPreferenced) {
+        if (event.target instanceof Element) {
+          const hrefElement = event.target.closest("[href]");
+          if (hrefElement && (hrefElement as any).href) {
+            console.log("SELF PREFERENCED CLICK")
+            this.numSelfPreferencedClicks++;
+          } else {
+            this.possibleSelfPreferencedClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
+            return;
+          }
+        }
       } else if (type === ElementType.Internal) {
         if (event.target instanceof Element) {
           const href = getInternalLink(event.target as Element);
@@ -320,22 +398,16 @@ export class PageValues {
    **/
   handleMousedown(event: MouseEvent, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
     if (type === ElementType.Organic) {
-      if ((event.currentTarget as any).href) {
-        this.mostRecentMousedown = {
-          Type: ElementType.Organic,
-          Link: (event.currentTarget as any).href,
-          Ranking: ranking,
-        }
-      }
-    }
-    if (type === ElementType.Internal) {
       if (event.target instanceof Element) {
-        const href = getInternalLink(event.target as Element);
-        if (href) {
-          this.mostRecentMousedown = {
-            Type: ElementType.Internal,
-            Link: href,
-            Ranking: null
+        const hrefElement = event.target.closest("[href]");
+        if (hrefElement) {
+          const href = (hrefElement as any).href;
+          if (href) {
+            this.mostRecentMousedown = {
+              Type: ElementType.Organic,
+              Link: (event.currentTarget as any).href,
+              Ranking: ranking,
+            }
           }
         }
       }
@@ -355,8 +427,43 @@ export class PageValues {
         }
       }
     }
+    if (type === ElementType.Internal) {
+      if (event.target instanceof Element) {
+        const href = getInternalLink(event.target as Element);
+        if (href) {
+          this.mostRecentMousedown = {
+            Type: ElementType.Internal,
+            Link: href,
+            Ranking: null
+          }
+        }
+      }
+    }
+    if (type === ElementType.SelfPreferenced) {
+      if (event.target instanceof Element) {
+        const hrefElement = event.target.closest("[href]");
+        if (hrefElement) {
+          const href = (hrefElement as any).href;
+          if (href) {
+            this.mostRecentMousedown = {
+              Type: ElementType.SelfPreferenced,
+              Link: href,
+              Ranking: null
+            }
+          }
+        }
+      }
+    }
   }
 
+  /**
+   * Adds "click" and "mousedown" listeners to an element.
+   * @param element - The element that listeners are being added to.
+   * @param type - The type of the element that the listener is being added to (Organic, Advertisement, or Internal)
+   * @param ranking - the ranking of the organic result if the element is an organic link element. Otherwise, null.
+   * @param getInternalLink - returns a link (the href) if target was an internal link element in the search area, an empty string if a click
+   * on target a possible internal link click, and null otherwise. null if the element is not an internal element.
+   */
   addElementListeners(element: Element, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
     const clickListener = (event: MouseEvent) => this.handleClick(event, type, ranking, getInternalLink);
     const mousedownListener = (event: MouseEvent) => this.handleMousedown(event, type, ranking, getInternalLink);
@@ -365,7 +472,15 @@ export class PageValues {
     this.elementListenersList.push({ element: element, clickListener: clickListener, mousedownListener: mousedownListener });
   }
 
-  addListeners(organicLinkElements: Element[][], adLinkElements: Element[], getInternalLink: (target: Element) => string) {
+  /**
+   * Add listeners to the DOM elements to track organic, advertisement, and internal links.
+   * @param organicLinkElements - An array where each element is an array of links for the organic element at that index. (eg.
+   * organicLinkElements[0] is the array of link elements for the first organic element)
+   * @param adLinkElements - An array of ad link elements on the page.
+   * @param getInternalLink - returns a link (the href) if target was an internal link element in the search area, an empty string if a click
+   * on target a possible internal link click, and null otherwise.
+   */
+  addListeners(organicLinkElements: Element[][], adLinkElements: Element[], getInternalLink: (target: Element) => string, selfPreferencedElements: Element[]) {
     // Remove any previously added listeners.
     for (const elementListeners of this.elementListenersList) {
       elementListeners.element.removeEventListener("click", elementListeners.clickListener, true);
@@ -373,7 +488,7 @@ export class PageValues {
     }
     this.elementListenersList = [];
 
-    // Add the internal tracking listeners.
+    // Add the internal tracking listener to the document body.
     if (getInternalLink) {
       this.addElementListeners(document.body, ElementType.Internal, null, getInternalLink);
     }
@@ -389,6 +504,11 @@ export class PageValues {
       for (const organicLinkElement of organicLinkElementsAtIndex) {
         this.addElementListeners(organicLinkElement, ElementType.Organic, i, null);
       }
+    }
+
+    // Add the self preferenced tracking listeners.
+    for (const selfPreferencedElement of selfPreferencedElements) {
+      this.addElementListeners(selfPreferencedElement, ElementType.SelfPreferenced, null, null);
     }
   }
 
@@ -409,18 +529,30 @@ export class PageValues {
       this.numInternalClicks++;
     }
 
+    // If there was a possible self preferenced click within 1 second of the reporting,
+    // we consider the possible self preferenced click to be a self preferenced click.
+    if (this.possibleSelfPreferencedClickTimeStamp &&
+      this.possibleSelfPreferencedClickTimeStamp >= timeStamp - maxClickToPageVisitEndDelay) {
+      console.log("SELF PREFERENCED CLICK")
+      this.numSelfPreferencedClicks++;
+    }
+
     // Send data to background page
     webScience.pageManager.sendMessage({
       type: "SerpVisitData",
       data: {
         searchEngine: this.searchEngine,
         query: this.query,
+        queryVertical: this.queryVertical,
         pageId: this.pageId,
         attentionDuration: this.getAttentionDuration(),
+        dwellTime: timeStamp - this.pageVisitStartTime,
         pageLoaded: this.pageLoaded,
         pageNum: this.pageNum,
         organicDetails: this.organicDetails,
         organicClicks: this.organicClicks,
+        selfPreferencedDetails: this.selfPreferencedDetails,
+        numSelfPreferencedClicks: this.numSelfPreferencedClicks,
         numAdResults: this.numAdResults,
         numAdClicks: this.numAdClicks,
         numInternalClicks: this.numInternalClicks,
@@ -454,40 +586,17 @@ export function getElementTopHeight(element: Element): number {
   } catch (error) {
     return null;
   }
-
 }
 
 /**
  * @param {Element} element - An element
- * @returns {number} The number of pixels between the top of the page and the bottom of the element
+ * @returns {number} The number of pixels between the top of the page and the bottom of the element.
  */
 export function getElementBottomHeight(element: Element) {
-  return getElementTopHeight(getNextElement(element))
-}
-
-/**
- * @param {Element} element - An element
- * @returns {number} The next element in the DOM or null if such an element does not exist.
- */
-function getNextElement(element: Element) {
-  if (!element) {
+  try {
+    return window.pageYOffset + element.getBoundingClientRect().bottom
+  } catch (error) {
     return null;
-  }
-
-  // Get the next sibling element where the display property for the element or one of its parents
-  // is not set to none and the position property is not set to fixed. If no such sibling element exists,
-  // recursively call this on the parent element.
-  while (element.nextElementSibling && (
-    !(element.nextElementSibling as HTMLElement).offsetParent ||
-    !(element.nextElementSibling as HTMLElement).offsetHeight ||
-    !(element.nextElementSibling as HTMLElement).offsetWidth
-  )) {
-    element = element.nextElementSibling
-  }
-  if (element.nextElementSibling) {
-    return element.nextElementSibling;
-  } else {
-    return getNextElement(element.parentElement);
   }
 }
 

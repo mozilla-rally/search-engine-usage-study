@@ -1,5 +1,10 @@
 @charset "UTF-8";
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+@font-face{font-display:block;font-family:Zilla Slab;font-style:normal;font-weight:700;src:url(/dist/pages/webfonts/assets/ZillaSlabBold.woff2) format("woff2"),url(/dist/pages/assets/webfonts/ZillaSlabBold.woff) format("woff")}
+
+@font-face{font-display:block;font-family:Inter;font-style:normal;font-weight:400;src:url(/dist/pages/assets/webfonts/Inter.woff) format("woff")}
+
+@font-face{font-display:block;font-family:Inter;font-style:normal;font-weight:700;src:url(/dist/pages/assets/webfonts/InterBold.woff) format("woff")}
 
 html {
   box-sizing: border-box;
@@ -33,10 +38,11 @@ html {
   }
 }
 body {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 h1 {
+  font-family: 'Zilla Slab', sans-serif;
   font-size: 2.5rem;
   line-height: 1;
 }
@@ -44,9 +50,8 @@ h2 {
   font-size: 1.75rem;
 }
 h4 {
-  font-size: 1.5rem !important;
+  font-size: 1.3rem !important;
   font-weight: 700 !important;
-  margin-bottom: 1rem !important;
 }
 p {
   line-height: 1;
@@ -78,20 +83,8 @@ p {
   display: none;
 }
 
-.wrapper {
-  padding-top: 5px;
-}
-
-.footer {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  padding: 10px 10px 10px 10px;
-}
-
 .logo {
-  max-height:100px;
+  max-height:85px;
 }
 
 .logo-div {
@@ -104,12 +97,23 @@ p {
 }
 
 .radio-button {
-  height: 40px;
-  width: 40px;
+  height: 2.5rem;
+  width: 2.5rem;
 }
 
 .button {
   font-size: 2rem;
+  font-weight: 700;
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #000;
+}
+
+.button:hover:not([disabled]) {
+  background-color: #ededf0;
+  border-color: #000;
+  box-shadow: none;
+  color: #000;
 }
 
 
@@ -121,35 +125,50 @@ p {
   margin-bottom: 2rem;
 }
 
+.continue {
+  margin: 10px;
+}
+
 
 #page-container {
   position: relative;
   min-height: 100vh;
 }
 
-#footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 8.5rem;
-  left: 0;
+.footer-notice {
+  background-color: #000;
+  color: white;
 }
 
-.content-wrap {
+.notice-wrapper {
+  padding-top: 5rem;
   padding-bottom: 15rem;    /* Footer height */
 }
 
-.footer-img {
-  height: 4rem;
-}
 #engine-info {
   padding-bottom: 2rem;
 }
 
 .choice-ballot-wrapper {
-  margin-bottom: 80px;
+  padding-top: 10px;
+  margin-bottom: 25px;
 }
 
 .choice-ballot-description{
   padding-bottom: 10px;
+}
+
+a:not([class]) {
+  color: black;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+a:not([class]):hover {
+  text-decoration: none;
+}
+
+footer {
+  position: sticky;
+  bottom: 0px;
 }

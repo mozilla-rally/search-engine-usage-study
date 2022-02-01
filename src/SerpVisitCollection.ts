@@ -6,10 +6,10 @@
  */
 
 import * as webScience from "@mozilla/web-science";
-import { serpScripts } from "./contentScriptsImport.js"
 import * as AttributionTracking from "./AttributionTracking.js"
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
+import * as ContentScripts from "./ContentScripts.js"
 
 import * as serpVisitMetrics from "../src/generated/serpVisit";
 import * as searchUsagePings from "../src/generated/pings";
@@ -31,38 +31,11 @@ let storage;
  * Start SERP visit collection
  * @async
  **/
-export async function initializeCollection(storageArg): Promise<void> {
+export async function initializeCollection(conditionType, storageArg): Promise<void> {
   storage = storageArg;
-
   await initializeQuerySetsFromStorage();
   registerSerpVisitDataListener();
-  await registerContentScripts();
-}
-
-/**
- * Register the SERP content scripts and the messaging to tabs for onCreatedNavigationTarget
- * so that a content script can know if a link was opened in a new tab from its page
- * @async
- */
-async function registerContentScripts() {
-  webScience.messaging.registerSchema("CreatedNavigationTargetMessage", {
-    details: "object"
-  });
-
-  // There's currently a regression in Firefox where this doesn't fire for new tabs triggered by
-  // target="_blank" link clicks. This is okay for this study, however, because such clicks are
-  // accounted for with click event listeners added to DOM elements by the content scripts.
-  browser.webNavigation.onCreatedNavigationTarget.addListener((details) => {
-    webScience.messaging.sendMessageToTab(details.sourceTabId, {
-      type: "CreatedNavigationTargetMessage",
-      details
-    });
-  });
-
-  for (const serpScript of serpScripts) {
-    serpScript.args["runAt"] = "document_start";
-    await browser.contentScripts.register(serpScript.args);
-  }
+  await ContentScripts.registerContentScripts(conditionType);
 }
 
 /**
@@ -92,6 +65,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   const serpVisitData = {
     SearchEngine: pageVisitData.searchEngine,
     AttentionDuration: pageVisitData.attentionDuration,
+    DwellTime: pageVisitData.dwellTime,
     PageNum: pageVisitData.pageNum,
     Attribution: attributionDetailsEngineMatches ? attributionDetails.attribution : null,
     AttributionID: attributionDetailsEngineMatches ? attributionDetails.attributionID : null,
@@ -105,7 +79,8 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     SearchAreaBottomHeight: pageVisitData.searchAreaBottomHeight,
     TimeSinceSameQuery: timeSinceSameQuery === -1 ? -1 : Utils.getCoarsenedTimeStamp(timeSinceSameQuery),
     PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
-    CurrentDefaultEngine: await Privileged.getSearchEngine()
+    CurrentDefaultEngine: await Privileged.getSearchEngine(),
+    NavigationalQuery: getIsNavigationalQuery(pageVisitData.query),
   }
 
   serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine);
@@ -128,6 +103,10 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
 
   console.log(serpVisitData);
   searchUsagePings.serpVisit.submit();
+}
+
+function getIsNavigationalQuery(query: string): string {
+  return "";
 }
 
 /** 

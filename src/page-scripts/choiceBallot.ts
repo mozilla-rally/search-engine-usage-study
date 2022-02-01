@@ -1,4 +1,5 @@
-import { initializeAttentionTracking, getAttentionDuration } from "./pageScriptCommon.js";
+import { timing } from "@mozilla/web-science";
+import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
 
 // Randomly shuffles the input array in place.
 function shuffleArray(array) {
@@ -93,21 +94,6 @@ window.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // Add a click listener to the continue button that sends the ChoiceBallotResponse
-    // message to the background page and closes the window.
-    document.querySelector(".continue").addEventListener("click", () => {
-        const selectedEngine = (document.querySelector("input[name=engine-select]:checked") as HTMLInputElement).value;
-        browser.runtime.sendMessage({
-            type: "ChoiceBallotResponse",
-            engine: selectedEngine,
-            enginesOrdering,
-            seeMoreClicked: seeMoreClicked,
-            attentionDuration: getAttentionDuration(),
-            detailsExpanded: Array.from(detailsExpandedSet)
-        });
-        window.close();
-    });
-
     // Enable the participant to continue. Should be called if a search engine option is selected.
     function enableContinue() {
         document.querySelector(".continue").removeAttribute("disabled");
@@ -162,7 +148,29 @@ window.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    window.addEventListener("unload", () => {
-        browser.runtime.sendMessage({ type: "ChoiceBallotAttention", attentionDuration: getAttentionDuration() });
+    // Whether the ballot is completed.
+    let ballotCompleted = false;
+
+    // Add a click listener to the continue button that sends the ChoiceBallotResponse
+    // message to the background page and closes the window.
+    document.querySelector(".continue").addEventListener("click", () => {
+        ballotCompleted = true;
+        window.close();
+    });
+
+    window.addEventListener("unload", (event) => {
+        const checkedRadio = document.querySelector("input[name=engine-select]:checked") as HTMLInputElement
+        const selectedEngine = checkedRadio ? checkedRadio.value : "";
+        browser.runtime.sendMessage({
+            type: "ChoiceBallotData",
+            newEngine: selectedEngine,
+            attentionDuration: getAttentionDuration(),
+            dwellTime: getDwellTime(event.timeStamp),
+            detailsExpanded: Array.from(detailsExpandedSet),
+            seeMoreClicked,
+            enginesOrdering,
+            ballotCompleted,
+            completionTime: timing.fromMonotonicClock(event.timeStamp, true),
+        });
     });
 });

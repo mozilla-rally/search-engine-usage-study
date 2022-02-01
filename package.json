@@ -11,8 +11,9 @@
     "dev": "npm run build:glean && rollup -c --config-enable-developer-mode && npm run tailwind",
     "lint": "eslint . && web-ext lint && npm run lint:glean",
     "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\"",
-    "start": "npm run build && web-ext run --browser-console",
+    "start": "web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
+    "test": "mocha --timeout 30000 \"./tests/integration/*.js\"",
     "test-integration": "npm run package && mv web-ext-artifacts/*.zip web-ext-artifacts/study.xpi && mocha --timeout 30000 \"./tests/integration/*.js\"",
     "watch": "npm-run-all --parallel watch-raw watch-bundled",
     "watch-raw": "npm run dev -- -w",
@@ -43,6 +44,7 @@
     "rollup-plugin-svelte": "^7.1.0",
     "selenium-webdriver": "^4.0.0-beta.3",
     "tailwindcss": "^2.2.16",
+    "svelte": "^3.38.3",
     "web-ext": "^6.1.0",
     "webextension-polyfill": "^0.8.0"
   },

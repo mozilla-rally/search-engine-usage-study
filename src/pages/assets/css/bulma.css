@@ -55,59 +55,6 @@
   margin-bottom: 1.5rem;
 }
 
-.delete, .modal-close {
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  background-color: rgba(10, 10, 10, 0.2);
-  border: none;
-  border-radius: 290486px;
-  cursor: pointer;
-  display: inline-block;
-  flex-grow: 0;
-  flex-shrink: 0;
-  font-size: 0;
-  height: 20px;
-  max-height: 20px;
-  max-width: 20px;
-  min-height: 20px;
-  min-width: 20px;
-  outline: none;
-  position: relative;
-  vertical-align: top;
-  width: 20px;
-}
-
-.delete::before, .modal-close::before, .delete::after, .modal-close::after {
-  background-color: white;
-  content: "";
-  display: block;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);
-          transform: translateX(-50%) translateY(-50%) rotate(45deg);
-  -webkit-transform-origin: center center;
-          transform-origin: center center;
-}
-
-.delete::before, .modal-close::before {
-  height: 2px;
-  width: 50%;
-}
-
-.delete::after, .modal-close::after {
-  height: 50%;
-  width: 2px;
-}
-
-.delete:hover, .modal-close:hover, .delete:focus, .modal-close:focus {
-  background-color: rgba(10, 10, 10, 0.3);
-}
-
-.delete:active, .modal-close:active {
-  background-color: rgba(10, 10, 10, 0.4);
-}
-
 .is-small.delete, .is-small.modal-close {
   height: 16px;
   max-height: 16px;
@@ -349,10 +296,6 @@ a {
 
 a strong {
   color: currentColor;
-}
-
-a:hover {
-  color: #363636;
 }
 
 code {
@@ -1547,11 +1490,6 @@ a.box:active {
   margin-right: calc(-0.375em - 1px);
 }
 
-.button:hover, .button.is-hovered {
-  border-color: #b5b5b5;
-  color: #363636;
-}
-
 .button:focus, .button.is-focused {
   border-color: #3273dc;
   color: #363636;
@@ -1561,7 +1499,7 @@ a.box:active {
   box-shadow: 0 0 0 0.125em rgba(50, 115, 220, 0.25);
 }
 
-.button:active, .button.is-active {
+.button:active:not([disabled]), .button.is-active:not([disabled]) {
   border-color: #4a4a4a;
   color: #363636;
 }
@@ -2543,8 +2481,6 @@ a.box:active {
 }
 
 .button[disabled] {
-  background-color: white;
-  border-color: #dbdbdb;
   box-shadow: none;
   opacity: 0.5;
 }
@@ -8557,12 +8493,6 @@ label.panel-block:hover {
   }
 }
 
-.columns {
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-  margin-top: -0.75rem;
-}
-
 .columns:last-child {
   margin-bottom: -0.75rem;
 }
@@ -9668,4 +9598,3 @@ label.panel-block:hover {
   background-color: #fafafa;
   padding: 3rem 1.5rem 6rem;
 }
-/*# sourceMappingURL=bulma.css.map */
