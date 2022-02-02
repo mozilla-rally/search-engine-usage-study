@@ -234,17 +234,28 @@ export function getCoarsenedTimeStamp(timeStamp: number): number {
 }
 
 /**
- * @param {string} homepages - A "|" separated string of the browser homepages
+ * @param {string} homepage - The current browser homepage.
  * @returns {boolean} Returns whether the homepage needs to be changed (if 
- * one of the homepages is a search engine page)
+ * the current homepage is a search engine page)
  */
-export function getHomepageChangeNeeded(homepages: string): boolean {
-  const homepageList = homepages.split("|");
-  for (const homepage of homepageList) {
-    if (homepage && getEngineFromURL(homepage)) {
-      return true;
-    }
+export function getHomepageChangeNeeded(homepage: string): boolean {
+  if (!homepage) {
+    return false;
   }
+
+  // If the participant has multiple homepages (multiple tabs open on browser startup
+  // and new window), the homepage string will consist of multiple URLs separated by
+  // the "|" character. In this case, we do not want to change the participant's homepages
+  // even if one of them is a search engine page because this implies a more involved effort
+  // by the participant.
+  if (homepage.includes("|")) {
+    return false;
+  }
+
+  if (getEngineFromURL(homepage)) {
+    return true;
+  }
+
   return false;
 }
 

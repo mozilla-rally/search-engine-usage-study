@@ -46,13 +46,13 @@ export async function changeSearchEngine(searchEngine: string): Promise<void> {
 }
 
 /**
- * Changes the current homepages.
- * @param {string} homepages - a "|" separated string of the URLs that the homepages should be changed to.
+ * Changes the browser homepage.
+ * @param {string} homepage - the URL that the homepage should be changed to.
  * @async
  */
-export async function changeHomepage(homepages: string): Promise<void> {
+export async function changeHomepage(homepage: string): Promise<void> {
   try {
-    await browser.experimental.changeHomepage(homepages);
+    await browser.experimental.changeHomepage(homepage);
   } catch (error) {
     console.error(error);
   }

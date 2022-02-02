@@ -134,11 +134,11 @@ this.experimental = class extends ExtensionAPI {
                     return defaultEngine ? defaultEngine.name : "";
                 },
                 /**
-                 * Changes the participant's current homepages in the browser.
-                 * @param {string} homepages - a "|" separated string of the URLs that the homepages should be changed to.
+                 * Changes the participant's current homepage in the browser.
+                 * @param {string} homepage - The URL that the homepage should be changed to.
                  */
-                changeHomepage(homepages) {
-                    Services.prefs.setCharPref("browser.startup.homepage", homepages);
+                changeHomepage(homepage) {
+                    Services.prefs.setCharPref("browser.startup.homepage", homepage);
                 },
                 /**
                  * @returns {Promise<string>} A promise for the participant's current "|" separated homepage URLs.

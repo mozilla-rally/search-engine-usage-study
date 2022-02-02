@@ -1,7 +1,7 @@
 /**
  * This module provides functionality for conducting the modal popup stage of modal interventions.
  * 
- * @module Modal
+ * @module ModalPopup
  */
 
 import * as Privileged from "./Privileged.js"

@@ -48,13 +48,13 @@
       {
         "name": "changeHomepage",
         "type": "function",
-        "description": "Changes the participant's current homepages in the browser.",
+        "description": "Changes the participant's current homepage in the browser.",
         "async": false,
         "parameters": [
           {
-            "name": "homepages",
+            "name": "homepage",
             "type": "string",
-            "description": "A '|' separated string of the URLs that the homepages should be changed to."
+            "description": "The URL that the homepage should be changed to."
           }
         ]
       },
