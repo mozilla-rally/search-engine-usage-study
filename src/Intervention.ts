@@ -35,7 +35,9 @@ let storage;
  */
 let interventionType;
 
-let treatmentStartTimes: number[] = null;
+let treatmentStartTime: number = null;
+
+let ballotPresentedTimes: number[] = null;
 
 /**
  * Conducts intervention functionality.
@@ -52,13 +54,12 @@ export async function conductIntervention(interventionTypeArg, storageArg): Prom
     return;
   }
 
-  treatmentStartTimes = await storage.get("TreatmentStartTimes");
-  if (!treatmentStartTimes) {
-    treatmentStartTimes = [webScience.timing.now()];
+  treatmentStartTime = await storage.get("TreatmentStartTime");
+  if (!treatmentStartTime) {
+    treatmentStartTime = webScience.timing.now();
   }
 
-  treatmentStartTimes.push(webScience.timing.now());
-  storage.set("TreatmentStartTimes", treatmentStartTimes);
+  storage.set("TreatmentStartTime", treatmentStartTime);
 
   // Conducts the randomly selected intervention.
   if (interventionType === "NoticeDefault") {
@@ -97,7 +98,7 @@ function reportNoticeData(attentionDuration: number, dwellTime: number, revertSe
     RevertSelected: revertSelected,
     OldEngine: oldEngine,
     NewEngine: newEngine,
-    TreatmentTime: treatmentStartTimes[0],
+    TreatmentTime: treatmentStartTime,
     TreatmentCompletionTime: treatmentCompletionTime,
     PingTime: webScience.timing.now()
   };
@@ -212,7 +213,7 @@ function reportChoiceBallotData(
     Ordering: ordering,
     DetailsExpanded: detailsExpanded,
     Attempts: attempts,
-    TreatmentTime: treatmentStartTimes,
+    TreatmentTimes: ballotPresentedTimes,
     TreatmentCompletionTime: treatmentCompletionTime,
     PingTime: webScience.timing.now()
   };
@@ -241,6 +242,12 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
   if (!choiceBallotDwellTimeList) {
     choiceBallotDwellTimeList = []
   }
+
+  ballotPresentedTimes = await storage.get("BallotPresentedTimes");
+  if (!ballotPresentedTimes) {
+    ballotPresentedTimes = [];
+  }
+  storage.set("BallotPresentedTimes", ballotPresentedTimes);
 
   // If the choice ballot has previously been displayed, get the order the search engines
   // were displayed in.

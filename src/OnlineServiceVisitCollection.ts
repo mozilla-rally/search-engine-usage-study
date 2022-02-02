@@ -2,7 +2,7 @@
  * This module enables registering SERP content scripts and collecting 
  * data for SERP visits.
  * 
- * @module SerpVisitCollection
+ * @module OnlineServiceVisitCollection
  */
 
 import * as webScience from "@mozilla/web-science";
