@@ -1,9 +1,6 @@
 /**
- * This module enables selecting an intervention group for the participant
- * and conducting the respective intervention. This does not, however, conduct the
- * second stage of modal interventions (the popping up of a modal dialog).
- * 
- * @module Intervention
+ * This module enables conducting the selected choice architecture treatment.
+ * @module ChoiceArchitectureTreatment
  */
 
 import * as webScience from "@mozilla/web-science";
@@ -30,61 +27,59 @@ enum ChoiceBallotType {
 let storage;
 
 /**
- * The selected intervention type
+ * The selected treatment condition
  * @type {string}
  */
-let interventionType;
+let conditionType;
 
 let treatmentStartTime: number = null;
 
-let ballotPresentedTimes: number[] = null;
-
 /**
- * Conducts intervention functionality.
- * @param {Object} storage - A persistent key-value storage object for the study
+ * Conducts choice architecture treatment functionality.
+ * @param {Object} conditionTypeArg - The randomly selected condition for the participant
+ * @param {Object} storageArg - A persistent key-value storage object for the study
  * @async
  **/
-export async function conductIntervention(interventionTypeArg, storageArg): Promise<void> {
+export async function conductTreatment(conditionTypeArg, storageArg): Promise<void> {
+  conditionType = conditionTypeArg;
   storage = storageArg;
-  interventionType = interventionTypeArg;
-
-  const interventionComplete = await storage.get("InterventionComplete");
-  if (interventionComplete) {
-    ModalPopup.initializeModalIntervention(interventionType, storage);
-    return;
-  }
 
   treatmentStartTime = await storage.get("TreatmentStartTime");
   if (!treatmentStartTime) {
     treatmentStartTime = webScience.timing.now();
+    storage.set("TreatmentStartTime", treatmentStartTime);
   }
 
-  storage.set("TreatmentStartTime", treatmentStartTime);
+  const treatmentComplete = await storage.get("TreatmentComplete");
+  if (treatmentComplete) {
+    ModalPopup.initializeModalPopup(conditionType, storage);
+    return;
+  }
 
-  // Conducts the randomly selected intervention.
-  if (interventionType === "NoticeDefault") {
-    noticeIntervention(NoticeType.Default);
-  } else if (interventionType === "NoticeRevert") {
-    noticeIntervention(NoticeType.Revert);
-  } else if (interventionType === "ChoiceBallotDefault") {
-    choiceBallotIntervention(ChoiceBallotType.Default);
-  } else if (interventionType === "ChoiceBallotHidden") {
-    choiceBallotIntervention(ChoiceBallotType.Hidden);
-  } else if (interventionType === "ChoiceBallotDescriptions") {
-    choiceBallotIntervention(ChoiceBallotType.Descriptions);
-  } else if (interventionType === "ChoiceBallotExtended") {
-    choiceBallotIntervention(ChoiceBallotType.Extended);
-  } else if (interventionType === "ModalPrimaryRevert") {
-    choiceBallotIntervention(ChoiceBallotType.Descriptions);
-  } else if (interventionType === "ModalSecondaryRevert") {
-    choiceBallotIntervention(ChoiceBallotType.Descriptions);
+  // Conducts the randomly selected treatment.
+  if (conditionType === "NoticeDefault") {
+    noticeTreatment(NoticeType.Default);
+  } else if (conditionType === "NoticeRevert") {
+    noticeTreatment(NoticeType.Revert);
+  } else if (conditionType === "ChoiceBallotDefault") {
+    choiceBallotTreatment(ChoiceBallotType.Default);
+  } else if (conditionType === "ChoiceBallotHidden") {
+    choiceBallotTreatment(ChoiceBallotType.Hidden);
+  } else if (conditionType === "ChoiceBallotDescriptions") {
+    choiceBallotTreatment(ChoiceBallotType.Descriptions);
+  } else if (conditionType === "ChoiceBallotExtended") {
+    choiceBallotTreatment(ChoiceBallotType.Extended);
+  } else if (conditionType === "ModalPrimaryRevert") {
+    choiceBallotTreatment(ChoiceBallotType.Descriptions);
+  } else if (conditionType === "ModalSecondaryRevert") {
+    choiceBallotTreatment(ChoiceBallotType.Descriptions);
   } else {
-    completeIntervention();
+    completeTreatment();
   }
 }
 
 /**
- * Report notice data and complete the notice intervention.
+ * Report notice data and complete the notice treatment.
  * @param {number} attentionDuration - How long the notice page has had the participant's attention.
  * @param {number} dwellTime - How long the notice page was open.
  * @param {boolean} revertSelected - Whether the participant selected the option to revert the changes.
@@ -92,7 +87,7 @@ export async function conductIntervention(interventionTypeArg, storageArg): Prom
  * @param {string} newEngine - The search engine that the participant's default was changed to.
  */
 function reportNoticeData(attentionDuration: number, dwellTime: number, revertSelected: boolean, oldEngine: string, newEngine: string, treatmentCompletionTime: number) {
-  const noticeInterventionData = {
+  const noticeTreatmentData = {
     AttentionDuration: attentionDuration,
     DwellTime: dwellTime,
     RevertSelected: revertSelected,
@@ -103,19 +98,19 @@ function reportNoticeData(attentionDuration: number, dwellTime: number, revertSe
     PingTime: webScience.timing.now()
   };
 
-  console.log(noticeInterventionData);
+  console.log(noticeTreatmentData);
 
-  completeIntervention();
+  completeTreatment();
 }
 
 /**
- * Conduct one of the two notice interventions. The participant's default search engine will be changed
+ * Conduct one of the two notice treatments. The participant's default search engine will be changed
  * and they will be presented a notice notifying them of the change
  * @param {NoticeType} noticeType - Specifies the notice type that will be shown to the participant.
  * @async
  */
-async function noticeIntervention(noticeType: NoticeType) {
-  // If the notice has been shown already, then the intervention is complete.
+async function noticeTreatment(noticeType: NoticeType) {
+  // If the notice has been shown already, then the treatment is complete.
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
     reportNoticeData(-1, -1, false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
@@ -186,7 +181,7 @@ async function noticeIntervention(noticeType: NoticeType) {
 }
 
 /**
- * Report notice data and complete the notice intervention.
+ * Report notice data and complete the notice treatment.
  * @param {number} attentionDurationList - How long the notice page has had the participant's attention on each ballot attempt.
  * @param {number} dwellTimeList - How long the notice page was open on each ballot attempt.
  * @param {boolean} revertSelected - Whether the participant selected the option to revert the changes.
@@ -202,9 +197,10 @@ function reportChoiceBallotData(
   ordering: string[],
   detailsExpanded: string[],
   attempts: number,
+  ballotPresentedTimes: number[],
   treatmentCompletionTime: number) {
 
-  const choiceBallotInterventionData = {
+  const choiceBallotTreatmentData = {
     AttentionDurationList: attentionDurationList,
     DwellTimeList: dwellTimeList,
     OldEngine: oldEngine,
@@ -218,19 +214,19 @@ function reportChoiceBallotData(
     PingTime: webScience.timing.now()
   };
 
-  console.log(choiceBallotInterventionData);
+  console.log(choiceBallotTreatmentData);
 
-  completeIntervention();
+  completeTreatment();
 }
 
 
 /**
- * Conduct one of the four choice ballot interventions. A search engine choice ballot will be displayed to the participant
+ * Conduct one of the four choice ballot treatments. A search engine choice ballot will be displayed to the participant
  * and their default search engine will be changed to their selection.
  * @param {ChoiceBallotType} ChoiceBallotType - Specifies the choice ballot type that will be shown to the participant.
  * @async
  */
-async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
+async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
   // An array of the attention times for each attempt of the choice ballot
   let choiceBallotAttentionList: number[] = await storage.get("ChoiceBallotAttentionList");
   if (!choiceBallotAttentionList) {
@@ -243,25 +239,27 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
     choiceBallotDwellTimeList = []
   }
 
-  ballotPresentedTimes = await storage.get("BallotPresentedTimes");
+  let ballotPresentedTimes: number[] = await storage.get("BallotPresentedTimes");
   if (!ballotPresentedTimes) {
     ballotPresentedTimes = [];
   }
-  storage.set("BallotPresentedTimes", ballotPresentedTimes);
 
   // If the choice ballot has previously been displayed, get the order the search engines
   // were displayed in.
   let enginesOrdering = await storage.get("ChoiceBallotEngineOrdering");
 
   // Get the number of times the choice ballot has been displayed to the participant.
-  // If it has been shown three times already, we do not try again and mark the intervention
+  // If it has been shown three times already, we do not try again and mark the treatment
   // as completed.
   const choiceBallotAttemptsCounter = await webScience.storage.createCounter("ChoiceBallotAttempts");
   let choiceBallotAttempts = choiceBallotAttemptsCounter.get();
   if (choiceBallotAttempts >= 3) {
-    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, null, 4, webScience.timing.now());
+    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, null, 4, ballotPresentedTimes, webScience.timing.now());
     return;
   }
+
+  ballotPresentedTimes.push(webScience.timing.now());
+  storage.set("BallotPresentedTimes", ballotPresentedTimes);
 
   // Increment the number of choice ballot attempts
   choiceBallotAttempts = await choiceBallotAttemptsCounter.incrementAndGet();
@@ -312,7 +310,7 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
         Utils.changeHomepageToDefault();
       }
 
-      reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, oldEngine, message.newEngine, message.seeMoreClicked, message.enginesOrdering, message.detailsExpanded, choiceBallotAttempts, message.completionTime);
+      reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, oldEngine, message.newEngine, message.seeMoreClicked, message.enginesOrdering, message.detailsExpanded, choiceBallotAttempts, ballotPresentedTimes, message.completionTime);
     }
   }, {
     type: "ChoiceBallotData",
@@ -336,10 +334,10 @@ async function choiceBallotIntervention(choiceBallotType: ChoiceBallotType) {
 }
 
 /**
- * Called when an intervention is complete. Sets the value of InterventionComplete to true
- * in storage and starts the modal dialog treatment functionality.
+ * Called when a treatment is complete (excluding the modal popup stage of a modal treatment).
+ * Sets the value of TreatmentComplete to true in storage and starts the modal dialog treatment functionality.
  */
-function completeIntervention() {
-  storage.set("InterventionComplete", true);
-  ModalPopup.initializeModalIntervention(interventionType, storage);
+function completeTreatment() {
+  storage.set("TreatmentComplete", true);
+  ModalPopup.initializeModalPopup(conditionType, storage);
 }

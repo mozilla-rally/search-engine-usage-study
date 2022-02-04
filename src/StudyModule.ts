@@ -4,7 +4,7 @@
  * @module StudyModule
  */
 
-import * as Intervention from "./Intervention.js";
+import * as ChoiceArchitectureTreatment from "./ChoiceArchitectureTreatment.js";
 import * as AttributionTracking from "./AttributionTracking.js";
 import * as InitialCollection from "./InitialCollection.js";
 import * as webScience from "@mozilla/web-science";
@@ -60,9 +60,6 @@ export async function startStudy(rally): Promise<void> {
 
   const conditionType = await webScience.randomization.selectCondition(conditionSet);
 
-  SerpVisitCollection.initializeCollection(conditionType, storage);
-  OnlineServiceVisitCollection.initializeCollection(storage);
-
   // Get the start time of the initial survey from storage, which is also the time the study
   // first loaded in participant's browser regardless of if they joined in phase 1 or phase 2.
   // If the value does not exist in storage, then this is the start time of the 
@@ -73,30 +70,42 @@ export async function startStudy(rally): Promise<void> {
     storage.set("InitialSurveyStartTime", initialSurveyStartTime);
   }
 
-  // If there is no treatmentStartTime in storage, this means the treatment has not started yet
-  // and we determine when it should start. If this is the case, we do not set the value in storage
-  // because this is just the lower bound on when the treatment should start. If the participant's browser
-  // is not open when this lower bound time is reached, treatment will only start upon the next load of 
-  // the extension. We want to know when treatment started, not just the lower bound, because the
-  // start time of the followup survey relies on this.
-  let treatmentStartTime: number = await storage.get("TreatmentStartTime");
-  if (!treatmentStartTime) {
-    treatmentStartTime = initialSurveyStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilTreatment);
+  // Get the time that phase 2 started for the participant. We want to know this because
+  // we want 10 days of data collection before any treatment, and data collection
+  // only begins during the second phase.
+  let secondPhaseStartTime = await storage.get("SecondPhaseStartTime");
+  if (!secondPhaseStartTime) {
+    secondPhaseStartTime = webScience.timing.now();
+    storage.set("SecondPhaseStartTime", secondPhaseStartTime);
   }
 
+  // Determine the treatment start time. We do not set the treatment start time value in storage here
+  // because the calculated value is only the lower bound on when a treatment will start (no treatment
+  // can occur if the extension is not running). We actually set the treatment start time value in 
+  // ChoiceArchitectureTreatment.ts
+  let treatmentStartTime: number = await storage.get("TreatmentStartTime");
+  if (!treatmentStartTime) {
+    treatmentStartTime = secondPhaseStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilTreatment);
+    if (treatmentStartTime <= currentTime) {
+      treatmentStartTime = webScience.timing.now();
+    }
+  }
+
+  SerpVisitCollection.initializeCollection(conditionType, treatmentStartTime, storage);
+  OnlineServiceVisitCollection.initializeCollection(storage);
   Survey.initializeSurvey(treatmentStartTime);
 
-  // We pass in the initialSurveyStartTime because this is the same as the enrollment time
-  // regardless of if participant joined during v1 or v2 of the study
+  // We pass in the initialSurveyStartTime as the enrollmentTime parameter because this is the same
+  // as the enrollment time regardless of if participant joined during v1 or v2 of the study.
   InitialCollection.run(initialSurveyStartTime, conditionType, storage);
 
-  // If current time is before the treatment start time, set timer to start intervention functionality.
-  // Otherwise, start intervention functionality now.
+  // If current time is before the treatment start time, set timer to start choice architecture treatment
+  // functionality at the treatment start time. Otherwise, start treatment functionality now.
   if (currentTime < treatmentStartTime) {
     setTimeout(() => {
-      Intervention.conductIntervention(conditionType, storage);
+      ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
     }, treatmentStartTime - currentTime);
   } else {
-    Intervention.conductIntervention(conditionType, storage);
+    ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
   }
 }

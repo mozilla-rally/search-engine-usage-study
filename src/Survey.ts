@@ -69,7 +69,7 @@ async function startFollowupSurvey() {
 
 /**
  * Starts user survey functionality
- * @param {Object} treatmentStartTime - The start time of the treatment
+ * @param {number} treatmentStartTime - The start time of the treatment.
  * @async
  **/
 export async function initializeSurvey(treatmentStartTime): Promise<void> {

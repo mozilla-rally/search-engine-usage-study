@@ -1,13 +1,15 @@
 import { serpScripts, googleRemoveScript, googleReplaceScript, googleDefaultScript } from "./contentScriptsImport.js"
 import * as webScience from "@mozilla/web-science";
 
+let registeredGoogleScript = null;
 
 /**
  * Register the SERP content scripts and the messaging to tabs for onCreatedNavigationTarget
  * so that a content script can know if a link was opened in a new tab from its page
+ * @param {number} treatmentStartTime - The start time of the treatment.
  * @async
  */
-export async function registerContentScripts(conditionType) {
+export async function registerContentScripts(conditionType, treatmentStartTime) {
   webScience.messaging.registerSchema("CreatedNavigationTargetMessage", {
     details: "object"
   });
@@ -27,20 +29,75 @@ export async function registerContentScripts(conditionType) {
     await browser.contentScripts.register(serpScript.args);
   }
 
-  await registerGoogleScript(conditionType);
+  await registerGoogleScript(conditionType, treatmentStartTime);
 }
 
-async function registerGoogleScript(conditionType): Promise<void> {
-  if (conditionType === "SelfPreferencedRemoval") {
-    googleRemoveScript.args["runAt"] = "document_start";
-    await browser.contentScripts.register(googleRemoveScript.args);
-  } else if (conditionType === "SelfPreferencedReplacement") {
-    googleReplaceScript.args["runAt"] = "document_start";
-    await browser.contentScripts.register(googleReplaceScript.args);
+async function registerGoogleScript(conditionType, treatmentStartTime): Promise<void> {
+  const currentTime = webScience.timing.now();
+
+  // We stop modifying self preferenced results after 50 days
+  // (50 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
+  const treatmentEndTime = treatmentStartTime + (50 * 24 * 60 * 60 * 1000);
+
+  if (currentTime < treatmentStartTime) {
+    registerGoogleDefaultScript();
+
+    setTimeout(() => {
+      registerGoogleModificationScript(conditionType, treatmentEndTime - currentTime);
+    }, treatmentStartTime - currentTime);
+
   } else {
-    googleDefaultScript.args["runAt"] = "document_start";
-    await browser.contentScripts.register(googleDefaultScript.args);
+    if (currentTime < treatmentEndTime) {
+      registerGoogleModificationScript(conditionType, treatmentEndTime - currentTime);
+    } else {
+      registerGoogleDefaultScript();
+    }
   }
 }
 
+async function registerGoogleDefaultScript() {
+  if (registeredGoogleScript) {
+    registeredGoogleScript.unregister();
+    registeredGoogleScript = null;
+  }
 
+  googleDefaultScript.args["runAt"] = "document_start";
+  registeredGoogleScript = await browser.contentScripts.register(googleDefaultScript.args);
+}
+
+async function registerGoogleModificationScript(conditionType, timeUntilTreatmentEndTime) {
+  if (registeredGoogleScript) {
+    registeredGoogleScript.unregister();
+    registeredGoogleScript = null;
+  }
+
+  if (conditionType !== "SelfPreferencedRemoval" && conditionType !== "SelfPreferencedReplacement") {
+    googleDefaultScript.args["runAt"] = "document_start";
+    registeredGoogleScript = await browser.contentScripts.register(googleDefaultScript.args);
+  } else {
+    if (conditionType === "SelfPreferencedRemoval") {
+      googleRemoveScript.args["runAt"] = "document_start";
+      registeredGoogleScript = await browser.contentScripts.register(googleRemoveScript.args);
+    } else if (conditionType === "SelfPreferencedReplacement") {
+      googleReplaceScript.args["runAt"] = "document_start";
+      registeredGoogleScript = await browser.contentScripts.register(googleReplaceScript.args);
+    }
+
+    setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime);
+  }
+}
+
+// setTimeout uses a 32 bit into to store delay so the max delay value allowed is 2147483647 (0x7FFFFFFF)
+// which is slightly under 25 days. The treatment ends after 50 days and so we need this function
+// to accomplish this longer delay.
+function setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime) {
+  if (timeUntilTreatmentEndTime > 0x7FFFFFFF) {
+    setTimeout(() => {
+      setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime - 0x7FFFFFFF);
+    }, 0x7FFFFFFF);
+  } else {
+    setTimeout(() => {
+      registerGoogleDefaultScript();
+    }, timeUntilTreatmentEndTime);
+  }
+}

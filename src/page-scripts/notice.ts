@@ -3,7 +3,7 @@ import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from 
 
 /**
  * Description for each of the search engines that the participant's default can be changed to
- * as part of the notice intervention.
+ * as part of the notice treatment.
  * @type {Object}
  */
 const engineDetails = {

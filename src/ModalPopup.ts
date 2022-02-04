@@ -1,9 +1,8 @@
 /**
- * This module provides functionality for conducting the modal popup stage of modal interventions.
+ * This module provides functionality for conducting the modal popup stage of modal popup treatment.
  * 
  * @module ModalPopup
  */
-
 import * as Privileged from "./Privileged.js"
 import * as webScience from "@mozilla/web-science";
 
@@ -45,28 +44,28 @@ async function webNavigationOnCommittedListener(details) {
         // Remove this listener, the modal dialog should only be displayed one time.
         browser.webNavigation.onCommitted.removeListener(webNavigationOnCommittedListener);
 
-        // Set the completion status of the modal intervention to true so that it won't be shown again.
-        storage.set("ModalInterventionCompleted", true);
+        // Set the completion status of the modal treatment to true so that it won't be shown again.
+        storage.set("ModalTreatmentCompleted", true);
 
         const treatmentStartTime = webScience.timing.now();
 
         // Display the modal dialog and get the participant's selection.
         const revertChosen = await browser.experimental.createPopup(oldEngine, newEngine, modalPrimaryRevert);
 
-        // If the participant chooses to revert, then change their search engine back to the engine that the choice ballot
-        // stage of the intervention changed it from.
+        // If the participant chooses to revert, then change their search engine back to the engine it was changed
+        // from in the choice ballot treatment stage.
         if (revertChosen) {
             Privileged.changeSearchEngine(oldEngine);
         }
 
-        // Report modal intervention data.
-        const modalInterventionData = {
+        // Report modal treatment data.
+        const modalTreatmentData = {
             RevertSelected: revertChosen,
             TreatmentTime: treatmentStartTime,
             PingTime: webScience.timing.now(),
         };
 
-        console.log(modalInterventionData);
+        console.log(modalTreatmentData);
     }
 }
 
@@ -75,24 +74,24 @@ async function webNavigationOnCommittedListener(details) {
  * @param {Object} storageArg - A persistent key-value storage object for the study
  * @async
  **/
-export async function initializeModalIntervention(interventionType, storageArg) {
+export async function initializeModalPopup(conditionType, storageArg) {
     storage = storageArg;
 
-    const modalInterventionCompleted = await storage.get("ModalInterventionCompleted");
+    const modalTreatmentCompleted = await storage.get("ModalTreatmentCompleted");
     oldEngine = await storage.get("OldEngine");
     newEngine = await storage.get("NewEngine");
-    modalPrimaryRevert = interventionType === "ModalPrimaryRevert";
+    modalPrimaryRevert = conditionType === "ModalPrimaryRevert";
 
     // Modal functionality should only run if:
-    //  1. This intervention has not already been completed.
-    //  2. The participant's intervention group is one of the two modal intervention groups
-    //  3. The choice ballot stage of the modal intervention was completed successfully (oldEngine
+    //  1. This treatment has not already been completed.
+    //  2. The participant's treatment condition is one of the two modal treatment conditions.
+    //  3. The choice ballot stage of the modal treatment was completed successfully (oldEngine
     //     and newEngine will only be set if the participant selected an option on the choice ballot).
     //  4. The engine that the participant chose on the choice ballot is different from their
     //     their original engine. It does not make sense to popup the modal dialog if the participant's
     //     default was originally Google and they proceeded to select Google on the choice ballot.
-    if (!modalInterventionCompleted &&
-        (interventionType === "ModalPrimaryRevert" || interventionType === "ModalSecondaryRevert") &&
+    if (!modalTreatmentCompleted &&
+        (conditionType === "ModalPrimaryRevert" || conditionType === "ModalSecondaryRevert") &&
         oldEngine && newEngine &&
         !newEngine.toLowerCase().includes(oldEngine.toLowerCase()) &&
         !oldEngine.toLowerCase().includes(newEngine.toLowerCase())) {

@@ -29,13 +29,14 @@ let storage;
 
 /**
  * Start SERP visit collection
+ * @param {number} treatmentStartTime - The start time of the treatment.
  * @async
  **/
-export async function initializeCollection(conditionType, storageArg): Promise<void> {
+export async function initializeCollection(conditionType, treatmentStartTime, storageArg): Promise<void> {
   storage = storageArg;
   await initializeQuerySetsFromStorage();
   registerSerpVisitDataListener();
-  await ContentScripts.registerContentScripts(conditionType);
+  await ContentScripts.registerContentScripts(conditionType, treatmentStartTime);
 }
 
 /**
@@ -106,6 +107,8 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
 }
 
 function getIsNavigationalQuery(query: string): string {
+  return "";
+  console.log(query)
   return "";
 }
 

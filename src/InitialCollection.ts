@@ -102,13 +102,14 @@ function searchEngineQuerySetsToQueryCounts(searchEngineQuerySets:
  * If the earliest item in history is after timeStamp, returns the difference between currentTime and the visit time of 
  * the earliest item in history. If there are no history items, returns -1.
  */
-async function getHistoryAge(currentTime: number, timeStamp: number) {
+async function getHistoryAge(currentTime: number, timeStamp30DaysAgo: number) {
   let earliestHistoryTime = Number.MAX_SAFE_INTEGER;
 
-  // Search for a single result before the timeStamp. If such a result exists, return timeStamp.
-  let historyItems = await browser.history.search({ text: "", startTime: 0, endTime: timeStamp, maxResults: 1 });
+  // Search for a single result before the timeStamp. If such a result exists, return currentTime - timeStamp30DaysAgo.
+  // This should be the the number of milliseconds in 30 days.
+  let historyItems = await browser.history.search({ text: "", startTime: 0, endTime: timeStamp30DaysAgo, maxResults: 1 });
   if (historyItems.length) {
-    return currentTime - timeStamp;
+    return currentTime - timeStamp30DaysAgo;
   }
 
   // Iterate through each of this history items (going backwards because
@@ -122,8 +123,8 @@ async function getHistoryAge(currentTime: number, timeStamp: number) {
     const earliestVisitItem = visitItems[visitItems.length - 1];
     if (earliestVisitItem.visitTime < earliestHistoryTime) {
       earliestHistoryTime = earliestVisitItem.visitTime;
-      if (earliestHistoryTime <= timeStamp) {
-        return currentTime - timeStamp;
+      if (earliestHistoryTime <= timeStamp30DaysAgo) {
+        return currentTime - timeStamp30DaysAgo;
       }
     }
   }
