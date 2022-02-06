@@ -88,7 +88,7 @@ export const onlineServicesMetadata: {
     domain: "yelp.com",
   },
 
-  // Referrer: https://www.alaskaair.com/Booking/Seats/SelectSeats
+  // Referrer: https://www.alaskaair.com/Booking/Seats/SelectSeats or https://www.alaskaair.com/booking/travelers
   // https://www.alaskaair.com/booking/payment
   Alaska: {
     domain: "alaskaair.com",
