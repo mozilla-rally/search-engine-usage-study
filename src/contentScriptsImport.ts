@@ -4,7 +4,7 @@
 
 /**
  * The following objects contain:
- *  -- matches which URL fragments to match
+ *  -- matches: matches which URL fragments to match
  *  -- js: content script to load
  */
 export const serpScripts = [

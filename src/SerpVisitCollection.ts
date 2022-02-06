@@ -13,6 +13,7 @@ import * as ContentScripts from "./ContentScripts.js"
 
 import * as serpVisitMetrics from "../src/generated/serpVisit";
 import * as searchUsagePings from "../src/generated/pings";
+import { navigationalQueryData } from "./OnlineServiceData.js";
 
 /**
  * For each of the search engines, maps queries to the last time the query was made on the engine.
@@ -81,7 +82,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     TimeSinceSameQuery: timeSinceSameQuery === -1 ? -1 : Utils.getCoarsenedTimeStamp(timeSinceSameQuery),
     PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
     CurrentDefaultEngine: await Privileged.getSearchEngine(),
-    NavigationalQuery: getIsNavigationalQuery(pageVisitData.query),
+    NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
   }
 
   serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine);
@@ -106,10 +107,24 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   searchUsagePings.serpVisit.submit();
 }
 
-function getIsNavigationalQuery(query: string): string {
-  return "";
-  console.log(query)
-  return "";
+/** 
+ * If the search query was a navigational query to one of the tracked online services or Google services,
+ * then this will be the category of service it was (Airlines, Hotels, Other Travel, Restaurant and Business,
+ * Lyrics, Weather, or Google). If not, this will be an empty string.
+ */
+function getNavigationalQueryType(query: string): string {
+  try {
+    for (const navigationalQueryType in navigationalQueryData) {
+      const navigationalQueryRegExp = new RegExp(navigationalQueryData[navigationalQueryType]);
+      if (navigationalQueryRegExp.test(query)) {
+        return navigationalQueryType;
+      }
+    }
+  } catch (error) {
+    // Do nothing
+  }
+
+  return ""
 }
 
 /** 

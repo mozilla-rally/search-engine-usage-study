@@ -1,4 +1,4 @@
-import { serpScripts, googleRemoveScript, googleReplaceScript, googleDefaultScript } from "./contentScriptsImport.js"
+import { serpScripts, googleRemoveScript, googleReplaceScript, googleDefaultScript } from "./ContentScriptsImport.js"
 import * as webScience from "@mozilla/web-science";
 
 let registeredGoogleScript = null;

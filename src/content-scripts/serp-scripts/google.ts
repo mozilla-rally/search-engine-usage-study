@@ -1,6 +1,6 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, getXPathElement, ElementType } from "../common.js"
 import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
-import { onlineServices } from "../../OnlineServiceVisitCollection.js";
+import { onlineServicesMetadata } from "../../OnlineServiceData";
 
 /**
  * Content Scripts for Google SERP
@@ -32,11 +32,10 @@ const serpScript = function () {
     function getOnlineServiceFromOrganicResult(organicResult: Element): string {
         try {
             const citeText = (organicResult.querySelector("a cite") as HTMLElement).innerText.toLowerCase();
-            for (const onlineService in onlineServices) {
-                const onlineServiceDomainStrings = onlineServices[onlineService];
-                for (const onlineServiceDomainString of onlineServiceDomainStrings) {
-                    if (citeText.includes(onlineServiceDomainString))
-                        return onlineServiceDomainString
+            for (const onlineService in onlineServicesMetadata) {
+                const onlineServiceDomainString = onlineServicesMetadata[onlineService].domain;
+                if (citeText.includes(onlineServiceDomainString)) {
+                    return onlineServiceDomainString;
                 }
             }
         } catch (error) {

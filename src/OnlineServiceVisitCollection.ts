@@ -1,5 +1,8 @@
+import { onlineServicesMetadata } from "./OnlineServiceData"
+
 /**
- * This module enables registering SERP content scripts and collecting 
+ * This module enables tracking interaction with the tracked online services. Data is accumulated
+ * for each tracked service and reported on around a daily basis.
  * data for SERP visits.
  * 
  * @module OnlineServiceVisitCollection
@@ -13,6 +16,11 @@ import * as webScience from "@mozilla/web-science";
  */
 let storage;
 
+/**
+ * An object that maps each tracked service to its aggregated data for the current
+ * aggregation period.
+ * @type {Object}
+ */
 let aggregateData: {
   // The name of the online service.
   [serviceName: string]: {
@@ -23,71 +31,29 @@ let aggregateData: {
   }
 } = {};
 
+/**
+ * The start time of the current aggregation period.
+ * @type {number}
+ */
 let aggregationPeriodStartTime: number = null;
 
-export const onlineServices: {
-  // The name of the online service.
-  [serviceName: string]: string[]
-} = {
-  Agoda: ["agoda.com"],
-  BookingCom: ["booking.com"],
-  ChoiceHotels: ["choicehotels.com"],
-  Expedia: ["expedia.com"],
-  HotelsCom: ["hotels.com"],
-  Hotwire: ["hotwire.com"],
-  Kayak: ["kayak.com"],
-  Orbitz: ["orbitz.com"],
-  Priceline: ["priceline.com"],
-  Skyscanner: ["skyscanner.com"],
-  Travelocity: ["travelocity.com"],
-  Tripadvisor: ["tripadvisor.com"],
-  Trivago: ["trivago.com"],
-  Yelp: ["yelp.com"],
-
-  Alaska: ["alaskaair.com"],
-  Allegiant: ["allegiantair.com"],
-  American: ["aa.com"],
-  Delta: ["delta.com"],
-  Frontier: ["flyfrontier.com"],
-  Hawaiian: ["hawaiianairlines.com"],
-  JetBlue: ["jetblue.com"],
-  Southwest: ["southwest.com"],
-  Spirit: ["spirit.com"],
-  United: ["united.com"],
-
-  Hilton: ["hilton.com"],
-  Hyatt: ["hyatt.com"],
-  IHG: ["ihg.com"],
-  Marriott: ["marriott.com"],
-  Wyndham: ["wyndhamhotels.com"],
-
-  AZLyrics: ["azlyrics.com"],
-  Genius: ["genius.com"],
-  LyricsCom: ["lyrics.com"],
-  Musixmatch: ["musixmatch.com"],
-  SongLyrics: ["songlyrics.com"],
-
-  AccuWeather: ["accuweather.com"],
-  NationalWeatherService: ["weather.gov"],
-  WeatherChannel: ["weather.com"],
-  WeatherBug: ["weatherbug.com"],
-  WeatherUnderground: ["wunderground.com"],
-  Windy: ["windy.com"],
-}
-
 /**
- * Start SERP visit collection
+ * Start online service visit collection
  * @async
  **/
 export async function initializeCollection(storageArg): Promise<void> {
   storage = storageArg;
 
+  // Get the aggregate data object from storage.
+  // If it does not exist in storage, create a new aggregate data object.
   aggregateData = await storage.get("OnlineServiceAggregateData");
   if (!aggregateData) {
     aggregateData = createNewAggregateDataObject();
     storage.set("OnlineServiceAggregateData", aggregateData);
   }
 
+  // Get the start time of the current aggregation period.
+  // If it does not exist in storage, then we set the start time to the current time.
   aggregationPeriodStartTime = await storage.get("OnlineServiceAggregationPeriodStartTime");
   if (!aggregationPeriodStartTime) {
     aggregationPeriodStartTime = webScience.timing.now();
@@ -98,17 +64,60 @@ export async function initializeCollection(storageArg): Promise<void> {
   webScience.scheduling.onIdleDaily.addListener(reportOnlineServiceVisitData);
 }
 
+/**
+ * Initializes the listeners for the tracked online services.
+ **/
 function initializeOnlineServicePageNavigationListeners() {
-  for (const onlineServiceName in onlineServices) {
-    console.log(onlineServiceName);
-    const domainMatchPatterns = webScience.matching.domainsToMatchPatterns(onlineServices[onlineServiceName]);
+  for (const onlineServiceName in onlineServicesMetadata) {
+
+    // Get the match patterns that will be used for the listener for this service.
+    // Each element in onlineServicesMetadata should have either a domain or a 
+    // matchPatterns property.
+    const domainMatchPatterns = onlineServicesMetadata[onlineServiceName].domain ?
+      webScience.matching.domainsToMatchPatterns([onlineServicesMetadata[onlineServiceName].domain]) :
+      onlineServicesMetadata[onlineServiceName].matchPatterns;
 
     webScience.pageNavigation.onPageData.addListener(pageNavigationDetails => {
-
       aggregateData[onlineServiceName].TotalAttentionTime += pageNavigationDetails.attentionDuration;
       aggregateData[onlineServiceName].TotalDwellTime += pageNavigationDetails.pageVisitStopTime - pageNavigationDetails.pageVisitStartTime;
       aggregateData[onlineServiceName].PageVisitCount += 1;
 
+      const confirmationIncludesString = onlineServicesMetadata[onlineServiceName].confirmationIncludesString;
+      const confirmationReferrerIncludesStringArray = onlineServicesMetadata[onlineServiceName].confirmationReferrerIncludesStringArray;
+
+      // Determine if the page navigation was to a confirmation page
+      try {
+        if (confirmationIncludesString) {
+          if (confirmationReferrerIncludesStringArray) {
+            const referrerUrl = new URL(pageNavigationDetails.referrer);
+
+            // Determine if the referrer matches what is expected for the referrer to a confirmation page.
+            for (const confirmationReferrerIncludesString of confirmationReferrerIncludesStringArray) {
+              if (referrerUrl.pathname.includes(confirmationReferrerIncludesString)) {
+
+                // Determine if the url matches what is expected for a confirmation page.
+                const url = new URL(pageNavigationDetails.url);
+                if (url.pathname.includes(confirmationIncludesString)) {
+                  aggregateData[onlineServiceName].CompletedTransactionCount += 1;
+                }
+              }
+              break;
+            }
+
+          } else {
+            // Determine if the url matches what is expected for a confirmation page.
+            const url = new URL(pageNavigationDetails.url);
+            if (url.pathname.includes(confirmationIncludesString)) {
+              aggregateData[onlineServiceName].CompletedTransactionCount += 1;
+            }
+          }
+        }
+      } catch (error) {
+        // Do nothing
+      }
+
+
+      // Update the aggregate data object in storage
       storage.set("OnlineServiceAggregateData", aggregateData);
     },
       {
@@ -118,6 +127,9 @@ function initializeOnlineServicePageNavigationListeners() {
   }
 }
 
+/**
+ * @returns {Object} A new aggregate data object.
+ **/
 function createNewAggregateDataObject(): {
   [serviceName: string]: {
     TotalAttentionTime: number,
@@ -127,7 +139,7 @@ function createNewAggregateDataObject(): {
   }
 } {
   const newAggregateDataObject = {}
-  for (const onlineServiceName in onlineServices) {
+  for (const onlineServiceName in onlineServicesMetadata) {
     newAggregateDataObject[onlineServiceName] = {
       TotalAttentionTime: 0,
       TotalDwellTime: 0,
@@ -139,21 +151,25 @@ function createNewAggregateDataObject(): {
   return newAggregateDataObject;
 }
 
-
+/**
+ * The callback for the onIdleDaily listener that reports the aggregated
+ * data over the current aggregation period.
+ **/
 function reportOnlineServiceVisitData() {
   const currentTime = webScience.timing.now();
 
   const onlineServiceVisitData = {
     AggregateData: aggregateData,
     AggregationPeriodStartTime: aggregationPeriodStartTime,
-    AggregationPeriodEndTime: currentTime,
     PingTime: currentTime,
   };
   console.log(onlineServiceVisitData);
 
+  // Reset the aggregate data object for the new aggregation period starting now.
   aggregateData = createNewAggregateDataObject();
   storage.set("OnlineServiceAggregateData", aggregateData);
 
+  // Reset the aggregation period start time for the new aggregation period starting now.
   aggregationPeriodStartTime = currentTime;
   storage.set("OnlineServiceAggregationPeriodStartTime", aggregationPeriodStartTime);
 }

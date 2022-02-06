@@ -132,11 +132,11 @@ export const searchEnginesMetadata: {
 /**
  * @param {string} url - a URL string.
  * @param {string} engine - a search engine.
- * @returns {string} The search query parameter for url if it is a SERP page for engine. Otherwise, null.
+ * @returns {string} The search query parameter for url if it is a SERP page for engine. Otherwise, an empty string.
  */
 export function getSerpQuery(url: string, engine: string): string {
   if (!url || !engine) {
-    return;
+    return "";
   }
 
   // Get the possible search query parameters for the engine.
@@ -162,7 +162,7 @@ export function getSerpQuery(url: string, engine: string): string {
       }
     }
   }
-  return null;
+  return "";
 }
 
 /**
