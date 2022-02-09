@@ -132,7 +132,7 @@ function getCreatedTemplateSER(): Element {
 
     // Gets the organic element with the smallest height. We are assuming the smallest height element will be
     // the most basic organic result.
-    const minHeight = 9999;
+    const minHeight = Number.MAX_VALUE;
     let templateElement: Element = null;
     for (const organicResult of organicResults) {
         const resultOffsetHeight = (organicResult as HTMLElement).offsetHeight;
@@ -245,8 +245,20 @@ function getDefaultTemplateSER(): HTMLDivElement {
 	</div>
 </div>
 `;
+
+
+    const classes = ["jtfYYd", "NJo7tc", "Z26q7c", "jGGQ5e", "yuRUbf", "LC20lb", "MBeuO", "DKV0Md", "TbwUpd", "NJjxre", "iUh30", "qLRx3b", "tjvcx", "dyjrff", "qzEoUe", "NJo7tc", "Z26q7c", "uUuwM", "VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb", "lyLwlc", "lEBKkf",]
+    for (const className of classes) {
+        const selected = document.querySelector(`.${className}`);
+        if (!selected) {
+            console.log(className)
+        }
+    }
+
     return replacementSER;
 }
+
+
 
 /**
  * Creates a replacement result from the given parameters.

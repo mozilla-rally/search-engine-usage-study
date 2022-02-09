@@ -32,14 +32,14 @@ const serpScript = function () {
     function getOnlineServiceFromOrganicResult(organicResult: Element): string {
         try {
             const citeText = (organicResult.querySelector("a cite") as HTMLElement).innerText.toLowerCase();
-            for (const onlineService in onlineServicesMetadata) {
-                const onlineServiceDomainString = onlineServicesMetadata[onlineService].domain;
-                if (citeText.includes(onlineServiceDomainString)) {
-                    return onlineServiceDomainString;
+            for (const metadata of onlineServicesMetadata) {
+                const domain = metadata.domain;
+                if (citeText.includes(domain)) {
+                    return metadata.serviceName;
                 }
             }
         } catch (error) {
-            return "";
+            // Do nothing
         }
         return "";
     }

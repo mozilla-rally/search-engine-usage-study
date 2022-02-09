@@ -28,6 +28,11 @@ const searchEngineQueryTimes: { [searchEngine: string]: { [query: string]: numbe
  */
 let storage;
 
+let navigationalQueryRegExps: {
+  name: string;
+  regExp: RegExp;
+}[] = null;
+
 /**
  * Start SERP visit collection
  * @param {number} treatmentStartTime - The start time of the treatment.
@@ -35,9 +40,31 @@ let storage;
  **/
 export async function initializeCollection(conditionType, treatmentStartTime, storageArg): Promise<void> {
   storage = storageArg;
+
+  navigationalQueryRegExps = getNavigationalQueryRegExps();
   await initializeQuerySetsFromStorage();
   registerSerpVisitDataListener();
   await ContentScripts.registerContentScripts(conditionType, treatmentStartTime);
+}
+
+/**
+ * @returns {Array} An array where each element is an object with the name of a navigational query type
+ * and a regular expression of match terms for that navigational query type.
+ **/
+function getNavigationalQueryRegExps() {
+  const navigationalQueryRegExpsArray = []
+  for (const navigationalQueryDataElement of navigationalQueryData) {
+    const navigationalQueryMatchTerms = navigationalQueryDataElement.matchTerms;
+
+    const regExp = new RegExp(navigationalQueryMatchTerms.map(webScience.matching.escapeRegExpString).join("|"));
+
+    navigationalQueryRegExpsArray.push({
+      name: navigationalQueryDataElement.name,
+      regExp: regExp,
+    })
+  }
+
+  return navigationalQueryRegExpsArray;
 }
 
 /**
@@ -113,15 +140,11 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
  * Lyrics, Weather, or Google). If not, this will be an empty string.
  */
 function getNavigationalQueryType(query: string): string {
-  try {
-    for (const navigationalQueryType in navigationalQueryData) {
-      const navigationalQueryRegExp = new RegExp(navigationalQueryData[navigationalQueryType]);
-      if (navigationalQueryRegExp.test(query)) {
-        return navigationalQueryType;
-      }
+
+  for (const navigationalQueryRegExp of navigationalQueryRegExps) {
+    if (navigationalQueryRegExp.regExp.test(query)) {
+      return navigationalQueryRegExp.name;
     }
-  } catch (error) {
-    // Do nothing
   }
 
   return ""

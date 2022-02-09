@@ -68,22 +68,22 @@ export async function initializeCollection(storageArg): Promise<void> {
  * Initializes the listeners for the tracked online services.
  **/
 function initializeOnlineServicePageNavigationListeners() {
-  for (const onlineServiceName in onlineServicesMetadata) {
+  for (const metadata of onlineServicesMetadata) {
 
     // Get the match patterns that will be used for the listener for this service.
     // Each element in onlineServicesMetadata should have either a domain or a 
     // matchPatterns property.
-    const domainMatchPatterns = onlineServicesMetadata[onlineServiceName].domain ?
-      webScience.matching.domainsToMatchPatterns([onlineServicesMetadata[onlineServiceName].domain]) :
-      onlineServicesMetadata[onlineServiceName].matchPatterns;
+    const domainMatchPatterns = metadata.domain ?
+      webScience.matching.domainsToMatchPatterns([metadata.domain]) :
+      metadata.matchPatterns;
 
     webScience.pageNavigation.onPageData.addListener(pageNavigationDetails => {
-      aggregateData[onlineServiceName].TotalAttentionTime += pageNavigationDetails.attentionDuration;
-      aggregateData[onlineServiceName].TotalDwellTime += pageNavigationDetails.pageVisitStopTime - pageNavigationDetails.pageVisitStartTime;
-      aggregateData[onlineServiceName].PageVisitCount += 1;
+      aggregateData[metadata.serviceName].TotalAttentionTime += pageNavigationDetails.attentionDuration;
+      aggregateData[metadata.serviceName].TotalDwellTime += pageNavigationDetails.pageVisitStopTime - pageNavigationDetails.pageVisitStartTime;
+      aggregateData[metadata.serviceName].PageVisitCount += 1;
 
-      const confirmationIncludesString = onlineServicesMetadata[onlineServiceName].confirmationIncludesString;
-      const confirmationReferrerIncludesStringArray = onlineServicesMetadata[onlineServiceName].confirmationReferrerIncludesStringArray;
+      const confirmationIncludesString = metadata.confirmationIncludesString;
+      const confirmationReferrerIncludesStringArray = metadata.confirmationReferrerIncludesStringArray;
 
       // Determine if the page navigation was to a confirmation page
       try {
@@ -98,7 +98,7 @@ function initializeOnlineServicePageNavigationListeners() {
                 // Determine if the url matches what is expected for a confirmation page.
                 const url = new URL(pageNavigationDetails.url);
                 if (url.pathname.includes(confirmationIncludesString)) {
-                  aggregateData[onlineServiceName].CompletedTransactionCount += 1;
+                  aggregateData[metadata.serviceName].CompletedTransactionCount += 1;
                 }
               }
               break;
@@ -108,7 +108,7 @@ function initializeOnlineServicePageNavigationListeners() {
             // Determine if the url matches what is expected for a confirmation page.
             const url = new URL(pageNavigationDetails.url);
             if (url.pathname.includes(confirmationIncludesString)) {
-              aggregateData[onlineServiceName].CompletedTransactionCount += 1;
+              aggregateData[metadata.serviceName].CompletedTransactionCount += 1;
             }
           }
         }
@@ -139,8 +139,8 @@ function createNewAggregateDataObject(): {
   }
 } {
   const newAggregateDataObject = {}
-  for (const onlineServiceName in onlineServicesMetadata) {
-    newAggregateDataObject[onlineServiceName] = {
+  for (const metadata of onlineServicesMetadata) {
+    newAggregateDataObject[metadata.serviceName] = {
       TotalAttentionTime: 0,
       TotalDwellTime: 0,
       PageVisitCount: 0,
@@ -159,7 +159,10 @@ function reportOnlineServiceVisitData() {
   const currentTime = webScience.timing.now();
 
   const onlineServiceVisitData = {
-    AggregateData: aggregateData,
+    // Convert aggregate data into array
+    AggregateData: Object.keys(aggregateData).map(serviceName => {
+      return { serviceName, ...aggregateData[serviceName] }
+    }),
     AggregationPeriodStartTime: aggregationPeriodStartTime,
     PingTime: currentTime,
   };
