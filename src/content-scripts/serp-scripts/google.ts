@@ -2,6 +2,13 @@ import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToD
 import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 import { onlineServicesMetadata } from "../../OnlineServiceData";
 
+export function getGoogleOrganicResults(): Element[] {
+    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)")).filter(element => {
+        // Remove shopping results
+        return !element.querySelector(":scope > g-card")
+    });
+}
+
 /**
  * Content Scripts for Google SERP
  */
@@ -48,7 +55,8 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)");
+        const organicResults = getGoogleOrganicResults();
+
         const organicDetails: OrganicDetail[] = [];
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {

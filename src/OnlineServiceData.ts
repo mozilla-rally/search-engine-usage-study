@@ -249,6 +249,54 @@ export const onlineServicesMetadata: {
       domain: "windy.com",
     },
 
+    {
+      serviceName: "Amazon",
+      domain: "amazon.com",
+    },
+    {
+      serviceName: "Apple",
+      domain: "apple.com",
+    },
+    {
+      serviceName: "BestBuy",
+      domain: "bestbuy.com",
+    },
+    {
+      serviceName: "Costco",
+      domain: "costco.com",
+    },
+    {
+      serviceName: "eBay",
+      domain: "ebay.com",
+    },
+    {
+      serviceName: "Etsy",
+      domain: "etsy.com",
+    },
+    {
+      serviceName: "HomeDepot",
+      domain: "homedepot.com",
+    },
+    {
+      serviceName: "Kroger",
+      domain: "kroger.com",
+    },
+    {
+      serviceName: "Lowes",
+      domain: "Lowes.com",
+    },
+    {
+      serviceName: "Target",
+      domain: "target.com",
+    },
+    {
+      serviceName: "Walmart",
+      domain: "walmart.com",
+    },
+    {
+      serviceName: "Wayfair",
+      domain: "wayfair.com",
+    },
 
     {
       serviceName: "GoogleMaps",

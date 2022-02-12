@@ -1,4 +1,5 @@
 import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
+import { getGoogleOrganicResults } from "./serp-scripts/google.js";
 
 /**
  * An object that maps each self preferenced result type to metadata for the result.
@@ -6,6 +7,10 @@ import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathE
  */
 const selfPreferencedResultMetadata: {
     [type: string]: {
+        // Whether Google has a competing service for this type of self preferenced result.
+        // If it does not, then these types of results will be removed even if we are in
+        // the self preferencing replacement condition.
+        competingGoogleService: boolean;
         // A fallback header for a replacement result.
         defaultHeader: string;
         // An xpath to get the text for the header of a replacement result
@@ -26,7 +31,8 @@ const selfPreferencedResultMetadata: {
     }
 } = {
     thingsToDo: {
-        defaultHeader: "Things to do - Google",
+        competingGoogleService: true,
+        defaultHeader: "Things to do - Google Search",
         headerXpath: "//*[@role='heading' and starts-with(text(), 'Top sights in')]",
         headerTail: " | Google Travel",
         defaultLink: "https://www.google.com/travel/things-to-do",
@@ -38,6 +44,7 @@ const selfPreferencedResultMetadata: {
         },
     },
     vacationRental: {
+        competingGoogleService: true,
         defaultHeader: "Google Hotel Search",
         headerXpath: "//*[@role='heading' and starts-with(text(), 'Vacation Rentals |')]",
         headerTail: " - Google Vacation Rentals",
@@ -50,6 +57,7 @@ const selfPreferencedResultMetadata: {
         },
     },
     hotel: {
+        competingGoogleService: true,
         defaultHeader: "Google Hotel Search",
         headerXpath: "//*[@role='heading' and starts-with(text(), 'Hotels |')]",
         headerTail: " - Google Hotels",
@@ -62,6 +70,7 @@ const selfPreferencedResultMetadata: {
         },
     },
     map: {
+        competingGoogleService: true,
         defaultHeader: "Google Maps",
         headerXpath: "//*[starts-with(@aria-label, 'Location Results')]",
         headerTail: " - Google Maps",
@@ -73,12 +82,13 @@ const selfPreferencedResultMetadata: {
             const mapResultsType1 = getXPathElements("//*[@id='rso']/*[descendant::*[starts-with(@aria-label, 'Location Results')]]");
 
             // Map results that do not show up at top of page. Search "malls in new york" for example
-            const mapResultsType2 = getXPathElements("//*[@id='rcnt']/div/div[descendant::*[starts-with(@aria-label, 'Location Results')]]");
+            const mapResultsType2 = getXPathElements("//*[@id='rcnt']/div/div[descendant::*[starts-with(@aria-label, 'Location Results') and not(ancestor::*[@id='center_col'])]]");
 
             return mapResultsType1.concat(mapResultsType2);
         },
     },
     flight: {
+        competingGoogleService: true,
         defaultHeader: "Google Flights",
         headerXpath: "//*[starts-with(@aria-label, 'Location Results')]",
         headerTail: " - Google Flights",
@@ -91,6 +101,7 @@ const selfPreferencedResultMetadata: {
         },
     },
     lyric: {
+        competingGoogleService: false,
         defaultHeader: "",
         headerXpath: "",
         headerTail: "",
@@ -109,6 +120,7 @@ const selfPreferencedResultMetadata: {
         },
     },
     weather: {
+        competingGoogleService: false,
         defaultHeader: "",
         headerXpath: "",
         headerTail: "",
@@ -119,7 +131,56 @@ const selfPreferencedResultMetadata: {
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::h2[text()='Weather Result']]");
         },
+    },
+    shoppingMainResults: {
+        competingGoogleService: false,
+        defaultHeader: "",
+        headerXpath: "",
+        headerTail: "",
+        defaultLink: "",
+        defaultDescription: "",
+        cite: "",
+        citeSpan: "",
+        getResults: function (): Element[] {
+            // Get the self preferenced shopping results in the main results column that are labeled as 'Ads'
+            // and generally at the top of the page.
+            const adSelfPreferencedProductResult: Element[] = Array.from(document.querySelectorAll(".cu-container")).filter(element => {
+                return !element.closest("#rhs") && !element.querySelector(".commercial-unit-desktop-rhs")
+            });
+
+            // Get the self preferenced shopping results in the main results column that are not labeled as 'Ads'
+            // and generally not at the top of the page.
+            const nonAdSelfPreferencedProductResult: Element[] = Array.from(document.querySelectorAll(".g")).filter(element => {
+                return !!element.querySelector("[data-enable-product-traversal]") && !element.closest("#rhs");
+            });
+
+            return adSelfPreferencedProductResult.concat(nonAdSelfPreferencedProductResult);
+        },
+    },
+    shoppingRhsResults: {
+        competingGoogleService: false,
+        defaultHeader: "",
+        headerXpath: "",
+        headerTail: "",
+        defaultLink: "",
+        defaultDescription: "",
+        cite: "",
+        citeSpan: "",
+        getResults: function (): Element[] {
+            // Get the self preferenced shopping results in the column to the right of the main results.
+            return Array.from(document.querySelectorAll(".cu-container")).filter(element => {
+                return !!element.closest("#rhs") || !!element.querySelector(".commercial-unit-desktop-rhs")
+            });
+        },
     }
+}
+
+function elementFilter(element: Element) {
+    if (element.querySelector("#rso") || element.querySelector("[id^='kp-wp-tab']") || element.querySelector(".g")) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -128,7 +189,7 @@ const selfPreferencedResultMetadata: {
  */
 function getCreatedTemplateSER(): Element {
     // Gets the organic results
-    const organicResults = document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)");
+    const organicResults = getGoogleOrganicResults().filter(elementFilter);
 
     // Gets the organic element with the smallest height. We are assuming the smallest height element will be
     // the most basic organic result.
@@ -246,12 +307,23 @@ function getDefaultTemplateSER(): HTMLDivElement {
 </div>
 `;
 
+    const selectors: string[] = [];
+    for (const sheet of document.styleSheets) {
+        try {
+            selectors.push(...Object.values(sheet.cssRules).map(x => { return x["selectorText"] }).filter(selectorText => !!selectorText));
+        } catch (error) {
+            // Do nothing
+        }
+    }
+
+    const selectorsString = selectors.join(" ");
+
 
     const classes = ["jtfYYd", "NJo7tc", "Z26q7c", "jGGQ5e", "yuRUbf", "LC20lb", "MBeuO", "DKV0Md", "TbwUpd", "NJjxre", "iUh30", "qLRx3b", "tjvcx", "dyjrff", "qzEoUe", "NJo7tc", "Z26q7c", "uUuwM", "VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb", "lyLwlc", "lEBKkf",]
     for (const className of classes) {
-        const selected = document.querySelector(`.${className}`);
-        if (!selected) {
-            console.log(className)
+        if (!selectorsString.includes(className) && !document.querySelector(`.${className}`)) {
+            console.log(`Class not found: ${className}`);
+            return null;
         }
     }
 
@@ -269,16 +341,22 @@ function getDefaultTemplateSER(): HTMLDivElement {
  * @param {string} citeSpan - The cite span for the replacement result.
  * @returns the replacement result created with the given parameters.
  */
-function generateReplacementResult(header: string, link: string, description: string, cite: string, citeSpan: string) {
+function generateReplacementResult(header: string, link: string, description: string, cite: string, citeSpan: string): Element {
     let replacementSER = getCreatedTemplateSER();
     if (!replacementSER) replacementSER = getDefaultTemplateSER();
+    if (!replacementSER) return null;
 
-    replacementSER.querySelector("h3").innerHTML = header;
-    replacementSER.querySelector("a").href = link;
-    replacementSER.querySelector("div > span").innerHTML = description;
-    replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
-    replacementSER.querySelector("cite > span").innerHTML = citeSpan;
-    return replacementSER;
+    try {
+        replacementSER.querySelector("h3").innerHTML = header;
+        replacementSER.querySelector("a").href = link;
+        replacementSER.querySelector("div > span").innerHTML = description;
+        replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
+        replacementSER.querySelector("cite > span").innerHTML = citeSpan;
+        return replacementSER;
+    } catch (error) {
+        return null;
+    }
+
 }
 
 /**
@@ -287,6 +365,9 @@ function generateReplacementResult(header: string, link: string, description: st
  */
 function getLink(element: Element): string {
     let link = null;
+
+    // Sometimes the g-more-link element is within the a element and sometimes the a element is within
+    // g-more-link element so we try both ways here.
     try {
         link = (getXPathElement("//a[@href and descendant::g-more-link]", element) as any).href;
     } catch (error) {
@@ -393,18 +474,24 @@ const trackedElementClass = "rally-study-self-preferenced-tracking";
  * is the self preferenced results on the SERP of that type.
  */
 function getSelfPreferencedElements(noRepeats: boolean): {
-    [type: string]: Element[]
+    [type: string]: { elements: Element[], competingGoogleService: boolean }
 } {
 
-    const selfPreferencedResults = {};
+    // Get the self preferenced results for each of the types we are tracking.
+    const selfPreferencedResults: {
+        [type: string]: { elements: Element[], competingGoogleService: boolean }
+    } = {};
     for (const selfPreferencedResultType in selfPreferencedResultMetadata) {
-        selfPreferencedResults[selfPreferencedResultType] = selfPreferencedResultMetadata[selfPreferencedResultType].getResults();
+        selfPreferencedResults[selfPreferencedResultType] = {
+            elements: selfPreferencedResultMetadata[selfPreferencedResultType].getResults().filter(elementFilter),
+            competingGoogleService: selfPreferencedResults[selfPreferencedResultType].competingGoogleService
+        }
     }
 
     if (noRepeats) {
         // Filter out the results that have previously been returned by this function.
         for (const selfPreferencedResultType in selfPreferencedResults) {
-            selfPreferencedResults[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].filter(element => {
+            selfPreferencedResults[selfPreferencedResultType].elements = selfPreferencedResults[selfPreferencedResultType].elements.filter(element => {
                 return !element.classList.contains(trackedElementClass);
             });
         }
@@ -412,7 +499,7 @@ function getSelfPreferencedElements(noRepeats: boolean): {
         // Add trackedElementClass to the results that will be returned by this function call so that they can be identified
         // on subsequent calls to this function.
         for (const selfPreferencedResultType in selfPreferencedResults) {
-            const elements = selfPreferencedResults[selfPreferencedResultType];
+            const elements = selfPreferencedResults[selfPreferencedResultType].elements;
             for (const element of elements) {
                 element.classList.add(trackedElementClass);
             }
@@ -422,6 +509,7 @@ function getSelfPreferencedElements(noRepeats: boolean): {
     return selfPreferencedResults;
 }
 
+// A list of self preferenced result details that have been removed from the SERP.
 const removedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
 /**
  * Removes the self preferenced results on the SERP.
@@ -435,12 +523,12 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
     }
 
     const selfPreferencedResults: {
-        [type: string]: Element[]
+        [type: string]: { elements: Element[], competingGoogleService: boolean }
     } = getSelfPreferencedElements(true);
 
     // Get details of all self preferenced results
     for (const selfPreferencedResultType in selfPreferencedResults) {
-        const elements = selfPreferencedResults[selfPreferencedResultType];
+        const elements = selfPreferencedResults[selfPreferencedResultType].elements;
         for (const element of elements) {
             removedSelfPreferencedElementDetails.push({
                 TopHeight: getElementTopHeight(element),
@@ -454,7 +542,7 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
     // This is in separate loop from the one above that gets the details so that
     // any removal will not affect the heights
     for (const selfPreferencedResultType in selfPreferencedResults) {
-        const elements = selfPreferencedResults[selfPreferencedResultType];
+        const elements = selfPreferencedResults[selfPreferencedResultType].elements;
         for (const element of elements) {
             (element as any).style.setProperty("display", "none");
         }
@@ -465,19 +553,22 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
 
 /**
  * @returns {string} An object containing an array of the details of the self preferenced results on the page and an array of
- * the self preferenced results.
+ * the self preferenced results. This is used if there will be no modification to the SERP.
  */
 export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
 
+    // We pass false to getSelfPreferencedElements because we want to return details for all self preferenced elements on the page,
+    // even if details for a particular element were previously returned by a call to this function.
     const selfPreferencedResults: {
-        [type: string]: Element[]
+        [type: string]: { elements: Element[], competingGoogleService: boolean }
     } = getSelfPreferencedElements(false);
 
     const selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
     const selfPreferencedElements: Element[] = [];
 
+    // Get the details of all the self preferenced results.
     for (const selfPreferencedResultType in selfPreferencedResults) {
-        const elements = selfPreferencedResults[selfPreferencedResultType];
+        const elements = selfPreferencedResults[selfPreferencedResultType].elements;
         for (const element of elements) {
             selfPreferencedElements.push(element);
             selfPreferencedElementDetails.push({
@@ -491,11 +582,12 @@ export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElement
     return { selfPreferencedElementDetails, selfPreferencedElements };
 }
 
+// A list of replacement results that have been added to the SERP.
 const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, selfPreferencedElement: Element }[] = [];
 
 /**
  * Replaces the self preferenced results on the page that are for a Google service and removes
- * the other self preferenced results for which Google does not have its own service (weather and lyrics).
+ * the other self preferenced results for which Google does not have a competing own service.
  * @returns {string} An object containing:
  *      1) An array of the details of the replacement results created and of the self preferenced results that were
  *         removed without replacement
@@ -504,43 +596,41 @@ const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, sel
  */
 export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
     const selfPreferencedResults: {
-        [type: string]: Element[]
+        [type: string]: { elements: Element[], competingGoogleService: boolean }
     } = getSelfPreferencedElements(true);
 
-
-    const lyricAndWeatherResults: {
+    const selfPreferencedResultsToRemove: {
         [type: string]: Element[]
     } = {};
     const selfPreferencedResultsToReplace: {
         [type: string]: Element[]
     } = {};
 
-    // Get all the lyrics and weather results, which will be removed because Google does not
-    // have a competing service, and all the other tracked self preferenced results, which will
-    // be replaced.
+    // Get all the self preferenced elements that will be removed because Google does not have a competing Service
+    // and all the elements that will be replaced.
     for (const selfPreferencedResultType in selfPreferencedResults) {
-        if (['lyric', 'weather'].includes(selfPreferencedResultType)) {
-            lyricAndWeatherResults[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType];
+        if (selfPreferencedResults[selfPreferencedResultType].competingGoogleService) {
+            selfPreferencedResultsToReplace[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
         } else {
-            selfPreferencedResultsToReplace[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType];
+            selfPreferencedResultsToRemove[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
         }
     }
 
-    // Get the details of all the lyrics and weather results.
-    for (const lyricAndWeatherResultType in lyricAndWeatherResults) {
-        const elements = lyricAndWeatherResults[lyricAndWeatherResultType];
+    // Get the details of all the self preferenced results that do not have a competing Google service and will be removed.
+    for (const selfPreferencedResultsToRemoveType in selfPreferencedResultsToRemove) {
+        const elements = selfPreferencedResultsToRemove[selfPreferencedResultsToRemoveType];
         for (const element of elements) {
             removedSelfPreferencedElementDetails.push({
                 TopHeight: getElementTopHeight(element),
                 BottomHeight: getElementBottomHeight(element),
-                Type: lyricAndWeatherResultType
+                Type: selfPreferencedResultsToRemoveType
             });
         }
     }
 
-    // Remove all the lyrics and weather results.
-    for (const lyricAndWeatherResultType in lyricAndWeatherResults) {
-        const elements = lyricAndWeatherResults[lyricAndWeatherResultType];
+    // Remove all the self preferenced results that do not have a competing Google service
+    for (const selfPreferencedResultsToRemoveType in selfPreferencedResultsToRemove) {
+        const elements = selfPreferencedResultsToRemove[selfPreferencedResultsToRemoveType];
         for (const element of elements) {
             (element as any).style.setProperty("display", "none");
         }
@@ -549,15 +639,23 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     // Creates the replacement results and removes the self preferenced results they are replacing.
     for (const typeOfSelfPreferencedResultToReplace in selfPreferencedResultsToReplace) {
         for (const selfPreferencedResultToReplace of selfPreferencedResultsToReplace[typeOfSelfPreferencedResultToReplace]) {
+            // Get the data used to populate a replacement result from the self preferenced result.
             const replacementData = typeOfSelfPreferencedResultToReplace === "flight" ?
                 getFlightReplacementData(selfPreferencedResultToReplace) :
                 getReplacementData(selfPreferencedResultToReplace, typeOfSelfPreferencedResultToReplace);
 
+            // Generate a replacement result.
             const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
 
-            selfPreferencedResultToReplace.parentElement.insertBefore(replacementResult, selfPreferencedResultToReplace);
-            (selfPreferencedResultToReplace as any).style.setProperty("display", "none");
+            // Insert the replacement result right before the self preferenced result and then remove the self preferenced result.
+            if (replacementResult) {
+                selfPreferencedResultToReplace.parentElement.insertBefore(replacementResult, selfPreferencedResultToReplace);
+                (selfPreferencedResultToReplace as any).style.setProperty("display", "none");
+            }
 
+            // Add the replacement result to the list of replacement results that is built up across different runs of this function.
+            // We do this because if a future run adds more replacement results, we will want to recalculate the position of
+            // all the previously added replacement results.
             replacedSelfPreferencedElementsAndType.push({
                 selfPreferencedType: typeOfSelfPreferencedResultToReplace,
                 selfPreferencedElement: replacementResult,
@@ -569,11 +667,13 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     const replacedSelfPreferencedElements: Element[] = [];
     const replacedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
 
-    // Gets the details of the newly added replacement results
+    // Gets the details of replacement results from all runs of this function. We wait until the end of this function call
+    // to get these details because replacing/removing a self preferenced result may change the top height and bottom height
+    // of a replacement result.
     for (const { selfPreferencedType, selfPreferencedElement } of replacedSelfPreferencedElementsAndType) {
         replacedSelfPreferencedElementDetails.push({
-            TopHeight: getElementTopHeight(selfPreferencedElement),
-            BottomHeight: getElementBottomHeight(selfPreferencedElement),
+            TopHeight: selfPreferencedElement ? getElementTopHeight(selfPreferencedElement) : -1,
+            BottomHeight: selfPreferencedElement ? getElementBottomHeight(selfPreferencedElement) : -1,
             Type: selfPreferencedType
         });
         replacedSelfPreferencedElements.push(selfPreferencedElement);
