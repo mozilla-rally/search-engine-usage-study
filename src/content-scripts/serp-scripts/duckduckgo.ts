@@ -1,4 +1,4 @@
-import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElement, ElementType } from "../common.js"
+import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, ElementType } from "../common.js"
 import { searchEnginesMetadata } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
@@ -6,9 +6,6 @@ import { timing } from "@mozilla/web-science";
  * Content Script for DuckDuckGo SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("DuckDuckGo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, extraCallback);
-
     /**
      * @returns {boolean} Whether the page is a DuckDuckGo web SERP page.
      */
@@ -40,7 +37,7 @@ const serpScript = function () {
         const organicDetails: OrganicDetail[] = []
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: getPageNumForElement(organicResult), OnlineService: "" })
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: getPageNumForElement(organicResult), onlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
@@ -105,11 +102,13 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageElement = getXPathElement("(//div[contains(@class, 'result__pagenum')])[last()]")
-        if (pageElement) {
-            return Number(pageElement.textContent);
-        } else {
-            return 1;
+        try {
+            const pageNumElements = document.querySelectorAll("div.result__pagenum");
+            const lastPageNumElement = pageNumElements[pageNumElements.length - 1];
+            const pageNumber = Number(lastPageNumElement.textContent);
+            return pageNumber ? pageNumber : 1;
+        } catch (error) {
+            return 1
         }
     }
 
@@ -159,6 +158,8 @@ const serpScript = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
+
+
         const normalizedUrl: string = getNormalizedUrl(url);
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("duckduckgo.com/y.js") || pageValues.mostRecentMousedown.Link === url) {
@@ -170,12 +171,12 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
-            if (pageValues.mostRecentMousedown.Link === url) {
+            if (getNormalizedUrl(pageValues.mostRecentMousedown.Link) === normalizedUrl) {
                 console.log("INTERNAL CLICK")
                 pageValues.numInternalClicks++;
             }
@@ -183,14 +184,19 @@ const serpScript = function () {
         }
     }
 
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("DuckDuckGo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, extraCallback);
+
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         const newPageIsCorrect = getIsWebSerpPage();
 
-        // DuckDuckGo uses History API when navigating between different search types
-        // for the same SERP query. We report results when going from a web SERP page
-        // to a different type of SERP page (ie. images or maps)
+        // DuckDuckGo uses the History API when navigating between different search types
+        // for the same SERP query. This ensures we report when such a navigation occurs.
         if (pageValues.isWebSerpPage && !newPageIsCorrect) {
             pageValues.reportResults(timeStamp);
+        }
+
+        if (!pageValues.isWebSerpPage && newPageIsCorrect) {
             pageValues.resetTracking(timeStamp);
         }
         pageValues.determinePageValues();

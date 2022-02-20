@@ -1,6 +1,11 @@
 import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
-import { getGoogleOrganicResults } from "./serp-scripts/google.js";
 
+function getGoogleOrganicResults(): Element[] {
+    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)")).filter(element => {
+        // Remove shopping results
+        return !element.querySelector(":scope > g-card")
+    });
+}
 /**
  * An object that maps each self preferenced result type to metadata for the result.
  * @type {Array}
@@ -81,7 +86,6 @@ const selfPreferencedResultMetadata: {
         getResults: function (): Element[] {
             const mapResultsType1 = getXPathElements("//*[@id='rso']/*[descendant::*[starts-with(@aria-label, 'Location Results')]]");
 
-            // Map results that do not show up at top of page. Search "malls in new york" for example
             const mapResultsType2 = getXPathElements("//*[@id='rcnt']/div/div[descendant::*[starts-with(@aria-label, 'Location Results') and not(ancestor::*[@id='center_col'])]]");
 
             return mapResultsType1.concat(mapResultsType2);
@@ -110,8 +114,10 @@ const selfPreferencedResultMetadata: {
         cite: "",
         citeSpan: "",
         getResults: function (): Element[] {
+            // Gets lyrics in the 'Lyrics' tab of a tabbed knowledge panel.
             let lyricsElements: Element[] = Array.from(document.querySelectorAll("[aria-label='Lyrics']"));
 
+            // If there is not a knowledge panel, gets the standard lyrics result.
             if (!document.querySelector("[id^='kp-wp-tab']")) {
                 lyricsElements = lyricsElements.concat(getXPathElements("//*[@id='rso']/*[descendant::*[@data-lyricid]]"));
             }
@@ -176,7 +182,7 @@ const selfPreferencedResultMetadata: {
 }
 
 function elementFilter(element: Element) {
-    if (element.querySelector("#rso") || element.querySelector("[id^='kp-wp-tab']") || element.querySelector(".g")) {
+    if (element.querySelector("#rso") || element.querySelector("[id^='kp-wp-tab']") || element.querySelectorAll("div.g").length > 1) {
         return false;
     }
 
@@ -307,6 +313,7 @@ function getDefaultTemplateSER(): HTMLDivElement {
 </div>
 `;
 
+    // Get all of the CSS selectors for the document.
     const selectors: string[] = [];
     for (const sheet of document.styleSheets) {
         try {
@@ -315,11 +322,13 @@ function getDefaultTemplateSER(): HTMLDivElement {
             // Do nothing
         }
     }
-
     const selectorsString = selectors.join(" ");
 
 
-    const classes = ["jtfYYd", "NJo7tc", "Z26q7c", "jGGQ5e", "yuRUbf", "LC20lb", "MBeuO", "DKV0Md", "TbwUpd", "NJjxre", "iUh30", "qLRx3b", "tjvcx", "dyjrff", "qzEoUe", "NJo7tc", "Z26q7c", "uUuwM", "VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb", "lyLwlc", "lEBKkf",]
+    // A list of all the classes in the hardcoded HTML above
+    const classes = ["jtfYYd", "NJo7tc", "Z26q7c", "jGGQ5e", "yuRUbf", "LC20lb", "MBeuO", "DKV0Md", "TbwUpd", "NJjxre", "iUh30", "qLRx3b", "tjvcx", "dyjrff", "qzEoUe", "NJo7tc", "Z26q7c", "uUuwM", "VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb", "lyLwlc", "lEBKkf",];
+
+    // Check that each of the classes in the default template HTML is either in the CSS or in the DOM.
     for (const className of classes) {
         if (!selectorsString.includes(className) && !document.querySelector(`.${className}`)) {
             console.log(`Class not found: ${className}`);
@@ -484,7 +493,7 @@ function getSelfPreferencedElements(noRepeats: boolean): {
     for (const selfPreferencedResultType in selfPreferencedResultMetadata) {
         selfPreferencedResults[selfPreferencedResultType] = {
             elements: selfPreferencedResultMetadata[selfPreferencedResultType].getResults().filter(elementFilter),
-            competingGoogleService: selfPreferencedResults[selfPreferencedResultType].competingGoogleService
+            competingGoogleService: selfPreferencedResultMetadata[selfPreferencedResultType].competingGoogleService
         }
     }
 
@@ -531,9 +540,9 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
         const elements = selfPreferencedResults[selfPreferencedResultType].elements;
         for (const element of elements) {
             removedSelfPreferencedElementDetails.push({
-                TopHeight: getElementTopHeight(element),
-                BottomHeight: getElementBottomHeight(element),
-                Type: selfPreferencedResultType
+                topHeight: getElementTopHeight(element),
+                bottomHeight: getElementBottomHeight(element),
+                type: selfPreferencedResultType
             });
         }
     }
@@ -572,9 +581,9 @@ export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElement
         for (const element of elements) {
             selfPreferencedElements.push(element);
             selfPreferencedElementDetails.push({
-                TopHeight: getElementTopHeight(element),
-                BottomHeight: getElementBottomHeight(element),
-                Type: selfPreferencedResultType
+                topHeight: getElementTopHeight(element),
+                bottomHeight: getElementBottomHeight(element),
+                type: selfPreferencedResultType
             });
         }
     }
@@ -621,9 +630,9 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
         const elements = selfPreferencedResultsToRemove[selfPreferencedResultsToRemoveType];
         for (const element of elements) {
             removedSelfPreferencedElementDetails.push({
-                TopHeight: getElementTopHeight(element),
-                BottomHeight: getElementBottomHeight(element),
-                Type: selfPreferencedResultsToRemoveType
+                topHeight: getElementTopHeight(element),
+                bottomHeight: getElementBottomHeight(element),
+                type: selfPreferencedResultsToRemoveType
             });
         }
     }
@@ -672,9 +681,9 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     // of a replacement result.
     for (const { selfPreferencedType, selfPreferencedElement } of replacedSelfPreferencedElementsAndType) {
         replacedSelfPreferencedElementDetails.push({
-            TopHeight: selfPreferencedElement ? getElementTopHeight(selfPreferencedElement) : -1,
-            BottomHeight: selfPreferencedElement ? getElementBottomHeight(selfPreferencedElement) : -1,
-            Type: selfPreferencedType
+            topHeight: selfPreferencedElement ? getElementTopHeight(selfPreferencedElement) : -1,
+            bottomHeight: selfPreferencedElement ? getElementBottomHeight(selfPreferencedElement) : -1,
+            type: selfPreferencedType
         });
         replacedSelfPreferencedElements.push(selfPreferencedElement);
     }

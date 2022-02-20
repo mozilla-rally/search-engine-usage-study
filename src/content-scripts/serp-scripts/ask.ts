@@ -7,8 +7,6 @@ import { timing } from "@mozilla/web-science";
  */
 let internalListeners: { document: Document, clickListener: (event: MouseEvent) => void, mousedownListener: (event: MouseEvent) => void }[] = [];
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback);
 
     /**
     * @returns {boolean} Whether the page is an Ask web SERP page.
@@ -29,7 +27,7 @@ const serpScript = function () {
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
             // Get the details of all the organic elements.
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" });
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" });
 
             // Get all the links (elements with an "href" attribute).
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
@@ -45,7 +43,10 @@ const serpScript = function () {
 
         // The image ads on the side are .display-ad-block elements. The advertisements
         // in the main search area are in iframes and handled by askgoogleads.js
-        const adElements = document.querySelectorAll(".display-ad-block");
+        const displayAds = Array.from(document.querySelectorAll(".display-ad-block"));
+        const amazonResults = Array.from(document.querySelectorAll(".PartialAmazonResults"));
+
+        const adElements = displayAds.concat(amazonResults);
         for (const adElement of adElements) {
             adLinkElements.push(...adElement.querySelectorAll("[href]"));
         }
@@ -170,11 +171,20 @@ const serpScript = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
+
+        if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
+            if (pageValues.mostRecentMousedown.Link === url) {
+                console.log("AD CLICK")
+                pageValues.numAdClicks++;
+            }
+            return;
+        }
+
         const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedRecentUrl === normalizedUrl) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
@@ -188,6 +198,9 @@ const serpScript = function () {
         }
     }
 
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback);
+
     window.addEventListener("unload", (event) => {
         // Get the number of ads from iFrames
         let numAskFrameAds = 0;
@@ -195,7 +208,7 @@ const serpScript = function () {
             numAskFrameAds += askFrameToNumAdsObject[frame]
         }
 
-        pageValues.numAdResults = numAskFrameAds + document.querySelectorAll(".display-ad-block").length;
+        pageValues.numAdResults = numAskFrameAds + document.querySelectorAll(".display-ad-block").length + document.querySelectorAll(".PartialAmazonResults").length;
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 

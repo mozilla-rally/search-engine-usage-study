@@ -4,15 +4,6 @@ import { id } from "@mozilla/web-science";
  * Content Scripts for Ask SERP iFrames
  */
 (async function () {
-    const frameId = id.generateId();
-    const bodyObserver = new MutationObserver(() => {
-        reportAds();
-    });
-
-    window.addEventListener("load", function () {
-        reportAds();
-        bodyObserver.observe(document.body, { childList: true });
-    });
 
     function reportAds() {
         const adResults = getAds();
@@ -70,5 +61,15 @@ import { id } from "@mozilla/web-science";
             }
         }
     }
+
+    const frameId = id.generateId();
+    const bodyObserver = new MutationObserver(() => {
+        reportAds();
+    });
+
+    window.addEventListener("load", function () {
+        reportAds();
+        bodyObserver.observe(document.body, { childList: true });
+    });
 
 })()

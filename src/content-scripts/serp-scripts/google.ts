@@ -2,19 +2,10 @@ import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToD
 import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 import { onlineServicesMetadata } from "../../OnlineServiceData";
 
-export function getGoogleOrganicResults(): Element[] {
-    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)")).filter(element => {
-        // Remove shopping results
-        return !element.querySelector(":scope > g-card")
-    });
-}
-
 /**
  * Content Scripts for Google SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, selfPreferencingType, getSerpQueryVertical);
 
     /**
      * @returns {boolean} Whether the page is a Google web SERP page.
@@ -55,12 +46,15 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = getGoogleOrganicResults();
+        const organicResults = Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)")).filter(element => {
+            // Remove shopping results
+            return !element.querySelector(":scope > g-card")
+        });
 
         const organicDetails: OrganicDetail[] = [];
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: getOnlineServiceFromOrganicResult(organicResult) });
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: getOnlineServiceFromOrganicResult(organicResult) });
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')));
 
         }
@@ -240,7 +234,7 @@ const serpScript = function () {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return
         }
@@ -272,6 +266,9 @@ const serpScript = function () {
             return;
         }
     }
+
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, selfPreferencingType, getSerpQueryVertical);
 
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         pageValues.resetTracking(timeStamp);

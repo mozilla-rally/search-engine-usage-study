@@ -6,9 +6,6 @@ import { timing } from "@mozilla/web-science";
  * Content Script for Ecosia SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ecosia", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
-
 
     /**
     * @returns {boolean} Whether the page is an Ecosia web SERP page.
@@ -26,7 +23,7 @@ const serpScript = function () {
         const organicDetails: OrganicDetail[] = [];
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
@@ -128,7 +125,7 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
@@ -140,6 +137,9 @@ const serpScript = function () {
             return;
         }
     }
+
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Ecosia", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     window.addEventListener("unload", (event) => {
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));

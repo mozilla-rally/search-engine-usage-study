@@ -84,7 +84,7 @@ export const searchEnginesMetadata: {
     domains: ["yahoo.com"],
     searchQueryParameters: ["p", "q", "query"],
     getIsSerpPage: function (url: string): boolean {
-      return !!url.match(/(?:^(?:https?):\/\/(?:www\.)?search\.yahoo\.com(?::[0-9]+)?\/search(?:\/\?|\?))/i);
+      return !!url.match(/(?:^(?:https?):\/\/(?:www\.)?search\.yahoo\.com(?::[0-9]+)?\/search(?:\/\?|\?|\/;_ylt|;_ylt))/i);
     },
   },
   Ecosia: {
@@ -247,7 +247,7 @@ export function getHomepageChangeNeeded(homepage: string): boolean {
   // and new window), the homepage string will consist of multiple URLs separated by
   // the "|" character. In this case, we do not want to change the participant's homepages
   // even if one of them is a search engine page because this implies a more involved effort
-  // by the participant.
+  // by the participant in setting their homepage and we do not want to frustrate this effort.
   if (homepage.includes("|")) {
     return false;
   }
@@ -276,4 +276,14 @@ export async function changeHomepageToDefault(): Promise<void> {
 export function getQueryVariable(url, parameter) {
   const urlObject = new URL(url);
   return urlObject.searchParams.get(parameter);
+}
+
+export function getPositiveInteger(inputNumber: number): number {
+  try {
+    const roundedNumber = Math.round(inputNumber);
+    return roundedNumber >= 0 ? roundedNumber : Number.MAX_SAFE_INTEGER;
+  } catch (error) {
+    // Do nothing
+  }
+  return Number.MAX_SAFE_INTEGER;
 }

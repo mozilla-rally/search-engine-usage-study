@@ -127,12 +127,12 @@ export class PageValues {
   organicDetails: Array<OrganicDetail> = [];
 
   /**
-   * Details of the organic results on the page.
+   * Details of the self preferenced results on the page.
    */
   selfPreferencedDetails: Array<SelfPreferencedDetail> = [];
 
   /**
-   * The number of advertisement clicks.
+   * The number of self preferenced result clicks.
    */
   numSelfPreferencedClicks = 0;
 
@@ -196,6 +196,7 @@ export class PageValues {
     getSerpQueryVertical: () => string) {
 
     this.determinePageValues = () => {
+      console.log("DETERMINING PAGE VALUES")
       this.isWebSerpPage = getIsWebSerpPage();
       if (!this.isWebSerpPage) return;
 
@@ -361,11 +362,12 @@ export class PageValues {
     if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
       if (type === ElementType.Organic) {
         console.log("ORGANIC CLICK")
-        this.organicClicks.push({ Ranking: ranking, AttentionDuration: this.getAttentionDuration(), PageLoaded: this.pageLoaded });
+        this.organicClicks.push({ ranking: ranking, attentionDuration: this.getAttentionDuration(), pageLoaded: this.pageLoaded });
       } else if (type === ElementType.Ad) {
         console.log("AD CLICK")
         this.numAdClicks++;
       } else if (type === ElementType.SelfPreferenced) {
+        console.log("POSSIBLE SELF PREFERENCED CLICK")
         if (event.target instanceof Element) {
           const hrefElement = event.target.closest("[href]");
           if (hrefElement && (hrefElement as any).href) {
@@ -397,6 +399,7 @@ export class PageValues {
    * to open a link without a standard click (ie. by right-clicking and opening in a new tab).
    **/
   handleMousedown(event: MouseEvent, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
+    console.log(`ElementType: ${type}`)
     if (type === ElementType.Organic) {
       if (event.target instanceof Element) {
         const hrefElement = event.target.closest("[href]");
@@ -436,10 +439,22 @@ export class PageValues {
             Link: href,
             Ranking: null
           }
+        } else if (href === "") {
+          this.mostRecentMousedown = {
+            Type: ElementType.Internal,
+            Link: window.location.href,
+            Ranking: null
+          }
+          this.possibleInternalClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
+          return;
+        } else {
+          this.mostRecentMousedown = null;
         }
       }
     }
     if (type === ElementType.SelfPreferenced) {
+      console.log("POSSIBLE SELF PREFERENCED MOUSEDOWN")
+      console.log(event.target)
       if (event.target instanceof Element) {
         const hrefElement = event.target.closest("[href]");
         if (hrefElement) {
@@ -558,7 +573,8 @@ export class PageValues {
         numInternalClicks: this.numInternalClicks,
         searchAreaTopHeight: this.searchAreaTopHeight,
         searchAreaBottomHeight: this.searchAreaBottomHeight,
-        pageVisitStartTime: this.pageVisitStartTime
+        pageVisitStartTime: this.pageVisitStartTime,
+        selfPreferencingType: this.selfPreferencingType
       },
     });
   }

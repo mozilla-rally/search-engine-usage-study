@@ -1,12 +1,11 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, ElementType } from "../common.js"
-import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
+import { getQueryVariable, getSerpQuery, searchEnginesMetadata } from "../../Utils.js"
+import { timing } from "@mozilla/web-science";
 
 /**
  * Content Scripts for Baidu SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     /**
      * @returns {boolean} Whether the page is a Baidu web SERP page.
@@ -19,11 +18,20 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#content_left > .result");
+        const organicResults = Array.from(document.querySelectorAll("[tpl='se_com_default']")).filter(element => {
+            if (getXPathElements(`descendant::*[
+                normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
+                normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
+            ]`, element).length) {
+                return false;
+            }
+            return true;
+        });
+
         const organicDetails: OrganicDetail[] = []
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
@@ -33,7 +41,15 @@ const serpScript = function () {
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]").length;
+        return Array.from(document.querySelectorAll(".c-container")).filter(element => {
+            if (getXPathElements(`descendant::*[
+                normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
+                normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
+            ]`, element).length) {
+                return true;
+            }
+            return false;
+        }).length + document.querySelectorAll("#top-ad").length;
     }
 
     /**
@@ -41,13 +57,27 @@ const serpScript = function () {
      */
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
-        const adElements = getXPathElements("//div[contains(@class, 'c-container') and descendant::*[normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement']]");
+        document.querySelectorAll(".c-container");
+
+        const adElements: Element[] = Array.from(document.querySelectorAll(".c-container")).filter(element => {
+            if (getXPathElements(`descendant::*[
+                normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
+                normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
+            ]`, element).length) {
+                return true;
+            }
+            return false;
+        });
+
+        adElements.push(...document.querySelectorAll("#top-ad"));
+
         for (const adElement of adElements) {
             adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
                 const href = (adLinkElement as any).href;
                 return href && !href.includes("javascript");
             }));
         }
+
         return adLinkElements;
     }
 
@@ -79,8 +109,12 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumElement = document.querySelector("strong > .pc")
-        return Number(pageNumElement.textContent);
+        try {
+            const pageNumElement = document.querySelector("strong > .pc")
+            return Number(pageNumElement.textContent);
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
@@ -133,7 +167,7 @@ const serpScript = function () {
                 (normalizedUrl.includes("baidu.com/link") && normalizedRecentUrl.includes("baidu.com/link") &&
                     getQueryVariable(url, "url") === getQueryVariable(pageValues.mostRecentMousedown.Link, "url"))) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
@@ -146,13 +180,24 @@ const serpScript = function () {
         }
     }
 
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
+
+    // This variable tracks whether the #wrapper_wrapper element has been modified
+    // for the current page visit. This variable is used to prevent reporting on unload
+    // if the content has not changed since the last page visit start.
+    let wrapperModified = false;
+
     // Observer that looks for the #wrapper_wrapper element that contains
     // page content
     const documentObserver = new MutationObserver(function (_, observer) {
-        const container = document.querySelector("#wrapper_wrapper")
+        const container = document.querySelector("#wrapper_wrapper");
         if (container) {
             const domObserver = new MutationObserver(function () {
                 pageValues.determinePageValues();
+                if (pageValues.isWebSerpPage) {
+                    wrapperModified = true;
+                }
             });
             const config = { childList: true };
             domObserver.observe(container, config);
@@ -163,12 +208,27 @@ const serpScript = function () {
     documentObserver.observe(document, bodyConfig);
 
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
-        pageValues.resetTracking(timeStamp);
+        const newPageIsCorrect = getIsWebSerpPage();
+
+        if (newPageIsCorrect) {
+            const newQuery = getSerpQuery(window.location.href, "Baidu");
+            if (newQuery && pageValues.query && newQuery !== pageValues.query) {
+                pageValues.reportResults(timeStamp);
+                pageValues.resetTracking(timeStamp);
+            } else if (!pageValues.isWebSerpPage) {
+                pageValues.resetTracking(timeStamp);
+            }
+        } else if (pageValues.isWebSerpPage) {
+            pageValues.reportResults(timeStamp);
+        }
+        wrapperModified = false;
         pageValues.determinePageValues();
     });
 
-    webScience.pageManager.onPageVisitStop.addListener(({ timeStamp }) => {
-        pageValues.reportResults(timeStamp);
+    window.addEventListener("unload", (event) => {
+        if (wrapperModified) {
+            pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
+        }
     });
 };
 

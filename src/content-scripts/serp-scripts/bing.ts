@@ -1,20 +1,18 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, ElementType } from "../common.js"
-import { getQueryVariable } from "../../Utils.js"
+import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 import { timing } from "@mozilla/web-science";
 
 /**
  * Content Scripts for Bing SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Bing", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     /**
     * @returns {boolean} Whether the page is a Bing web SERP page.
     */
     function getIsWebSerpPage(): boolean {
         // The content script match pattern handles this.
-        return true;
+        return searchEnginesMetadata["Bing"].getIsSerpPage(window.location.href);
     }
 
     /**
@@ -25,8 +23,10 @@ const serpScript = function () {
         const organicDetails: OrganicDetail[] = []
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')).filter(element => {
+                return !element.closest(".pageRecoContainer");
+            }));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
@@ -102,7 +102,7 @@ const serpScript = function () {
         // Make sure the target is in the search area
         if (target.matches("#b_content *")) {
             // Make sure the target is not a pagination element, organic element, or ad element
-            if (!target.matches(".b_pag *, #b_results > li.b_algo *, .b_ad > ul > li *, .b_adLastChild *")) {
+            if (!target.matches(".b_pag *")) {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
@@ -132,6 +132,10 @@ const serpScript = function () {
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
+        console.log(url)
+        console.log(pageValues.mostRecentMousedown)
+
+
         // If a mousedown has not been recorded on an ad, organic, or internal element then return
         if (!pageValues.mostRecentMousedown) {
             return;
@@ -139,16 +143,24 @@ const serpScript = function () {
 
         const normalizedUrl: string = getNormalizedUrl(url);
 
-        // If the URL is for a redirect, get the URL it redirects to
+        // If the URL is for a redirect, get the URL it redirects to.
+        // Sometimes this redirect URL is encoded in Base 64.
         let redirectUrl = null;
+        let redirectUrlBase64 = null;
         if (normalizedUrl.includes("bing.com/newtabredir")) {
             redirectUrl = getQueryVariable(url, "url")
+            try {
+                redirectUrlBase64 = atob(getQueryVariable(url, "url"));
+            } catch (error) {
+                // Do nothing
+            }
         }
 
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("bing.com/aclk") ||
                 pageValues.mostRecentMousedown.Link === url ||
-                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
+                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl) ||
+                (redirectUrlBase64 && pageValues.mostRecentMousedown.Link === redirectUrlBase64)) {
                 console.log("AD CLICK")
                 pageValues.numAdClicks++;
             }
@@ -156,21 +168,41 @@ const serpScript = function () {
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url ||
-                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
+                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl) ||
+                (redirectUrlBase64 && pageValues.mostRecentMousedown.Link === redirectUrlBase64)) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
-            if (pageValues.mostRecentMousedown.Link === url ||
-                (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/"))) {
+            if ((pageValues.mostRecentMousedown.Link === url && normalizedUrl.includes("bing.com") && !normalizedUrl.includes("bing.com/newtabredir") && !normalizedUrl.includes("bing.com/aclk")) ||
+                (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/")) ||
+                (redirectUrlBase64 && (pageValues.mostRecentMousedown.Link === redirectUrlBase64 || redirectUrlBase64[0] === "/"))) {
                 console.log("INTERNAL CLICK")
                 pageValues.numInternalClicks++;
             }
             return
         }
     }
+
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Bing", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
+
+    webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
+        const newPageIsCorrect = getIsWebSerpPage();
+
+        // Bing sometimes uses the History API when navigating between pages (e.g., when clicking on the "See more results"
+        // button on a maps result). This ensures we report when such a navigation occurs.
+        if (pageValues.isWebSerpPage && !newPageIsCorrect) {
+            pageValues.reportResults(timeStamp);
+        }
+
+        if (!pageValues.isWebSerpPage && newPageIsCorrect) {
+            pageValues.resetTracking(timeStamp);
+        }
+        pageValues.determinePageValues();
+    });
 
     window.addEventListener("unload", (event) => {
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));

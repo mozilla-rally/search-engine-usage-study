@@ -73,7 +73,7 @@ export async function startStudy(rally): Promise<void> {
   // Get the time that phase 2 started for the participant. We want to know this because
   // we want 10 days of data collection before any treatment, and data collection
   // only begins during the second phase.
-  let secondPhaseStartTime = await storage.get("SecondPhaseStartTime");
+  let secondPhaseStartTime: number = await storage.get("SecondPhaseStartTime");
   if (!secondPhaseStartTime) {
     secondPhaseStartTime = webScience.timing.now();
     storage.set("SecondPhaseStartTime", secondPhaseStartTime);

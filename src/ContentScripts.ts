@@ -33,6 +33,12 @@ export async function registerContentScripts(conditionType, treatmentStartTime) 
 }
 
 async function registerGoogleScript(conditionType, treatmentStartTime): Promise<void> {
+
+  if (conditionType !== "SelfPreferencedRemoval" && conditionType !== "SelfPreferencedReplacement") {
+    registerGoogleDefaultScript();
+    return;
+  }
+
   const currentTime = webScience.timing.now();
 
   // We stop modifying self preferenced results after 50 days
@@ -43,15 +49,13 @@ async function registerGoogleScript(conditionType, treatmentStartTime): Promise<
     registerGoogleDefaultScript();
 
     setTimeout(() => {
-      registerGoogleModificationScript(conditionType, treatmentEndTime - currentTime);
+      registerGoogleModificationScript(conditionType, treatmentEndTime);
     }, treatmentStartTime - currentTime);
 
+  } else if (currentTime < treatmentEndTime) {
+    registerGoogleModificationScript(conditionType, treatmentEndTime);
   } else {
-    if (currentTime < treatmentEndTime) {
-      registerGoogleModificationScript(conditionType, treatmentEndTime - currentTime);
-    } else {
-      registerGoogleDefaultScript();
-    }
+    registerGoogleDefaultScript();
   }
 }
 
@@ -65,32 +69,29 @@ async function registerGoogleDefaultScript() {
   registeredGoogleScript = await browser.contentScripts.register(googleDefaultScript.args);
 }
 
-async function registerGoogleModificationScript(conditionType, timeUntilTreatmentEndTime) {
+async function registerGoogleModificationScript(conditionType, treatmentEndTime) {
   if (registeredGoogleScript) {
     registeredGoogleScript.unregister();
     registeredGoogleScript = null;
   }
 
-  if (conditionType !== "SelfPreferencedRemoval" && conditionType !== "SelfPreferencedReplacement") {
-    googleDefaultScript.args["runAt"] = "document_start";
-    registeredGoogleScript = await browser.contentScripts.register(googleDefaultScript.args);
-  } else {
-    if (conditionType === "SelfPreferencedRemoval") {
-      googleRemoveScript.args["runAt"] = "document_start";
-      registeredGoogleScript = await browser.contentScripts.register(googleRemoveScript.args);
-    } else if (conditionType === "SelfPreferencedReplacement") {
-      googleReplaceScript.args["runAt"] = "document_start";
-      registeredGoogleScript = await browser.contentScripts.register(googleReplaceScript.args);
-    }
-
-    setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime);
+  if (conditionType === "SelfPreferencedRemoval") {
+    googleRemoveScript.args["runAt"] = "document_start";
+    registeredGoogleScript = await browser.contentScripts.register(googleRemoveScript.args);
+  } else if (conditionType === "SelfPreferencedReplacement") {
+    googleReplaceScript.args["runAt"] = "document_start";
+    registeredGoogleScript = await browser.contentScripts.register(googleReplaceScript.args);
   }
+
+  setTimeoutForTreatmentEnd(treatmentEndTime);
 }
 
 // setTimeout uses a 32 bit into to store delay so the max delay value allowed is 2147483647 (0x7FFFFFFF)
 // which is slightly under 25 days. The treatment ends after 50 days and so we need this function
 // to accomplish this longer delay.
-function setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime) {
+function setTimeoutForTreatmentEnd(treatmentEndTime) {
+  const currentTime = webScience.timing.now();
+  const timeUntilTreatmentEndTime = treatmentEndTime - currentTime;
   if (timeUntilTreatmentEndTime > 0x7FFFFFFF) {
     setTimeout(() => {
       setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime - 0x7FFFFFFF);

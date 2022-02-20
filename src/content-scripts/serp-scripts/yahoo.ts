@@ -6,8 +6,6 @@ import { searchEnginesMetadata } from "../../Utils.js"
  * Content Scripts for Yahoo SERP
  */
 const serpScript = function () {
-    // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Yahoo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     /**
      * @returns {boolean} Whether the page is a Yahoo web SERP page.
@@ -24,7 +22,7 @@ const serpScript = function () {
         const organicDetails: OrganicDetail[] = []
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
-            organicDetails.push({ TopHeight: getElementTopHeight(organicResult), BottomHeight: getElementBottomHeight(organicResult), PageNum: null, OnlineService: "" })
+            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
@@ -43,11 +41,9 @@ const serpScript = function () {
     function getAdLinkElements(): Element[] {
         const adLinkElements: Element[] = [];
 
-        adLinkElements.push(...document.querySelectorAll("ol.searchCenterTopAds > li > .ads > div:not(.rs-section), ol.searchCenterBottomAds > li > .ads > div:not(.rs-section)"));
-
-        const adElements = document.querySelectorAll("ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
+        const adElements = document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
         for (const adElement of adElements) {
-            adLinkElements.push(...adElement.querySelectorAll('[href]:not(.p-abs,.p-abs *, .rs-section, .rs-section *)'));
+            adLinkElements.push(...adElement.querySelectorAll('[href]'));
         }
 
         return adLinkElements;
@@ -102,7 +98,7 @@ const serpScript = function () {
                     const href = (hrefElement as any).href;
                     if (isValidLinkToDifferentPage(href)) {
                         const url = new URL(href);
-                        if (url.hostname.includes("yahoo.com")) {
+                        if (url.hostname.includes("yahoo.com") && !url.hostname.includes("r.search.yahoo.com")) {
                             return href;
                         }
                     } else {
@@ -122,6 +118,8 @@ const serpScript = function () {
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
+        console.log(pageValues.mostRecentMousedown);
+        console.log(url);
         if (!pageValues.mostRecentMousedown) {
             return;
         }
@@ -136,20 +134,27 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
                 console.log("ORGANIC CLICK")
-                pageValues.organicClicks.push({ Ranking: pageValues.mostRecentMousedown.Ranking, AttentionDuration: pageValues.getAttentionDuration(), PageLoaded: pageValues.pageLoaded })
+                pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (pageValues.mostRecentMousedown.Link === url) {
-                console.log("INTERNAL CLICK")
-                pageValues.numInternalClicks++;
+                if (!url.includes("r.search.yahoo.com")) {
+                    console.log("INTERNAL CLICK")
+                    pageValues.numInternalClicks++;
+                }
+
             }
             return;
         }
     }
 
+    // Create a pageValues object to track data for the SERP page
+    const pageValues = new PageValues("Yahoo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
+
     window.addEventListener("unload", (event) => {
+        console.log("HELLO!!!")
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 };

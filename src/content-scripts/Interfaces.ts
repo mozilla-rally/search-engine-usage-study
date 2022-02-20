@@ -2,33 +2,33 @@
 
 interface OrganicDetail {
   // Number of pixels between the top of the page and the top of the organic result.
-  TopHeight: number,
+  topHeight: number,
   // Number of pixels between the top of the page and the bottom of the organic result.
-  BottomHeight: number,
+  bottomHeight: number,
   // The page number that the organic result was on
   // (only relevant for DuckDuckGo because of the infinite scroll on its SERP pages).
-  PageNum: number,
+  pageNum: number,
   // The online service of the result only if the result is for one of the tracked online services. If the result is a link for anything besides one of the tracked online services, this property will be null.
-  OnlineService: string,
+  onlineService: string,
 }
 
 interface SelfPreferencedDetail {
   // Number of pixels between the top of the page and the top of the organic result.
-  TopHeight: number,
+  topHeight: number,
   // Number of pixels between the top of the page and the bottom of the organic result.
-  BottomHeight: number,
+  bottomHeight: number,
   // The type of self-preferenced result that is on the page
   // (flights, hotels, other travel, maps, lyrics, weather, shopping, or other direct answer).
-  Type: string,
+  type: string,
 }
 
 interface OrganicClick {
   // The ranking of the selected organic result.
-  Ranking: number,
+  ranking: number,
   // The attention duration when the click occurred.
-  AttentionDuration: number,
+  attentionDuration: number,
   // If the whole page had loaded, including all dependent resources such as stylesheets and images when the selection occurred.
-  PageLoaded: boolean,
+  pageLoaded: boolean,
 }
 
 interface ElementListeners {
