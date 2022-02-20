@@ -7,6 +7,9 @@ import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
 import * as ModalPopup from "./ModalPopup.js"
 import * as Utils from "./Utils.js"
+import * as noticeInteractionMetrics from "../src/generated/noticeInteraction";
+import * as ballotInteractionMetrics from "../src/generated/ballotInteraction";
+import * as studyPings from "../src/generated/pings";
 
 enum NoticeType {
   Default = 1,
@@ -98,6 +101,17 @@ function reportNoticeData(attentionDuration: number, dwellTime: number, revertSe
     PingTime: webScience.timing.now()
   };
 
+  noticeInteractionMetrics.attentionDuration.set(attentionDuration)
+  noticeInteractionMetrics.dwellTime.set(dwellTime)
+  noticeInteractionMetrics.newSearchEngine.set(oldEngine)
+  noticeInteractionMetrics.oldSearchEngine.set(newEngine)
+  noticeInteractionMetrics.pingTime.set()
+  noticeInteractionMetrics.revertSelected.set(revertSelected)
+  noticeInteractionMetrics.treatmentCompletionTime.set(new Date(treatmentCompletionTime))
+  noticeInteractionMetrics.treatmentTime.set(new Date(treatmentStartTime))
+
+  studyPings.noticeInteraction.submit();
+
   console.log(noticeTreatmentData);
 
   completeTreatment();
@@ -113,7 +127,7 @@ async function noticeTreatment(noticeType: NoticeType) {
   // If the notice has been shown already, then the treatment is complete.
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
-    reportNoticeData(-1, -1, false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
+    reportNoticeData(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
     return;
   }
 
@@ -214,6 +228,19 @@ function reportChoiceBallotData(
     PingTime: webScience.timing.now()
   };
 
+
+  ballotInteractionMetrics.dwellTimes.set(dwellTimeList.map(String))
+  ballotInteractionMetrics.treatmentTimes.set(ballotPresentedTimes.map(String))
+  ballotInteractionMetrics.attentionDurations.set(attentionDurationList.map(String))
+  ballotInteractionMetrics.detailsExpanded.set(detailsExpanded);
+  ballotInteractionMetrics.seeMoreSelected.set(seeMoreSelected);
+  ballotInteractionMetrics.ballotOrdering.set(ordering);
+  ballotInteractionMetrics.newSearchEngine.set(newEngine);
+  ballotInteractionMetrics.oldSearchEngine.set(oldEngine);
+  ballotInteractionMetrics.attempts.set(attempts);
+  ballotInteractionMetrics.treatmentCompletionTime.set(new Date(treatmentCompletionTime));
+  ballotInteractionMetrics.pingTime.set();
+
   console.log(choiceBallotTreatmentData);
 
   completeTreatment();
@@ -254,7 +281,7 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
   const choiceBallotAttemptsCounter = await webScience.storage.createCounter("ChoiceBallotAttempts");
   let choiceBallotAttempts = choiceBallotAttemptsCounter.get();
   if (choiceBallotAttempts >= 3) {
-    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, null, 4, ballotPresentedTimes, webScience.timing.now());
+    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, [], 4, ballotPresentedTimes, webScience.timing.now());
     return;
   }
 

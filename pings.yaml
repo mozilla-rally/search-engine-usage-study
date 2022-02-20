@@ -19,7 +19,7 @@ study-enrollment:
     - TODO
   notification_emails:
     - than@mozilla.com
-study-initalization:
+study-initialization:
   description: |
     This ping is sent when the user joins the study.
   include_client_id: false
@@ -29,17 +29,7 @@ study-initalization:
     - TODO
   notification_emails:
     - than@mozilla.com
-clear-browser-history:
-  description: |
-    This ping is sent when the user clears their browsing history.
-  include_client_id: false
-  bugs:
-    - TODO
-  data_reviews:
-    - TODO
-  notification_emails:
-    - than@mozilla.com
-ballot-response:
+ballot-interaction:
   description: |
     This ping is sent for users in the search engine ballot treatment group   |
     once they've made a selection, or if they have refused to make a          |
@@ -51,10 +41,10 @@ ballot-response:
     - TODO
   notification_emails:
     - than@mozilla.com
-notice-response:
+notice-interaction:
   description: |
-    This ping is sent for users in the notification treatment group once the  |
-    user interacts with the notice.
+    This ping is sent for users in the default condition intervention group  |
+    once the user interacts with the notice.
   include_client_id: false
   bugs:
     - TODO
@@ -62,7 +52,7 @@ notice-response:
     - TODO
   notification_emails:
     - than@mozilla.com
-modal-response:
+modal-interaction:
   description: |
     This ping is sent for users in the modal treatment group once the user    |
     interacts with the modal.
@@ -76,6 +66,16 @@ modal-response:
 serp-visit:
   description: |
     This ping is sent when there is a visit to a search engine results page.
+  include_client_id: false
+  bugs:
+    - TODO
+  data_reviews:
+    - TODO
+  notification_emails:
+    - than@mozilla.com
+online-service-navigation:
+  description: |
+    TODO
   include_client_id: false
   bugs:
     - TODO

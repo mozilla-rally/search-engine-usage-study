@@ -1,5 +1,8 @@
 import { onlineServicesMetadata } from "./OnlineServiceData"
 
+import * as onlineServiceNavigationMetrics from "../src/generated/onlineServiceNavigation";
+import * as studyPings from "../src/generated/pings";
+
 /**
  * This module enables tracking interaction with the tracked online services. Data is accumulated
  * for each tracked service and reported on around a daily basis.
@@ -24,10 +27,10 @@ let storage;
 let aggregateData: {
   // The name of the online service.
   [serviceName: string]: {
-    TotalAttentionTime: number,
-    TotalDwellTime: number,
-    PageVisitCount: number,
-    CompletedTransactionCount: number,
+    totalAttentionTime: number,
+    totalDwellTime: number,
+    pageVisitCount: number,
+    completedTransactionCount: number,
   }
 } = {};
 
@@ -42,6 +45,7 @@ let aggregationPeriodStartTime: number = null;
  * @async
  **/
 export async function initializeCollection(storageArg): Promise<void> {
+
   storage = storageArg;
 
   // Get the aggregate data object from storage.
@@ -78,9 +82,9 @@ function initializeOnlineServicePageNavigationListeners() {
       metadata.matchPatterns;
 
     webScience.pageNavigation.onPageData.addListener(pageNavigationDetails => {
-      aggregateData[metadata.serviceName].TotalAttentionTime += pageNavigationDetails.attentionDuration;
-      aggregateData[metadata.serviceName].TotalDwellTime += pageNavigationDetails.pageVisitStopTime - pageNavigationDetails.pageVisitStartTime;
-      aggregateData[metadata.serviceName].PageVisitCount += 1;
+      aggregateData[metadata.serviceName].totalAttentionTime += pageNavigationDetails.attentionDuration;
+      aggregateData[metadata.serviceName].totalDwellTime += pageNavigationDetails.pageVisitStopTime - pageNavigationDetails.pageVisitStartTime;
+      aggregateData[metadata.serviceName].pageVisitCount += 1;
 
       const confirmationIncludesString = metadata.confirmationIncludesString;
       const confirmationReferrerIncludesStringArray = metadata.confirmationReferrerIncludesStringArray;
@@ -98,7 +102,7 @@ function initializeOnlineServicePageNavigationListeners() {
                 // Determine if the url matches what is expected for a confirmation page.
                 const url = new URL(pageNavigationDetails.url);
                 if (url.pathname.includes(confirmationIncludesString)) {
-                  aggregateData[metadata.serviceName].CompletedTransactionCount += 1;
+                  aggregateData[metadata.serviceName].completedTransactionCount += 1;
                 }
               }
               break;
@@ -108,7 +112,7 @@ function initializeOnlineServicePageNavigationListeners() {
             // Determine if the url matches what is expected for a confirmation page.
             const url = new URL(pageNavigationDetails.url);
             if (url.pathname.includes(confirmationIncludesString)) {
-              aggregateData[metadata.serviceName].CompletedTransactionCount += 1;
+              aggregateData[metadata.serviceName].completedTransactionCount += 1;
             }
           }
         }
@@ -132,19 +136,19 @@ function initializeOnlineServicePageNavigationListeners() {
  **/
 function createNewAggregateDataObject(): {
   [serviceName: string]: {
-    TotalAttentionTime: number,
-    TotalDwellTime: number,
-    PageVisitCount: number,
-    CompletedTransactionCount: number,
+    totalAttentionTime: number,
+    totalDwellTime: number,
+    pageVisitCount: number,
+    completedTransactionCount: number,
   }
 } {
   const newAggregateDataObject = {}
   for (const metadata of onlineServicesMetadata) {
     newAggregateDataObject[metadata.serviceName] = {
-      TotalAttentionTime: 0,
-      TotalDwellTime: 0,
-      PageVisitCount: 0,
-      CompletedTransactionCount: 0,
+      totalAttentionTime: 0,
+      totalDwellTime: 0,
+      pageVisitCount: 0,
+      completedTransactionCount: 0,
     }
   }
 
@@ -167,6 +171,20 @@ function reportOnlineServiceVisitData() {
     PingTime: currentTime,
   };
   console.log(onlineServiceVisitData);
+
+  onlineServiceNavigationMetrics.aggregationPeriodStartTime.set(new Date(aggregationPeriodStartTime));
+  onlineServiceNavigationMetrics.pingTime.set();
+  for (const [serviceName, serviceData] of Object.entries(aggregateData)) {
+    onlineServiceNavigationMetrics.onlineServiceData.record({
+      service_name: serviceName,
+      attention_time: serviceData.totalAttentionTime,
+      dwell_time: serviceData.totalDwellTime,
+      page_visit_count: serviceData.pageVisitCount,
+      completed_transaction_count: serviceData.completedTransactionCount
+    });
+  }
+
+  studyPings.onlineServiceNavigation.submit();
 
   // Reset the aggregate data object for the new aggregation period starting now.
   aggregateData = createNewAggregateDataObject();

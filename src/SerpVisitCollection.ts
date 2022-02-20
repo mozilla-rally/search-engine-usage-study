@@ -10,10 +10,10 @@ import * as AttributionTracking from "./AttributionTracking.js"
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
 import * as ContentScripts from "./ContentScripts.js"
+import { navigationalQueryData } from "./OnlineServiceData.js";
 
 import * as serpVisitMetrics from "../src/generated/serpVisit";
 import * as searchUsagePings from "../src/generated/pings";
-import { navigationalQueryData } from "./OnlineServiceData.js";
 
 /**
  * For each of the search engines, maps queries to the last time the query was made on the engine.
@@ -78,7 +78,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
 
 
   // The last time the query was made to the search engine, -1 if it has not previously been made.
-  let timeSinceSameQuery = -1;
+  let timeSinceSameQuery = Number.MAX_SAFE_INTEGER;
   if (pageVisitData.query && pageVisitData.searchEngine in searchEngineQueryTimes) {
     // If the query was made to the search engine before, get the time since it was last made.
     if (pageVisitData.query in searchEngineQueryTimes[pageVisitData.searchEngine]) {
@@ -91,8 +91,10 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     storage.set(pageVisitData.searchEngine, searchEngineQueryTimes[pageVisitData.searchEngine]);
   }
 
+
   const serpVisitData = {
     SearchEngine: pageVisitData.searchEngine,
+    QueryVertical: pageVisitData.queryVertical,
     AttentionDuration: pageVisitData.attentionDuration,
     DwellTime: pageVisitData.dwellTime,
     PageNum: pageVisitData.pageNum,
@@ -104,31 +106,66 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     NumAdResults: pageVisitData.numAdResults,
     NumAdClicks: pageVisitData.numAdClicks,
     NumInternalClicks: pageVisitData.numInternalClicks,
+    SelfPreferencedDetails: pageVisitData.selfPreferencedDetails,
+    NumSelfPreferencedClicks: pageVisitData.numSelfPreferencedClicks,
     SearchAreaTopHeight: pageVisitData.searchAreaTopHeight,
     SearchAreaBottomHeight: pageVisitData.searchAreaBottomHeight,
-    TimeSinceSameQuery: timeSinceSameQuery === -1 ? -1 : Utils.getCoarsenedTimeStamp(timeSinceSameQuery),
+    TimeSinceSameQuery: timeSinceSameQuery,
     PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
     CurrentDefaultEngine: await Privileged.getSearchEngine(),
     NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
+    PageLoaded: pageVisitData.pageLoaded,
+    PingTime: webScience.timing.now(),
+    SelfPreferencingType: pageVisitData.selfPreferencingType
   }
 
-  serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine);
-  serpVisitMetrics.attentionDuration.set(pageVisitData.attentionDuration);
-  serpVisitMetrics.pageNumber.set(pageVisitData.pageNum);
-  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : null);
-  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : null);
-  // serpVisitMetrics.transition.set(attributionDetailsEngineMatches ? attributionDetails.transition : null);
-  // serpVisitMetrics.organicDetails;
-  // serpVisitMetrics.organicClicks;
-  serpVisitMetrics.numAds.set(pageVisitData.numAdResults);
-  serpVisitMetrics.numAd.set(pageVisitData.numAdClicks);
-  serpVisitMetrics.numInternal.set(pageVisitData.numInternalClicks);
-  serpVisitMetrics.searchAreaTopHeight.set(pageVisitData.searchAreaTopHeight);
-  serpVisitMetrics.searchAreaBottomHeight.set(pageVisitData.searchAreaBottomHeight);
-  serpVisitMetrics.timeSinceSameQuery.set(timeSinceSameQuery === -1 ? -1 : Utils.getCoarsenedTimeStamp(timeSinceSameQuery));
-  // serpVisitMetrics.pageVisitStartTime.set(Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime));
-  serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine());
+  serpVisitMetrics.attentionDuration.set(pageVisitData.attentionDuration)
+  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : "")
+  serpVisitMetrics.attributionId.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : "")
+  serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine())
+  serpVisitMetrics.dwellTime.set(pageVisitData.dwellTime)
+  serpVisitMetrics.modificationType.set(pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None")
+  serpVisitMetrics.navigationalQuery.set(getNavigationalQueryType(pageVisitData.query))
+  serpVisitMetrics.numAdClicks.set(pageVisitData.numAdClicks)
+  serpVisitMetrics.numAds.set(pageVisitData.numAdResults)
+  serpVisitMetrics.numInternalClicks.set(pageVisitData.numInternalClicks)
+  serpVisitMetrics.numSelfPreferencedClicks.set(pageVisitData.numSelfPreferencedClicks)
+  serpVisitMetrics.pageLoaded.set(pageVisitData.pageLoaded)
+  serpVisitMetrics.pageNumber.set(pageVisitData.pageNum)
+  serpVisitMetrics.pageVisitStartTime.set(new Date(pageVisitData.pageVisitStartTime))
+  serpVisitMetrics.pingTime.set()
+  serpVisitMetrics.queryVertical.set(pageVisitData.queryVertical)
+  serpVisitMetrics.searchAreaBottomHeight.set(Math.round(pageVisitData.searchAreaBottomHeight))
+  serpVisitMetrics.searchAreaTopHeight.set(Math.round(pageVisitData.searchAreaTopHeight))
+  serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine)
+  serpVisitMetrics.timeSinceSameQuery.set(timeSinceSameQuery)
+  serpVisitMetrics.transition.set(attributionDetailsEngineMatches ? attributionDetails.transition : "")
 
+  for (const organicClick of (pageVisitData.organicClicks as OrganicClick[])) {
+    serpVisitMetrics.organicClicks.record({
+      result_ranking: organicClick.ranking,
+      attention_duration_upon_click: organicClick.attentionDuration,
+      page_loaded_upon_selection: organicClick.pageLoaded
+    });
+  }
+
+  for (const organicResultDetails of (pageVisitData.organicDetails as OrganicDetail[])) {
+    serpVisitMetrics.organicDetails.record({
+      result_top_height: Math.round(organicResultDetails.topHeight),
+      result_bottom_height: Math.round(organicResultDetails.bottomHeight),
+      result_page_num: organicResultDetails.pageNum ? organicResultDetails.pageNum : pageVisitData.pageNum,
+      result_online_service: organicResultDetails.onlineService,
+
+    });
+  }
+
+  for (const selfPreferencedResultDetails of (pageVisitData.selfPreferencedDetails as SelfPreferencedDetail[])) {
+    serpVisitMetrics.selfPreferencedDetails.record({
+      result_top_height: Math.round(selfPreferencedResultDetails.topHeight),
+      result_bottom_height: Math.round(selfPreferencedResultDetails.bottomHeight),
+      self_preferenced_result_type: selfPreferencedResultDetails.type,
+    });
+  }
 
   console.log(serpVisitData);
   searchUsagePings.serpVisit.submit();
@@ -156,7 +193,6 @@ function getNavigationalQueryType(query: string): string {
 function registerSerpVisitDataListener(): void {
   // Listen for new SERP visit data from content scripts
   webScience.messaging.onMessage.addListener((message) => {
-    console.log(message.data)
     reportSerpVisitData(message.data);
   }, {
     type: "SerpVisitData",

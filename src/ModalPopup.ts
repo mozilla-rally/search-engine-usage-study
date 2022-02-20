@@ -5,6 +5,8 @@
  */
 import * as Privileged from "./Privileged.js"
 import * as webScience from "@mozilla/web-science";
+import * as modalInteractionMetrics from "../src/generated/modalInteraction";
+import * as studyPings from "../src/generated/pings";
 
 /**
  * A persistent key-value storage object for the study
@@ -49,6 +51,8 @@ async function webNavigationOnCommittedListener(details) {
 
         const treatmentStartTime = webScience.timing.now();
 
+        modalInteractionMetrics.treatmentTime.set();
+
         // Display the modal dialog and get the participant's selection.
         const revertChosen = await browser.experimental.createPopup(oldEngine, newEngine, modalPrimaryRevert);
 
@@ -58,13 +62,17 @@ async function webNavigationOnCommittedListener(details) {
             Privileged.changeSearchEngine(oldEngine);
         }
 
+        modalInteractionMetrics.pingTime.set();
+        modalInteractionMetrics.revertSelected.set(revertChosen);
+        studyPings.modalInteraction.submit();
+
+
         // Report modal treatment data.
         const modalTreatmentData = {
             RevertSelected: revertChosen,
             TreatmentTime: treatmentStartTime,
             PingTime: webScience.timing.now(),
         };
-
         console.log(modalTreatmentData);
     }
 }

@@ -8,6 +8,8 @@
 import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
+import * as studyInitializationMetrics from "../src/generated/studyInitialization";
+import * as studyPings from "../src/generated/pings";
 
 /**
  * Run initial data collection.
@@ -26,18 +28,25 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
     // Current timeStamp - (30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
     const timeStamp30DaysAgo = currentTime - (30 * 24 * 60 * 60 * 1000);
 
-    const initialData = {
-      ConditionType: conditionType,
-      SurveyId: await webScience.userSurvey.getSurveyId(),
-      DefaultSearchEngine: await Privileged.getSearchEngine(),
-      HistoryQueryCount: await getHistoryQueryCount(timeStamp30DaysAgo),
-      HistoryAge: await getHistoryAge(currentTime, timeStamp30DaysAgo),
-      EnrollmentTime: enrollmentTime,
-      PingTime: Utils.getCoarsenedTimeStamp(currentTime),
-      TimeOffset: new Date().getTimezoneOffset()
-    };
+    const searchEnginesHistoryQueryCount = await getHistoryQueryCount(timeStamp30DaysAgo)
 
-    console.log(initialData);
+    studyInitializationMetrics.conditionType.set(conditionType)
+    studyInitializationMetrics.defaultSearchEngine.set(await Privileged.getSearchEngine())
+    studyInitializationMetrics.enrollmentTime.set(new Date(enrollmentTime))
+    studyInitializationMetrics.historyAge.set(await getHistoryAge(currentTime, timeStamp30DaysAgo))
+    studyInitializationMetrics.pingTime.set();
+    studyInitializationMetrics.surveyId.set(await webScience.userSurvey.getSurveyId());
+
+    studyInitializationMetrics.askQueryCount.set(searchEnginesHistoryQueryCount["Ask"]);
+    studyInitializationMetrics.baiduQueryCount.set(searchEnginesHistoryQueryCount["Baidu"]);
+    studyInitializationMetrics.bingQueryCount.set(searchEnginesHistoryQueryCount["Bing"]);
+    studyInitializationMetrics.duckduckgoQueryCount.set(searchEnginesHistoryQueryCount["DuckDuckGo"]);
+    studyInitializationMetrics.ecosiaQueryCount.set(searchEnginesHistoryQueryCount["Ecosia"]);
+    studyInitializationMetrics.googleQueryCount.set(searchEnginesHistoryQueryCount["Google"]);
+    studyInitializationMetrics.yahooQueryCount.set(searchEnginesHistoryQueryCount["Yahoo"]);
+    studyInitializationMetrics.yandexQueryCount.set(searchEnginesHistoryQueryCount["Yandex"]);
+
+    studyPings.studyInitialization.submit();
 
     storage.set("InitialDataReported", true);
   }
@@ -50,9 +59,9 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
  * @returns {Array} An array that, for each of the tracked search engines, has the query count for the
  * engine since the start time from history.
  */
-async function getHistoryQueryCount(startTime: number): Promise<Array<{ SearchEngine: string, QueryCount: number }>> {
-  const searchEngineQuerySets: {
-    [searchEngine: string]: Set<string>;
+async function getHistoryQueryCount(startTime: number): Promise<{ [searchEngine: string]: number }> {
+  const searchEngineQueryCounts: {
+    [searchEngine: string]: number;
   } = {}
 
   const engines = Utils.getAllSearchEngineNames();
@@ -70,29 +79,10 @@ async function getHistoryQueryCount(startTime: number): Promise<Array<{ SearchEn
         }
       }
     }
-    searchEngineQuerySets[engine] = querySet;
+    searchEngineQueryCounts[engine] = querySet.size;
   }
 
-  return searchEngineQuerySetsToQueryCounts(searchEngineQuerySets);
-}
-
-/**
- * @param {Object} searchEngineQuerySets - an object that maps each of the tracked search engines
- * to the unique query set for the engine.
- * @returns {Array} An array where each item is the name of one of the tracked search engines
- * and the query count for the engine.
- */
-function searchEngineQuerySetsToQueryCounts(searchEngineQuerySets:
-  { [searchEngine: string]: Set<string> }): { SearchEngine: string; QueryCount: number; }[] {
-  const searchEngineToQueryCount: { SearchEngine: string, QueryCount: number }[] = [];
-
-  for (const [searchEngine, querySet] of Object.entries(searchEngineQuerySets)) {
-    searchEngineToQueryCount.push({
-      SearchEngine: searchEngine,
-      QueryCount: querySet.size
-    });
-  }
-  return searchEngineToQueryCount;
+  return searchEngineQueryCounts;
 }
 
 /**
@@ -100,7 +90,7 @@ function searchEngineQuerySetsToQueryCounts(searchEngineQuerySets:
  * @param {number} timeStamp30DaysAgo - A timestamp, in milliseconds since the epoch.
  * @returns {number} If there are history items before timeStamp, returns the difference between currentTime and timeStamp.
  * If the earliest item in history is after timeStamp, returns the difference between currentTime and the visit time of 
- * the earliest item in history. If there are no history items, returns -1.
+ * the earliest item in history. If there are no history items, returns Number.MAX_SAFE_INTEGER.
  */
 async function getHistoryAge(currentTime: number, timeStamp30DaysAgo: number) {
   let earliestHistoryTime = Number.MAX_SAFE_INTEGER;
@@ -129,8 +119,9 @@ async function getHistoryAge(currentTime: number, timeStamp30DaysAgo: number) {
     }
   }
 
-  // If earliestHistoryTime equals Number.MAX_SAFE_INTEGER, that means there were no items in history and we return -1.
-  if (earliestHistoryTime === Number.MAX_SAFE_INTEGER) return -1;
+  // If earliestHistoryTime equals Number.MAX_SAFE_INTEGER, that means there were no items in history
+  // and we return Number.MAX_SAFE_INTEGER.
+  if (earliestHistoryTime === Number.MAX_SAFE_INTEGER) return Number.MAX_SAFE_INTEGER;
 
   // Returns the difference between the current time and the visit time of the earliest item in history.
   return currentTime - earliestHistoryTime;
