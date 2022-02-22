@@ -74,9 +74,11 @@ function exportDataAsCsv(pings) {
     for(const pingType in pings) {
         const data = pings[ pingType ]
 
+        if(data.length === 0) {
+            continue;
+        }
+
         // Extract all keys from the first object present, to use as CSV headers.
-        // TODO if we want to bundle different types of pings in the same CSV, then we should iterate over all objects.
-        // TODO if not, then we should figure out how to bundle different types of pings into different CSVs.
         const headerSet = new Set();
         for(const header of Object.keys(data[ 0 ])) {
             headerSet.add(header);
