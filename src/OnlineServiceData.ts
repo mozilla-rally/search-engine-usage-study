@@ -338,11 +338,11 @@ export const navigationalQueryData: {
     {
       name: "Hotel",
       matchTerms: [
-        "hilton",
+        "hilton", "waldorf astoria", "hampton inn", "doubletree",
         "hyatt",
-        "ihg",
-        "marriott",
-        "wyndham"
+        "ihg", "holiday inn", "intercontinental",
+        "marriott", "ritz carlton", "ritz-carlton", "sheraton", "westin", "fairfield inn", "residence inn",
+        "wyndham", "dolce hotels"
       ]
     },
     {
