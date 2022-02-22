@@ -44,7 +44,7 @@ study_initialization:
   condition_type:
     type: string
     description: |
-      TODO
+      The randomly chosen condition group for the participant.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -58,7 +58,8 @@ study_initialization:
   survey_id:
     type: string
     description: |
-      TODO
+      A randomly generated unique ID that enables syncing survey
+      data on Qualtrics with other data in the study.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -72,7 +73,7 @@ study_initialization:
   default_search_engine:
     type: string
     description: |
-      TODO
+      The participant's default search engine in web browser settings.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -88,7 +89,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Ask.com over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -103,7 +105,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Baidu over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -118,7 +121,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Bing over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -133,7 +137,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to DuckDuckGo over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -148,7 +153,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Ecosia over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -163,7 +169,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Google over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -178,7 +185,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Yahoo! over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -193,7 +201,8 @@ study_initialization:
     type: quantity
     unit: queries
     description: |
-      TODO
+      The number of unique search queries (the text a user enters into a search
+      engine) to Yandex over the past 30 days from browser history.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -209,7 +218,9 @@ study_initialization:
     type: quantity
     unit: milliseconds
     description: |
-      TODO
+      How far back the browser's history goes, with a maximum of 30 days.
+      We collect this value to account for participants who have a browser
+      history that is shorter than 30 days.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -224,7 +235,7 @@ study_initialization:
     type: datetime
     time_unit: millisecond
     description: |
-      TODO
+      The time when the participant joined the study.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -239,7 +250,7 @@ study_initialization:
     type: datetime
     time_unit: millisecond
     description: |
-      TODO
+      The time that the data submission ping was generated.
     lifetime: ping
     send_in_pings:
       - study-initialization
@@ -255,7 +266,8 @@ ballot_interaction:
   old_search_engine:
     type: string
     description: |
-      TODO
+      The participant's default search engine in web browser settings,
+      before the treatment was applied.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -269,7 +281,8 @@ ballot_interaction:
   new_search_engine:
     type: string
     description: |
-      TODO
+      The search engine that the participant selected and the default
+      was changed to.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -283,7 +296,8 @@ ballot_interaction:
   see_more_selected:
     type: boolean
     description: |
-      TODO
+      If the user clicked the “See More Search Engines” button
+      (only relevant in Condition 7).
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -297,7 +311,7 @@ ballot_interaction:
   ballot_ordering:
     type: string_list
     description: |
-      TODO
+      The ordering of the search engines on the ballot.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -311,7 +325,8 @@ ballot_interaction:
   details_expanded:
     type: string_list
     description: |
-      TODO
+      The names of search engines on the ballot for which the participant
+      expanded details (only relevant in Condition 5).
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -326,7 +341,9 @@ ballot_interaction:
     type: quantity
     unit: attempts
     description: |
-      TODO
+      The number of times that a choice ballot was presented to the
+      participant. If a selection is not made after 3 attempts, the
+      ballot is not shown again.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -342,7 +359,7 @@ ballot_interaction:
   treatment_times:
     type: string_list
     description: |
-      TODO
+      The times that the ballot was presented to the participant.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -356,7 +373,7 @@ ballot_interaction:
   dwell_times:
     type: string_list
     description: |
-      TODO
+      How long each presentation of the ballot was open.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -370,7 +387,7 @@ ballot_interaction:
   attention_durations:
     type: string_list
     description: |
-      TODO
+      How long each presentation of the ballot had the user's attention.
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -417,8 +434,7 @@ notice_interaction:
     type: quantity
     unit: milliseconds
     description: |
-      How long the user attention event occurred
-      (window/tab was focused and not idle).
+      How long the treatment notice had the participant's attention.
     lifetime: ping
     send_in_pings:
       - notice-interaction
@@ -433,7 +449,7 @@ notice_interaction:
     type: quantity
     unit: milliseconds
     description: |
-      TODO
+      How long the treatment notice was open.
     lifetime: ping
     send_in_pings:
       - notice-interaction
@@ -447,7 +463,7 @@ notice_interaction:
   revert_selected:
     type: boolean
     description: |
-      TODO
+      Whether the participant selected the revert button.
     lifetime: ping
     send_in_pings:
       - notice-interaction
@@ -461,7 +477,8 @@ notice_interaction:
   old_search_engine:
     type: string
     description: |
-      TODO
+      The participant's default search engine in web browser settings,
+      before the treatment was applied.
     lifetime: ping
     send_in_pings:
       - notice-interaction
@@ -475,7 +492,7 @@ notice_interaction:
   new_search_engine:
     type: string
     description: |
-      TODO
+      The search engine that the default was changed to.
     lifetime: ping
     send_in_pings:
       - notice-interaction
@@ -536,7 +553,7 @@ modal_interaction:
   revert_selected:
     type: boolean
     description: |
-      TODO
+      Whether the participant chose to revert the search engine change.
     lifetime: ping
     send_in_pings:
       - modal-interaction
@@ -584,7 +601,7 @@ serp_visit:
   search_engine:
     type: string
     description: |
-      TODO
+      Which search engine the user queried.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -599,7 +616,7 @@ serp_visit:
   query_vertical:
     type: string
     description: |
-      TODO
+      The category of online content the search query is for.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -614,7 +631,7 @@ serp_visit:
   page_loaded:
     type: boolean
     description: |
-      TODO
+      Whether the SERP completed loading in the participant's browser.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -630,8 +647,7 @@ serp_visit:
     type: quantity
     unit: milliseconds
     description: |
-      How long the user attention event occurred
-      (window/tab was focused and not idle).
+      How long the SERP had the participant's attention.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -647,7 +663,7 @@ serp_visit:
     type: quantity
     unit: milliseconds
     description: |
-      TODO
+      How long the SERP was open in the participant's browser.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -663,7 +679,7 @@ serp_visit:
     type: quantity
     unit: page
     description: |
-      TODO
+      The page number of the results for the query.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -678,7 +694,7 @@ serp_visit:
   attribution:
     type: string
     description: |
-      TODO
+      How the user navigated to the search engine.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -693,7 +709,7 @@ serp_visit:
   attribution_id:
     type: string
     description: |
-      TODO
+      A randomly generated unique ID that associates related SERPs.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -708,7 +724,7 @@ serp_visit:
   transition:
     type: string
     description: |
-      TODO
+       The transition that brought the participant to this particular page.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -723,7 +739,7 @@ serp_visit:
   organic_details:
     type: event
     description: |
-      TODO
+      Details for each of the organic results on the SERP.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -749,13 +765,14 @@ serp_visit:
           results as one continuously scrolling page)
         type: quantity
       result_online_service:
-        description: TODO
+        description: The online service of the result only if the result
+        is for one of the tracked online services.
         type: string
 
   organic_clicks:
     type: event
     description: |
-      TODO
+      Details for each selection of an organic result on the SERP.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -768,7 +785,7 @@ serp_visit:
     expires: never
     extra_keys:
       result_ranking:
-        description: The ranking of the organic result.
+        description: The ranking of the selected organic result.
         type: quantity
       attention_duration_upon_click:
         description: The attention duration when the selection occurred.
@@ -782,7 +799,7 @@ serp_visit:
     type: quantity
     unit: pages
     description: |
-      TODO
+      The number of advertisements on the page.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -798,7 +815,7 @@ serp_visit:
     type: quantity
     unit: clicks
     description: |
-      TODO
+      The number of advertisements that the participant clicked on.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -815,7 +832,7 @@ serp_visit:
   self_preferenced_details:
     type: event
     description: |
-      TODO
+      Details for each of the tracked self-preferenced results on the SERP.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -845,7 +862,7 @@ serp_visit:
     type: quantity
     unit: clicks
     description: |
-      TODO
+      The number of selections of links in the self-preferenced results.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -863,7 +880,8 @@ serp_visit:
     type: quantity
     unit: clicks
     description: |
-      TODO
+      The number of result links that the participant clicks and that lead
+      to another page operated by the same company as the search engine.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -881,7 +899,8 @@ serp_visit:
     type: quantity
     unit: pixels
     description: |
-      TODO
+      The number of pixels between the top of the page and the top of
+      the search result area.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -897,7 +916,8 @@ serp_visit:
     type: quantity
     unit: pixels
     description: |
-      TODO
+      The number of pixels between the top of the page and the bottom of
+      the search result area.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -913,7 +933,8 @@ serp_visit:
     type: quantity
     unit: milliseconds
     description: |
-      TODO
+      The time since the participant made the same query to the
+      same search engine.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -929,7 +950,7 @@ serp_visit:
     type: datetime
     time_unit: millisecond
     description: |
-      When did the page visit start.
+      The timestamp the SERP visit started rounded down to the nearest hour.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -945,7 +966,7 @@ serp_visit:
     type: datetime
     time_unit: millisecond
     description: |
-      TODO
+      The time that the data submission ping was generated.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -960,7 +981,7 @@ serp_visit:
   current_default_engine:
     type: string
     description: |
-      TODO
+      The participant's default search engine at the time of the SERP visit.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -975,7 +996,9 @@ serp_visit:
   navigational_query:
     type: string
     description: |
-      TODO
+      If the search query was a navigational query to one of the tracked online
+      services or Google services, then this will be the category of the online
+      service it was for.
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -990,7 +1013,9 @@ serp_visit:
   modification_type:
     type: string
     description: |
-      TODO
+      The type of modification that the study attempted to make to the
+      self-preferenced results on the search engine response page
+      (None, Removal, Replacement).
     lifetime: ping
     send_in_pings:
       - serp-visit
@@ -1006,7 +1031,8 @@ online_service_navigation:
   online_service_data:
     type: event
     description: |
-      TODO
+      Accumulated participant navigation data for each of the tracked
+      Google services and online services.
     lifetime: ping
     send_in_pings:
       - online-service-navigation
@@ -1019,25 +1045,29 @@ online_service_navigation:
     expires: never
     extra_keys:
       service_name:
-        description: TODO
+        description: The name of the service.
         type: string
       attention_time:
-        description: TODO
+        description: Total attention time during the current
+        aggregation period.
         type: quantity
       dwell_time:
-        description: TODO
+        description: Total dwell time during the current
+        aggregation period.
         type: quantity
       page_visit_count:
-        description: TODO
+        description: Count of pages visited during the
+        current aggregation period.
         type: quantity
       completed_transaction_count:
-        description: TODO
+        description: Count of transactions completed during
+        the current aggregation period.
         type: quantity
   aggregation_period_start_time:
     type: datetime
     time_unit: millisecond
     description: |
-      TODO
+      The start time of the current aggregation period.
     lifetime: ping
     send_in_pings:
       - online-service-navigation
@@ -1052,7 +1082,7 @@ online_service_navigation:
     type: datetime
     time_unit: millisecond
     description: |
-      TODO
+      The time that the data submission ping was generated.
     lifetime: ping
     send_in_pings:
       - online-service-navigation
