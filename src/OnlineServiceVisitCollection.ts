@@ -92,23 +92,27 @@ function initializeOnlineServicePageNavigationListeners() {
       // Determine if the page navigation was to a confirmation page
       try {
         if (confirmationIncludesString) {
-          if (confirmationReferrerIncludesStringArray) {
+          // Determine if the referrer matches what is expected for a confirmation page. If there are no
+          // items in confirmationReferrerIncludesStringArray, then we do not care about the referrer page
+          // and set this value to true.
+          let referrerMatches = false;
+
+          if (confirmationReferrerIncludesStringArray && confirmationReferrerIncludesStringArray.length > 0) {
             const referrerUrl = new URL(pageNavigationDetails.referrer);
 
             // Determine if the referrer matches what is expected for the referrer to a confirmation page.
             for (const confirmationReferrerIncludesString of confirmationReferrerIncludesStringArray) {
               if (referrerUrl.pathname.includes(confirmationReferrerIncludesString)) {
-
-                // Determine if the url matches what is expected for a confirmation page.
-                const url = new URL(pageNavigationDetails.url);
-                if (url.pathname.includes(confirmationIncludesString)) {
-                  aggregateData[metadata.serviceName].completedTransactionCount += 1;
-                }
+                referrerMatches = true;
               }
               break;
             }
 
           } else {
+            referrerMatches = true;
+          }
+
+          if (referrerMatches) {
             // Determine if the url matches what is expected for a confirmation page.
             const url = new URL(pageNavigationDetails.url);
             if (url.pathname.includes(confirmationIncludesString)) {

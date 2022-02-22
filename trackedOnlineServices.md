@@ -54,10 +54,6 @@
 - Marriott
 - Wyndham
 
-
-
-
-
 ### Restaurant and Business Recommendations
 - Travelocity
 - Yelp
