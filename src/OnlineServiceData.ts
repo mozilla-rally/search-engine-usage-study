@@ -13,7 +13,7 @@ export const onlineServicesMetadata: {
   matchPatterns?: string[],
   // A string that identifies a completed transaction confirmation page URL.
   confirmationIncludesString?: string,
-  // A string that identifies the referrer URL for a completed transaction confirmation page.
+  // An array of strings that identify the referrer URL for a completed transaction confirmation page.
   confirmationReferrerIncludesStringArray?: string[],
 
 }[] = [
