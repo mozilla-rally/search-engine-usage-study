@@ -11,6 +11,15 @@ import * as noticeInteractionMetrics from "../src/generated/noticeInteraction";
 import * as ballotInteractionMetrics from "../src/generated/ballotInteraction";
 import * as studyPings from "../src/generated/pings";
 
+interface ChoiceBallotAttemptDetails {
+  attemptNumber: number,
+  seeMoreSelected: boolean,
+  detailsExpanded: string[],
+  attentionDuration: number,
+  treatmentTime: number,
+  dwellTime: number,
+}
+
 enum NoticeType {
   Default = 1,
   Revert = 2
@@ -101,14 +110,14 @@ function reportNoticeData(attentionDuration: number, dwellTime: number, revertSe
     PingTime: webScience.timing.now()
   };
 
-  noticeInteractionMetrics.attentionDuration.set(attentionDuration)
-  noticeInteractionMetrics.dwellTime.set(dwellTime)
-  noticeInteractionMetrics.newSearchEngine.set(oldEngine)
-  noticeInteractionMetrics.oldSearchEngine.set(newEngine)
-  noticeInteractionMetrics.pingTime.set()
-  noticeInteractionMetrics.revertSelected.set(revertSelected)
-  noticeInteractionMetrics.treatmentCompletionTime.set(new Date(treatmentCompletionTime))
-  noticeInteractionMetrics.treatmentTime.set(new Date(treatmentStartTime))
+  noticeInteractionMetrics.attentionDuration.set(Utils.getPositiveInteger(attentionDuration));
+  noticeInteractionMetrics.dwellTime.set(Utils.getPositiveInteger(dwellTime));
+  noticeInteractionMetrics.newSearchEngine.set(oldEngine);
+  noticeInteractionMetrics.oldSearchEngine.set(newEngine);
+  noticeInteractionMetrics.pingTime.set();
+  noticeInteractionMetrics.revertSelected.set(revertSelected);
+  noticeInteractionMetrics.treatmentCompletionTime.set(new Date(treatmentCompletionTime));
+  noticeInteractionMetrics.treatmentTime.set(new Date(treatmentStartTime));
 
   studyPings.noticeInteraction.submit();
 
@@ -180,7 +189,8 @@ async function noticeTreatment(noticeType: NoticeType) {
     schema: {
       attentionDuration: "number",
       dwellTime: "number",
-      revert: "boolean"
+      revert: "boolean",
+      completionTime: "number"
     }
   });
 
@@ -199,49 +209,47 @@ async function noticeTreatment(noticeType: NoticeType) {
  * @param {number} attentionDurationList - How long the notice page has had the participant's attention on each ballot attempt.
  * @param {number} dwellTimeList - How long the notice page was open on each ballot attempt.
  * @param {boolean} revertSelected - Whether the participant selected the option to revert the changes.
- * @param {string} OldEngine - The search engine that the participant's default was changed from.
+ * @param {string} oldEngine - The search engine that the participant's default was changed from.
  * @param {string} newEngine - The search engine that the participant's default was changed to.
  */
 function reportChoiceBallotData(
-  attentionDurationList: number[],
-  dwellTimeList: number[],
   oldEngine: string,
   newEngine: string,
-  seeMoreSelected: boolean,
   ordering: string[],
-  detailsExpanded: string[],
   attempts: number,
-  ballotPresentedTimes: number[],
-  treatmentCompletionTime: number) {
+  treatmentCompletionTime: number,
+  choiceBallotAttemptDetailsList: ChoiceBallotAttemptDetails[]) {
 
   const choiceBallotTreatmentData = {
-    AttentionDurationList: attentionDurationList,
-    DwellTimeList: dwellTimeList,
     OldEngine: oldEngine,
     NewEngine: newEngine,
-    SeeMoreSelected: seeMoreSelected,
     Ordering: ordering,
-    DetailsExpanded: detailsExpanded,
     Attempts: attempts,
-    TreatmentTimes: ballotPresentedTimes,
     TreatmentCompletionTime: treatmentCompletionTime,
-    PingTime: webScience.timing.now()
+    PingTime: webScience.timing.now(),
+    AttemptDetails: choiceBallotAttemptDetailsList
   };
+  console.log(choiceBallotTreatmentData)
 
-
-  ballotInteractionMetrics.dwellTimes.set(dwellTimeList.map(String))
-  ballotInteractionMetrics.treatmentTimes.set(ballotPresentedTimes.map(String))
-  ballotInteractionMetrics.attentionDurations.set(attentionDurationList.map(String))
-  ballotInteractionMetrics.detailsExpanded.set(detailsExpanded);
-  ballotInteractionMetrics.seeMoreSelected.set(seeMoreSelected);
   ballotInteractionMetrics.ballotOrdering.set(ordering);
   ballotInteractionMetrics.newSearchEngine.set(newEngine);
   ballotInteractionMetrics.oldSearchEngine.set(oldEngine);
-  ballotInteractionMetrics.attempts.set(attempts);
+  ballotInteractionMetrics.attempts.set(Utils.getPositiveInteger(attempts));
   ballotInteractionMetrics.treatmentCompletionTime.set(new Date(treatmentCompletionTime));
   ballotInteractionMetrics.pingTime.set();
 
-  console.log(choiceBallotTreatmentData);
+  for (const choiceBallotAttemptDetails of choiceBallotAttemptDetailsList) {
+    ballotInteractionMetrics.attemptDetails.record({
+      attempt_number: Utils.getPositiveInteger(choiceBallotAttemptDetails.attemptNumber),
+      attention_duration: Utils.getPositiveInteger(choiceBallotAttemptDetails.attentionDuration),
+      details_expanded: choiceBallotAttemptDetails.detailsExpanded.join(),
+      dwell_time: Utils.getPositiveInteger(choiceBallotAttemptDetails.dwellTime),
+      see_more_selected: choiceBallotAttemptDetails.seeMoreSelected,
+      treatment_time: Utils.getPositiveInteger(choiceBallotAttemptDetails.treatmentTime),
+    });
+  }
+
+  studyPings.ballotInteraction.submit();
 
   completeTreatment();
 }
@@ -254,26 +262,16 @@ function reportChoiceBallotData(
  * @async
  */
 async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
-  // An array of the attention times for each attempt of the choice ballot
-  let choiceBallotAttentionList: number[] = await storage.get("ChoiceBallotAttentionList");
-  if (!choiceBallotAttentionList) {
-    choiceBallotAttentionList = []
-  }
 
-  // An array of the attention times for each attempt of the choice ballot
-  let choiceBallotDwellTimeList: number[] = await storage.get("ChoiceBallotDwellTimeList");
-  if (!choiceBallotDwellTimeList) {
-    choiceBallotDwellTimeList = []
-  }
-
-  let ballotPresentedTimes: number[] = await storage.get("BallotPresentedTimes");
-  if (!ballotPresentedTimes) {
-    ballotPresentedTimes = [];
-  }
 
   // If the choice ballot has previously been displayed, get the order the search engines
   // were displayed in.
   let enginesOrdering = await storage.get("ChoiceBallotEngineOrdering");
+
+  let choiceBallotAttemptDetails: ChoiceBallotAttemptDetails[] = await storage.get("ChoiceBallotAttemptDetails");
+  if (!choiceBallotAttemptDetails) {
+    choiceBallotAttemptDetails = [];
+  }
 
   // Get the number of times the choice ballot has been displayed to the participant.
   // If it has been shown three times already, we do not try again and mark the treatment
@@ -281,15 +279,22 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
   const choiceBallotAttemptsCounter = await webScience.storage.createCounter("ChoiceBallotAttempts");
   let choiceBallotAttempts = choiceBallotAttemptsCounter.get();
   if (choiceBallotAttempts >= 3) {
-    reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, await Privileged.getSearchEngine(), "", false, enginesOrdering, [], 4, ballotPresentedTimes, webScience.timing.now());
+    reportChoiceBallotData(await Privileged.getSearchEngine(), "", enginesOrdering, 4, webScience.timing.now(), choiceBallotAttemptDetails);
     return;
   }
 
-  ballotPresentedTimes.push(webScience.timing.now());
-  storage.set("BallotPresentedTimes", ballotPresentedTimes);
-
   // Increment the number of choice ballot attempts
   choiceBallotAttempts = await choiceBallotAttemptsCounter.incrementAndGet();
+
+  choiceBallotAttemptDetails.push({
+    attemptNumber: choiceBallotAttempts,
+    seeMoreSelected: false,
+    detailsExpanded: [],
+    attentionDuration: Number.MAX_SAFE_INTEGER,
+    treatmentTime: webScience.timing.now(),
+    dwellTime: Number.MAX_SAFE_INTEGER
+  });
+  storage.set("ChoiceBallotAttemptDetails", choiceBallotAttemptDetails);
 
   // Determine the participant's original search engine and homepage
   const oldEngine = await Privileged.getSearchEngine();
@@ -317,13 +322,33 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
     }
   });
 
+
+  // A listener that can be messaged by the choice ballot with the ordering of search engines on 
+  // the choice ballot.
+  webScience.messaging.onMessage.addListener(message => {
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].detailsExpanded = message.detailsExpanded;
+    storage.set("ChoiceBallotAttemptDetails", choiceBallotAttemptDetails);
+  }, {
+    type: "ChoiceBallotDetailsExpanded",
+    schema: {
+      detailsExpanded: "object",
+    }
+  });
+
+  // A listener that will be messaged by the choice ballot if the 'See More Engines' button is clicked.
+  webScience.messaging.onMessage.addListener(_message => {
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].seeMoreSelected = true;
+    storage.set("ChoiceBallotAttemptDetails", choiceBallotAttemptDetails);
+  }, {
+    type: "ChoiceBallotSeeMoreButtonClicked",
+    schema: {}
+  });
+
   // Register a listener that will get the ballot data upon unload.
   webScience.messaging.onMessage.addListener((message) => {
-    choiceBallotAttentionList.push(message.attentionDuration);
-    storage.set("ChoiceBallotAttentionList", choiceBallotAttentionList);
-
-    choiceBallotDwellTimeList.push(message.dwellTime);
-    storage.set("ChoiceBallotDwellTimeList", choiceBallotDwellTimeList);
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].attentionDuration = message.attentionDuration;
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].dwellTime = message.dwellTime;
+    storage.set("ChoiceBallotAttemptDetails", choiceBallotAttemptDetails);
 
     if (message.ballotCompleted) {
       storage.set("OldEngine", oldEngine);
@@ -337,18 +362,16 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
         Utils.changeHomepageToDefault();
       }
 
-      reportChoiceBallotData(choiceBallotAttentionList, choiceBallotDwellTimeList, oldEngine, message.newEngine, message.seeMoreClicked, message.enginesOrdering, message.detailsExpanded, choiceBallotAttempts, ballotPresentedTimes, message.completionTime);
+      reportChoiceBallotData(oldEngine, message.newEngine, enginesOrdering, choiceBallotAttempts, message.completionTime, choiceBallotAttemptDetails);
     }
   }, {
     type: "ChoiceBallotData",
     schema: {
-      engine: "string",
+      newEngine: "string",
       attentionDuration: "number",
       dwellTime: "number",
-      detailsExpanded: "object",
-      seeMoreClicked: "boolean",
-      enginesOrdering: "object",
-      ballotCompleted: "boolean"
+      ballotCompleted: "boolean",
+      completionTime: "number"
     }
   });
 

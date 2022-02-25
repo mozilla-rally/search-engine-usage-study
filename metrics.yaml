@@ -293,40 +293,10 @@ ballot_interaction:
     notification_emails:
       - than@mozilla.com
     expires: never
-  see_more_selected:
-    type: boolean
-    description: |
-      If the user clicked the “See More Search Engines” button
-      (only relevant in Condition 7).
-    lifetime: ping
-    send_in_pings:
-      - ballot-interaction
-    bugs:
-      - TODO
-    data_reviews:
-      - TODO
-    notification_emails:
-      - than@mozilla.com
-    expires: never
   ballot_ordering:
     type: string_list
     description: |
       The ordering of the search engines on the ballot.
-    lifetime: ping
-    send_in_pings:
-      - ballot-interaction
-    bugs:
-      - TODO
-    data_reviews:
-      - TODO
-    notification_emails:
-      - than@mozilla.com
-    expires: never
-  details_expanded:
-    type: string_list
-    description: |
-      The names of search engines on the ballot for which the participant
-      expanded details (only relevant in Condition 5).
     lifetime: ping
     send_in_pings:
       - ballot-interaction
@@ -356,48 +326,6 @@ ballot_interaction:
     expires: never
     no_lint:
       - UNIT_IN_NAME
-  treatment_times:
-    type: string_list
-    description: |
-      The times that the ballot was presented to the participant.
-    lifetime: ping
-    send_in_pings:
-      - ballot-interaction
-    bugs:
-      - TODO
-    data_reviews:
-      - TODO
-    notification_emails:
-      - than@mozilla.com
-    expires: never
-  dwell_times:
-    type: string_list
-    description: |
-      How long each presentation of the ballot was open.
-    lifetime: ping
-    send_in_pings:
-      - ballot-interaction
-    bugs:
-      - TODO
-    data_reviews:
-      - TODO
-    notification_emails:
-      - than@mozilla.com
-    expires: never
-  attention_durations:
-    type: string_list
-    description: |
-      How long each presentation of the ballot had the user's attention.
-    lifetime: ping
-    send_in_pings:
-      - ballot-interaction
-    bugs:
-      - TODO
-    data_reviews:
-      - TODO
-    notification_emails:
-      - than@mozilla.com
-    expires: never
   treatment_completion_time:
     type: datetime
     time_unit: millisecond
@@ -428,6 +356,47 @@ ballot_interaction:
     notification_emails:
       - than@mozilla.com
     expires: never
+  attempt_details:
+    type: event
+    description: |
+      Details for each of the ballot attempts.
+    lifetime: ping
+    send_in_pings:
+      - ballot-interaction
+    bugs:
+      - TODO
+    data_reviews:
+      - TODO
+    notification_emails:
+      - than@mozilla.com
+    expires: never
+    extra_keys:
+      attempt_number:
+        description: |
+          What number attempt this was.
+        type: quantity
+      see_more_selected:
+        description: |
+          If the user clicked the “See More Search Engines” button
+          (only relevant in Condition 7).
+        type: boolean
+      details_expanded:
+        description: |
+          The names of search engines on the ballot for which the participant
+          expanded details (only relevant in Condition 5).
+        type: string
+      attention_duration:
+        description: |
+          How long the presentation of the ballot had the user's attention.
+        type: quantity
+      treatment_time:
+        description: |
+          The time that the ballot was presented to the participant.
+        type: quantity
+      dwell_time:
+        description: |
+          How long the presentation of the ballot was open.
+        type: quantity
 
 notice_interaction:
   attention_duration:

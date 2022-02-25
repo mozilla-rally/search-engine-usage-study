@@ -13,12 +13,6 @@ window.addEventListener("DOMContentLoaded", async function () {
     initializeAttentionTracking();
 
     /**
-     * Whether the "See More Engines" button was selected.
-     * @type {boolean}
-     */
-    let seeMoreClicked = false;
-
-    /**
      * The set of search engine names that have had their details expanded
      * (only relevant for ChoiceBallotHidden group).
      * @type {Set<string>}
@@ -130,6 +124,7 @@ window.addEventListener("DOMContentLoaded", async function () {
             // Record that the details were expanded for the respective engine.
             detailsExpandedSet.add(targetElement.closest(".engine-container").id);
 
+            browser.runtime.sendMessage({ type: "ChoiceBallotDetailsExpanded", detailsExpanded: Array.from(detailsExpandedSet), });
         });
     }
 
@@ -137,14 +132,13 @@ window.addEventListener("DOMContentLoaded", async function () {
     const seeMoreButton = document.querySelector(".see-more");
     if (seeMoreButton) {
         seeMoreButton.addEventListener("click", () => {
-            // Record that the 'See More Engines' button was clicked.
-            seeMoreClicked = true;
-
             // Show the four hidden search engines.
             document.querySelector(".search-engines-more-wrapper").classList.remove("hiding");
 
             // Hide the button.
             document.querySelector(".see-more-container").classList.add("hiding");
+
+            browser.runtime.sendMessage({ type: "ChoiceBallotSeeMoreButtonClicked" });
         });
     }
 
@@ -166,8 +160,6 @@ window.addEventListener("DOMContentLoaded", async function () {
             newEngine: selectedEngine,
             attentionDuration: getAttentionDuration(),
             dwellTime: getDwellTime(event.timeStamp),
-            detailsExpanded: Array.from(detailsExpandedSet),
-            seeMoreClicked,
             enginesOrdering,
             ballotCompleted,
             completionTime: timing.fromMonotonicClock(event.timeStamp, true),
