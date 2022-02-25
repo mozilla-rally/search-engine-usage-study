@@ -8,6 +8,7 @@
 import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
 import * as Utils from "./Utils.js"
+
 import * as studyInitializationMetrics from "../src/generated/studyInitialization";
 import * as studyPings from "../src/generated/pings";
 
@@ -30,10 +31,10 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
 
     const searchEnginesHistoryQueryCount = await getHistoryQueryCount(timeStamp30DaysAgo)
 
-    studyInitializationMetrics.conditionType.set(conditionType)
-    studyInitializationMetrics.defaultSearchEngine.set(await Privileged.getSearchEngine())
-    studyInitializationMetrics.enrollmentTime.set(new Date(enrollmentTime))
-    studyInitializationMetrics.historyAge.set(await getHistoryAge(currentTime, timeStamp30DaysAgo))
+    studyInitializationMetrics.conditionType.set(conditionType);
+    studyInitializationMetrics.defaultSearchEngine.set(await Privileged.getSearchEngine());
+    studyInitializationMetrics.enrollmentTime.set(new Date(enrollmentTime));
+    studyInitializationMetrics.historyAge.set(Utils.getPositiveInteger(await getHistoryAge(currentTime, timeStamp30DaysAgo)));
     studyInitializationMetrics.pingTime.set();
     studyInitializationMetrics.surveyId.set(await webScience.userSurvey.getSurveyId());
 

@@ -390,6 +390,23 @@ export const navigationalQueryData: {
       ]
     },
     {
+      name: "eCommerce",
+      matchTerms: [
+        "amazon", "whole foods",
+        "apple",
+        "best buy", "bestbuy",
+        "costco",
+        "ebay",
+        "etsy",
+        "homedepot", "home depot",
+        "kroger",
+        "lowes", "lowe's",
+        "target",
+        "walmart",
+        "wayfair"
+      ]
+    },
+    {
       name: "Google",
       matchTerms: [
         "google",

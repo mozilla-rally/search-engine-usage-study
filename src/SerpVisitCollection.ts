@@ -55,8 +55,10 @@ function getNavigationalQueryRegExps() {
   const navigationalQueryRegExpsArray = []
   for (const navigationalQueryDataElement of navigationalQueryData) {
     const navigationalQueryMatchTerms = navigationalQueryDataElement.matchTerms;
-
-    const regExp = new RegExp(navigationalQueryMatchTerms.map(webScience.matching.escapeRegExpString).join("|"));
+    // Regular expression to make sure there are no word characters before or after the
+    // matching query. This prevents a SERP query of "shallowest" from matching with 
+    // "lowes" and other similar false matches.
+    const regExp = new RegExp(`(?<!\\w)(${navigationalQueryMatchTerms.map(webScience.matching.escapeRegExpString).join("|")})(?!\\w)`);
 
     navigationalQueryRegExpsArray.push({
       name: navigationalQueryDataElement.name,
@@ -77,7 +79,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   const attributionDetailsEngineMatches = attributionDetails && attributionDetails.engine === pageVisitData.searchEngine;
 
 
-  // The last time the query was made to the search engine, -1 if it has not previously been made.
+  // The last time the query was made to the search engine, Number.MAX_SAFE_INTEGER if it has not previously been made.
   let timeSinceSameQuery = Number.MAX_SAFE_INTEGER;
   if (pageVisitData.query && pageVisitData.searchEngine in searchEngineQueryTimes) {
     // If the query was made to the search engine before, get the time since it was last made.
@@ -119,51 +121,51 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     SelfPreferencingType: pageVisitData.selfPreferencingType
   }
 
-  serpVisitMetrics.attentionDuration.set(pageVisitData.attentionDuration)
-  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : "")
-  serpVisitMetrics.attributionId.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : "")
-  serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine())
-  serpVisitMetrics.dwellTime.set(pageVisitData.dwellTime)
-  serpVisitMetrics.modificationType.set(pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None")
+  serpVisitMetrics.attentionDuration.set(Utils.getPositiveInteger(pageVisitData.attentionDuration));
+  serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : "");
+  serpVisitMetrics.attributionId.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : "");
+  serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine());
+  serpVisitMetrics.dwellTime.set(Utils.getPositiveInteger(pageVisitData.dwellTime));
+  serpVisitMetrics.modificationType.set(pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None");
   serpVisitMetrics.navigationalQuery.set(getNavigationalQueryType(pageVisitData.query))
-  serpVisitMetrics.numAdClicks.set(pageVisitData.numAdClicks)
-  serpVisitMetrics.numAds.set(pageVisitData.numAdResults)
-  serpVisitMetrics.numInternalClicks.set(pageVisitData.numInternalClicks)
-  serpVisitMetrics.numSelfPreferencedClicks.set(pageVisitData.numSelfPreferencedClicks)
-  serpVisitMetrics.pageLoaded.set(pageVisitData.pageLoaded)
-  serpVisitMetrics.pageNumber.set(pageVisitData.pageNum)
-  serpVisitMetrics.pageVisitStartTime.set(new Date(pageVisitData.pageVisitStartTime))
-  serpVisitMetrics.pingTime.set()
-  serpVisitMetrics.queryVertical.set(pageVisitData.queryVertical)
-  serpVisitMetrics.searchAreaBottomHeight.set(Math.round(pageVisitData.searchAreaBottomHeight))
-  serpVisitMetrics.searchAreaTopHeight.set(Math.round(pageVisitData.searchAreaTopHeight))
-  serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine)
-  serpVisitMetrics.timeSinceSameQuery.set(timeSinceSameQuery)
-  serpVisitMetrics.transition.set(attributionDetailsEngineMatches ? attributionDetails.transition : "")
+  serpVisitMetrics.numAdClicks.set(Utils.getPositiveInteger(pageVisitData.numAdClicks));
+  serpVisitMetrics.numAds.set(Utils.getPositiveInteger(pageVisitData.numAdResults));
+  serpVisitMetrics.numInternalClicks.set(Utils.getPositiveInteger(pageVisitData.numInternalClicks));
+  serpVisitMetrics.numSelfPreferencedClicks.set(Utils.getPositiveInteger(pageVisitData.numSelfPreferencedClicks));
+  serpVisitMetrics.pageLoaded.set(pageVisitData.pageLoaded);
+  serpVisitMetrics.pageNumber.set(Utils.getPositiveInteger(pageVisitData.pageNum));
+  serpVisitMetrics.pageVisitStartTime.set(new Date(pageVisitData.pageVisitStartTime));
+  serpVisitMetrics.pingTime.set();
+  serpVisitMetrics.queryVertical.set(pageVisitData.queryVertical ? pageVisitData.queryVertical : "");
+  serpVisitMetrics.searchAreaBottomHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaBottomHeight));
+  serpVisitMetrics.searchAreaTopHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaTopHeight));
+  serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine ? pageVisitData.searchEngine : "");
+  serpVisitMetrics.timeSinceSameQuery.set(timeSinceSameQuery);
+  serpVisitMetrics.transition.set(attributionDetailsEngineMatches ? attributionDetails.transition : "");
 
   for (const organicClick of (pageVisitData.organicClicks as OrganicClick[])) {
     serpVisitMetrics.organicClicks.record({
-      result_ranking: organicClick.ranking,
-      attention_duration_upon_click: organicClick.attentionDuration,
+      result_ranking: Utils.getPositiveInteger(organicClick.ranking),
+      attention_duration_upon_click: Utils.getPositiveInteger(organicClick.attentionDuration),
       page_loaded_upon_selection: organicClick.pageLoaded
     });
   }
 
   for (const organicResultDetails of (pageVisitData.organicDetails as OrganicDetail[])) {
     serpVisitMetrics.organicDetails.record({
-      result_top_height: Math.round(organicResultDetails.topHeight),
-      result_bottom_height: Math.round(organicResultDetails.bottomHeight),
-      result_page_num: organicResultDetails.pageNum ? organicResultDetails.pageNum : pageVisitData.pageNum,
-      result_online_service: organicResultDetails.onlineService,
+      result_top_height: Utils.getPositiveInteger(organicResultDetails.topHeight),
+      result_bottom_height: Utils.getPositiveInteger(organicResultDetails.bottomHeight),
+      result_page_num: Utils.getPositiveInteger(organicResultDetails.pageNum),
+      result_online_service: organicResultDetails.onlineService ? organicResultDetails.onlineService : "",
 
     });
   }
 
   for (const selfPreferencedResultDetails of (pageVisitData.selfPreferencedDetails as SelfPreferencedDetail[])) {
     serpVisitMetrics.selfPreferencedDetails.record({
-      result_top_height: Math.round(selfPreferencedResultDetails.topHeight),
-      result_bottom_height: Math.round(selfPreferencedResultDetails.bottomHeight),
-      self_preferenced_result_type: selfPreferencedResultDetails.type,
+      result_top_height: Utils.getPositiveInteger(selfPreferencedResultDetails.topHeight),
+      result_bottom_height: Utils.getPositiveInteger(selfPreferencedResultDetails.bottomHeight),
+      self_preferenced_result_type: selfPreferencedResultDetails.type ? selfPreferencedResultDetails.type : "",
     });
   }
 
@@ -177,13 +179,11 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
  * Lyrics, Weather, or Google). If not, this will be an empty string.
  */
 function getNavigationalQueryType(query: string): string {
-
   for (const navigationalQueryRegExp of navigationalQueryRegExps) {
     if (navigationalQueryRegExp.regExp.test(query)) {
       return navigationalQueryRegExp.name;
     }
   }
-
   return ""
 }
 

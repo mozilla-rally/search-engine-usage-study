@@ -1,4 +1,5 @@
 import { onlineServicesMetadata } from "./OnlineServiceData"
+import * as Utils from "./Utils.js"
 
 import * as onlineServiceNavigationMetrics from "../src/generated/onlineServiceNavigation";
 import * as studyPings from "../src/generated/pings";
@@ -180,11 +181,11 @@ function reportOnlineServiceVisitData() {
   onlineServiceNavigationMetrics.pingTime.set();
   for (const [serviceName, serviceData] of Object.entries(aggregateData)) {
     onlineServiceNavigationMetrics.onlineServiceData.record({
-      service_name: serviceName,
-      attention_time: serviceData.totalAttentionTime,
-      dwell_time: serviceData.totalDwellTime,
-      page_visit_count: serviceData.pageVisitCount,
-      completed_transaction_count: serviceData.completedTransactionCount
+      service_name: serviceName ? serviceName : "",
+      attention_time: Utils.getPositiveInteger(serviceData.totalAttentionTime),
+      dwell_time: Utils.getPositiveInteger(serviceData.totalDwellTime),
+      page_visit_count: Utils.getPositiveInteger(serviceData.pageVisitCount),
+      completed_transaction_count: Utils.getPositiveInteger(serviceData.completedTransactionCount)
     });
   }
 

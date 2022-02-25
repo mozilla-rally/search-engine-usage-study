@@ -279,6 +279,7 @@ export function getQueryVariable(url, parameter) {
 }
 
 export function getPositiveInteger(inputNumber: number): number {
+  if (!inputNumber) return Number.MAX_SAFE_INTEGER;
   try {
     const roundedNumber = Math.round(inputNumber);
     return roundedNumber >= 0 ? roundedNumber : Number.MAX_SAFE_INTEGER;
