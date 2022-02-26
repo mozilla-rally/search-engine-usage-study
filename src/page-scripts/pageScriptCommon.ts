@@ -65,6 +65,21 @@ export function getAttentionDuration(): number {
     }
 }
 
-export function getDwellTime(timeStamp: number): number {
-    return timing.fromMonotonicClock(timeStamp, true) - timing.fromMonotonicClock(window.performance.timeOrigin, false);
+const millisecondsPerSecond = 1000;
+export function registerAttentionAndDwellTimeMessageOnInterval(): void {
+    setInterval(() => {
+        browser.runtime.sendMessage({
+            type: "AttentionAndDwellTimeUpdate",
+            attentionDuration: getAttentionDuration(),
+            dwellTime: getDwellTime(),
+        });
+    }, millisecondsPerSecond);
+}
+
+export function getDwellTime(timeStamp?: number): number {
+    if (timeStamp) {
+        return timing.fromMonotonicClock(timeStamp, true) - timing.fromMonotonicClock(window.performance.timeOrigin, false);
+    } else {
+        return timing.now() - timing.fromMonotonicClock(window.performance.timeOrigin, false);
+    }
 }

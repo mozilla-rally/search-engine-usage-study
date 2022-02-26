@@ -1,5 +1,5 @@
 import { timing } from "@mozilla/web-science";
-import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
+import { initializeAttentionTracking, getAttentionDuration, getDwellTime, registerAttentionAndDwellTimeMessageOnInterval } from "./pageScriptCommon.js";
 
 // Randomly shuffles the input array in place.
 function shuffleArray(array) {
@@ -151,6 +151,8 @@ window.addEventListener("DOMContentLoaded", async function () {
         ballotCompleted = true;
         window.close();
     });
+
+    registerAttentionAndDwellTimeMessageOnInterval();
 
     window.addEventListener("unload", (event) => {
         const checkedRadio = document.querySelector("input[name=engine-select]:checked") as HTMLInputElement

@@ -1,5 +1,5 @@
 import { timing } from "@mozilla/web-science";
-import { initializeAttentionTracking, getAttentionDuration, getDwellTime } from "./pageScriptCommon.js";
+import { initializeAttentionTracking, getAttentionDuration, getDwellTime, registerAttentionAndDwellTimeMessageOnInterval } from "./pageScriptCommon.js";
 
 /**
  * Description for each of the search engines that the participant's default can be changed to
@@ -77,6 +77,8 @@ window.addEventListener("DOMContentLoaded", async function () {
         const noHomepageChangeNotification = document.getElementById("noHomepageChangeDescription");
         if (noHomepageChangeNotification) noHomepageChangeNotification.classList.add("hiding");
     }
+
+    registerAttentionAndDwellTimeMessageOnInterval();
 
     // Send the NoticeResponse message to the background upon unload.
     window.addEventListener("unload", (event) => {

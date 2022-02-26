@@ -136,7 +136,7 @@ async function noticeTreatment(noticeType: NoticeType) {
   // If the notice has been shown already, then the treatment is complete.
   const noticeShown = await storage.get("NoticeShown");
   if (noticeShown) {
-    reportNoticeData(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
+    reportNoticeData(storage.get("NoticeAttentionDuration"), storage.get("NoticeDwellTime"), false, await storage.get("OldEngine"), await storage.get("NewEngine"), webScience.timing.now());
     return;
   }
 
@@ -173,6 +173,20 @@ async function noticeTreatment(noticeType: NoticeType) {
   }, {
     type: "NoticeDetails",
     schema: {}
+  });
+
+  // Register a listener that will get attention duration and dwell time updates every second.
+  // We have this in case we do not receive a message from the notice page upon unload
+  // (e.g., if the participant force quits out of the browser).
+  webScience.messaging.onMessage.addListener((message) => {
+    storage.set("NoticeAttentionDuration", message.attentionDuration);
+    storage.set("NoticeDwellTime", message.dwellTime);
+  }, {
+    type: "AttentionAndDwellTimeUpdate",
+    schema: {
+      attentionDuration: "number",
+      dwellTime: "number",
+    }
   });
 
   // Register a listener that will be sent a message when the notice page unloads
@@ -342,6 +356,21 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
   }, {
     type: "ChoiceBallotSeeMoreButtonClicked",
     schema: {}
+  });
+
+  // Register a listener that will get attention duration and dwell time updates every second.
+  // We have this in case we do not receive a message from the choice ballot page upon unload
+  // (e.g., if the participant force quits out of the browser).
+  webScience.messaging.onMessage.addListener((message) => {
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].attentionDuration = message.attentionDuration;
+    choiceBallotAttemptDetails[choiceBallotAttemptDetails.length - 1].dwellTime = message.dwellTime;
+    storage.set("ChoiceBallotAttemptDetails", choiceBallotAttemptDetails);
+  }, {
+    type: "AttentionAndDwellTimeUpdate",
+    schema: {
+      attentionDuration: "number",
+      dwellTime: "number",
+    }
   });
 
   // Register a listener that will get the ballot data upon unload.
