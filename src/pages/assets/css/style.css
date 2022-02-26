@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-@font-face{font-display:block;font-family:Zilla Slab;font-style:normal;font-weight:700;src:url(/dist/pages/webfonts/assets/ZillaSlabBold.woff2) format("woff2"),url(/dist/pages/assets/webfonts/ZillaSlabBold.woff) format("woff")}
+@font-face{font-display:block;font-family:Zilla Slab;font-style:normal;font-weight:700;src:url(/dist/pages/assets/webfonts/ZillaSlabBold.woff2) format("woff2"),url(/dist/pages/assets/webfonts/ZillaSlabBold.woff) format("woff")}
 
 @font-face{font-display:block;font-family:Inter;font-style:normal;font-weight:400;src:url(/dist/pages/assets/webfonts/Inter.woff) format("woff")}
 
