@@ -523,7 +523,9 @@ export class PageValues {
 
     // Add the self preferenced tracking listeners.
     for (const selfPreferencedElement of selfPreferencedElements) {
-      this.addElementListeners(selfPreferencedElement, ElementType.SelfPreferenced, null, null);
+      if (selfPreferencedElement) {
+        this.addElementListeners(selfPreferencedElement, ElementType.SelfPreferenced, null, null);
+      }
     }
   }
 

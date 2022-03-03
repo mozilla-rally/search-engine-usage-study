@@ -44,3 +44,9 @@ interface ReplacementData {
   cite: string,
   citeSpan: string,
 }
+
+interface ReplacementDataVariableSubset {
+  header: string,
+  link: string,
+  description: string,
+}

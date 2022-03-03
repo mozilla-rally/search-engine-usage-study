@@ -1,118 +1,279 @@
 import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
 
 function getGoogleOrganicResults(): Element[] {
-    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk)")).filter(element => {
+    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
         // Remove shopping results
         return !element.querySelector(":scope > g-card")
     });
 }
+
 /**
- * An object that maps each self preferenced result type to metadata for the result.
+ * An object that maps self preferenced result types that have a possible replacement
+ * to metadata for the result. A self preferenced result type has a possible replacement if
+ * Google has a competing service for the self preferenced result type. For example, travel
+ * self preferenced results have a competing service (Google Flights), while lyrics do not.
  * @type {Array}
  */
-const selfPreferencedResultMetadata: {
+const selfPreferencedResultMetadataReplacement: {
     [type: string]: {
-        // Whether Google has a competing service for this type of self preferenced result.
-        // If it does not, then these types of results will be removed even if we are in
-        // the self preferencing replacement condition.
-        competingGoogleService: boolean;
-        // A fallback header for a replacement result.
-        defaultHeader: string;
-        // An xpath to get the text for the header of a replacement result
-        // from the self preferenced result.
-        headerXpath: string;
-        // The header tail for a replacement results.
-        headerTail: string;
-        // A fallback link for a replacement result.
-        defaultLink: string;
-        // A fallback description for a replacement result.
-        defaultDescription: string;
         // The cite element content for a replacement result.
         cite: string;
         // The cite span element content for a replacement result.
         citeSpan: string;
         // Gets the self preferenced results for the result type.
         getResults: () => Element[],
+        // Gets fallback data for a replacement result.
+        getReplacementData: (element: Element) => ReplacementDataVariableSubset,
+        // Gets fallback data for a replacement result.
+        getDefaultReplacementData: () => ReplacementDataVariableSubset,
     }
 } = {
     thingsToDo: {
-        competingGoogleService: true,
-        defaultHeader: "Things to do - Google Search",
-        headerXpath: "//*[@role='heading' and starts-with(text(), 'Top sights in')]",
-        headerTail: " | Google Travel",
-        defaultLink: "https://www.google.com/travel/things-to-do",
-        defaultDescription: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
         cite: "https://www.google.com",
         citeSpan: " › travel › things-to-do",
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::*[@role='heading' and starts-with(text(), 'Top sights in')]]");
         },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            return {
+                header: getXPathElement(".//*[@role='heading' and starts-with(text(), 'Top sights in')]", element).textContent + " - Google Travel",
+                link: getLink(element),
+                description: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
+            };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Things to Do"
+            return {
+                header: "Things to do - Google Search",
+                link: "https://www.google.com/travel/things-to-do",
+                description: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
+            };
+        },
     },
     vacationRental: {
-        competingGoogleService: true,
-        defaultHeader: "Google Hotel Search",
-        headerXpath: "//*[@role='heading' and starts-with(text(), 'Vacation Rentals |')]",
-        headerTail: " - Google Vacation Rentals",
-        defaultLink: "https://www.google.com/travel/hotels",
-        defaultDescription: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
         cite: "https://www.google.com",
         citeSpan: " › travel › hotels",
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::*[@role='heading' and starts-with(text(), 'Vacation Rentals |')]]");
         },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            return {
+                header: getXPathElement(".//*[@role='heading' and starts-with(text(), 'Vacation Rentals |')]", element).textContent + " - Google Travel",
+                link: getLink(element),
+                description: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
+            };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // duckduckgo.com search of "Google Vacation Rentals" does not provide a search result specifically for
+            // Google Vacation Rentals so we instead used HTML tags on the Google Vacation Rentals homepage.
+            return {
+                // From the HTML <title> tag on the Google Vacation Rentals homepage.
+                header: "Google Hotel Search",
+                // This URL takes you to the Google Vacation Rentals homepage.
+                link: "https://www.google.com/travel/hotels?ts=CAI",
+                // From the HTML <meta name="description"> tag on the Google Vacation Rentals homepage.
+                description: "Plan your trip with Google. Find flights, hotels, vacation rentals, things to do, and more.",
+            };
+        },
     },
     hotel: {
-        competingGoogleService: true,
-        defaultHeader: "Google Hotel Search",
-        headerXpath: "//*[@role='heading' and starts-with(text(), 'Hotels |')]",
-        headerTail: " - Google Hotels",
-        defaultLink: "https://www.google.com/travel/hotels",
-        defaultDescription: "Find a place to stay quickly and easily. Browse hotel photos and reviews, compare rates and availability, and book a room on Google Hotel Search.",
         cite: "https://www.google.com",
         citeSpan: " › travel › hotels",
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::*[@role='heading' and starts-with(text(), 'Hotels |')]]");
         },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            return {
+                // The tail is from a DuckDuckGo search of "Google Hotels in Detroit"
+                header: getXPathElement(".//*[@role='heading' and starts-with(text(), 'Hotels |')]", element).textContent + " - Google Hotel Search",
+                link: getLink(element),
+                description: "Find a place to stay quickly and easily. Browse hotel photos and reviews, compare rates and availability, and book a room on Google Hotel Search.",
+            };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Hotels"
+            return {
+                header: "Google Hotel Search",
+                link: "https://www.google.com/travel/hotels",
+                description: "Find a place to stay quickly and easily. Browse hotel photos and reviews, compare rates and availability, and book a room on Google Hotel Search.",
+            };
+        },
     },
-    map: {
-        competingGoogleService: true,
-        defaultHeader: "Google Maps",
-        headerXpath: "//*[starts-with(@aria-label, 'Location Results')]",
-        headerTail: " - Google Maps",
-        defaultLink: "https://www.google.com/maps",
-        defaultDescription: "Find local businesses, view maps and get driving directions in Google Maps.",
+    localSearch: {
         cite: "https://maps.google.com",
         citeSpan: "",
         getResults: function (): Element[] {
-            const mapResultsType1 = getXPathElements("//*[@id='rso']/*[descendant::*[starts-with(@aria-label, 'Location Results')]]");
+            const localSearchResultsType1 = getXPathElements("//*[@id='rso']/*[descendant::*[starts-with(@aria-label, 'Location Results')]]");
 
-            const mapResultsType2 = getXPathElements("//*[@id='rcnt']/div/div[descendant::*[starts-with(@aria-label, 'Location Results') and not(ancestor::*[@id='center_col'])]]");
+            const localSearchResultsType2 = getXPathElements("//*[@id='rcnt']/div/div[descendant::*[starts-with(@aria-label, 'Location Results') and not(ancestor::*[@id='center_col'])]]");
 
-            return mapResultsType1.concat(mapResultsType2);
+            return localSearchResultsType1.concat(localSearchResultsType2);
+        },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            return {
+                // The tail is from a DuckDuckGo search of "Google Hotels in Detroit"
+                header: getXPathElement(".//*[starts-with(@aria-label, 'Location Results')]", element).textContent + " - Google Maps",
+                link: getLink(element),
+                description: "Find local businesses, view maps and get driving directions in Google Maps.",
+            };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Maps"
+            return {
+                header: "Google Maps",
+                link: "https://maps.google.com",
+                description: "Find local businesses, view maps and get driving directions in Google Maps.",
+            };
+        },
+    },
+    map: {
+        cite: "https://maps.google.com",
+        citeSpan: "",
+        getResults: function (): Element[] {
+            return getXPathElements("//*[@id='rso']/*[descendant::*[@aria-label= 'From'] and descendant::*[@aria-label= 'To']]");
+        },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            // Attempt to get the origin.
+            let origin = null;
+            try {
+                origin = (getXPathElement(".//*[@aria-label='From']", element) as any).placeholder as string;
+                if (origin == "My location") {
+                    origin = "Your location";
+                }
+            } catch (error) {
+                // Do nothing
+            }
+
+            // Attempt to get the destination.
+            let dest = null;
+            try {
+                dest = (getXPathElement(".//*[@aria-label='To']", element) as any).placeholder as string;
+                if (dest == "My location") {
+                    dest = null;
+                }
+            } catch (error) {
+                // Do nothing
+            }
+
+            const header = origin && dest ? `${origin} to ${dest} - Google Maps` : null;
+            const dataUrl = element.querySelector('[data-url]').getAttribute('data-url');
+            const url = dataUrl ? "https://www.google.com" + dataUrl : null;
+
+            return {
+                header: header,
+                link: url,
+                description: "Find local businesses, view maps and get driving directions in Google Maps.",
+            };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Maps"
+            return {
+                header: "Google Maps",
+                link: "https://maps.google.com",
+                description: "Find local businesses, view maps and get driving directions in Google Maps.",
+            };
         },
     },
     flight: {
-        competingGoogleService: true,
-        defaultHeader: "Google Flights",
-        headerXpath: "//*[starts-with(@aria-label, 'Location Results')]",
-        headerTail: " - Google Flights",
-        defaultLink: "https://www.google.com/travel/flights",
-        defaultDescription: "Find the best flights fast, track prices, and book with confidence.",
         cite: "https://www.google.com",
         citeSpan: " › travel › flights",
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::div[@role='button' and descendant::span[text()='Show flights']]]");
         },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            // Attempt to get the origin city.
+            let originCity = null;
+            try {
+                const originValue = (getXPathElement(".//*[@placeholder='Enter an origin']", element) as any).value as string;
+                originCity = originValue.substring(0, originValue.indexOf(","));
+            } catch (error) {
+                // Do nothing
+            }
+
+            // Attempt to get the destination city.
+            let destCity = null;
+            try {
+                const destValue = (getXPathElement(".//*[@placeholder='Enter a destination']", element) as any).value as string;
+                destCity = destValue.substring(0, destValue.indexOf(","));
+            } catch (error) {
+                // Do nothing
+            }
+
+            let header = null;
+            let link = null;
+            let description = null;
+            if (originCity && destCity) {
+                header = `Flights from ${originCity} to ${destCity}` + " - Google Flights";
+                link = `https://www.google.com/travel/flights/flights-from-${originCity.replace(/ /g, "-")}-to-${destCity.replace(/ /g, "-")}.html`;
+                description = `Find the best flights from ${originCity} to ${destCity} fast, track prices, and book with confidence.`;
+            } else if (originCity) {
+                header = `Flights from ${originCity}` + " - Google Flights";
+                link = `https://www.google.com/travel/flights/flights-from-${originCity.replace(/ /g, "-")}.html`;
+                description = `Find the best flights from ${originCity} fast, track prices, and book with confidence.`;
+            } else if (destCity) {
+                header = `Flights to ${destCity}` + " - Google Flights";
+                link = `https://www.google.com/travel/flights/flights-to-${destCity.replace(/ /g, "-")}.html`;
+                description = `Find the best flights to ${destCity} fast, track prices, and book with confidence.`;
+            }
+
+            return { header, link, description };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Flights"
+            return {
+                header: "Book flights with confidence | Google Flights",
+                link: "https://www.google.com/flights",
+                description: "Find cheap flights and airline tickets. Google Flights helps you compare and track airfares on hundreds of airlines to help you find the best flight deals.",
+            };
+        },
     },
+    // Searching "Flights to Texas" gets this result
+    flight2: {
+        cite: "https://www.google.com",
+        citeSpan: " › travel › flights",
+        getResults: function (): Element[] {
+            return getXPathElements("//*[@id='rso']/*[descendant::div[@role='button' and descendant::span[text()='More destinations']]]");
+        },
+        getReplacementData: function (element: Element): ReplacementDataVariableSubset {
+            const linkElement = element.querySelector("[href]");
+            const link = (linkElement as any).href;
+
+            let destCity = null;
+            if (!linkElement.querySelector("div").querySelector("*")) {
+                destCity = linkElement.querySelector("div").textContent;
+            }
+
+            const header = `Flights to ${destCity} - Google Flights`
+
+            const description = `Find the best flights to ${destCity} fast, track prices, and book with confidence.`;
+
+            return { header, link, description };
+        },
+        getDefaultReplacementData: function (): ReplacementDataVariableSubset {
+            // From duckduckgo.com search of "Google Flights"
+            return {
+                header: "Book flights with confidence | Google Flights",
+                link: "https://www.google.com/flights",
+                description: "Find cheap flights and airline tickets. Google Flights helps you compare and track airfares on hundreds of airlines to help you find the best flight deals.",
+            };
+        },
+    },
+}
+
+/**
+ * An object that maps self preferenced result types that do not have a possible replacement
+ * to metadata for the result. A self preferenced result type does not has a possible replacement
+ * if Google does not have a competing service for the self preferenced result type. For example,
+ * lyrics self preferenced results do not have have a competing service, while travel does (Google Flights).
+ * @type {Array}
+ */
+const selfPreferencedResultMetadataNoReplacement: {
+    [type: string]: {
+        // Gets the self preferenced results for the result type.
+        getResults: () => Element[],
+    }
+} = {
     lyric: {
-        competingGoogleService: false,
-        defaultHeader: "",
-        headerXpath: "",
-        headerTail: "",
-        defaultLink: "",
-        defaultDescription: "",
-        cite: "",
-        citeSpan: "",
         getResults: function (): Element[] {
             // Gets lyrics in the 'Lyrics' tab of a tabbed knowledge panel.
             let lyricsElements: Element[] = Array.from(document.querySelectorAll("[aria-label='Lyrics']"));
@@ -126,27 +287,11 @@ const selfPreferencedResultMetadata: {
         },
     },
     weather: {
-        competingGoogleService: false,
-        defaultHeader: "",
-        headerXpath: "",
-        headerTail: "",
-        defaultLink: "",
-        defaultDescription: "",
-        cite: "",
-        citeSpan: "",
         getResults: function (): Element[] {
             return getXPathElements("//*[@id='rso']/*[descendant::h2[text()='Weather Result']]");
         },
     },
     shoppingMainResults: {
-        competingGoogleService: false,
-        defaultHeader: "",
-        headerXpath: "",
-        headerTail: "",
-        defaultLink: "",
-        defaultDescription: "",
-        cite: "",
-        citeSpan: "",
         getResults: function (): Element[] {
             // Get the self preferenced shopping results in the main results column that are labeled as 'Ads'
             // and generally at the top of the page.
@@ -164,14 +309,6 @@ const selfPreferencedResultMetadata: {
         },
     },
     shoppingRhsResults: {
-        competingGoogleService: false,
-        defaultHeader: "",
-        headerXpath: "",
-        headerTail: "",
-        defaultLink: "",
-        defaultDescription: "",
-        cite: "",
-        citeSpan: "",
         getResults: function (): Element[] {
             // Get the self preferenced shopping results in the column to the right of the main results.
             return Array.from(document.querySelectorAll(".cu-container")).filter(element => {
@@ -199,89 +336,90 @@ function getCreatedTemplateSER(): Element {
 
     // Gets the organic element with the smallest height. We are assuming the smallest height element will be
     // the most basic organic result.
-    const minHeight = Number.MAX_VALUE;
-    let templateElement: Element = null;
+    let minTemplateSearchResultHeight = Number.MAX_VALUE;
+    let templateSearchResult: Element = null;
     for (const organicResult of organicResults) {
         const resultOffsetHeight = (organicResult as HTMLElement).offsetHeight;
-        if (resultOffsetHeight && resultOffsetHeight > 0 && resultOffsetHeight < minHeight) {
-            templateElement = organicResult;
+        if (resultOffsetHeight && resultOffsetHeight > 0 && resultOffsetHeight < minTemplateSearchResultHeight) {
+            templateSearchResult = organicResult;
+            minTemplateSearchResultHeight = resultOffsetHeight;
         }
     }
 
-    if (!templateElement) {
+    if (!templateSearchResult) {
         return null;
     }
 
-    // There are two types of organic SERs I have seen
-    //  1. The header and description containers are within a div element within another div element within
-    //     the encapsulating .g element
-    //  2. The header and description containers are within a div element within the encapsulating .g element
+    const linkElement = getXPathElement(".//a[@href and descendant::h3 and descendant::cite and not(ancestor::g-expandable-container)]", templateSearchResult);
 
-    // Attempt to create type 1 organic SER
-    try {
-        const replacementElement = templateElement.cloneNode();
+    const headerElement = linkElement.querySelector("h3");
+    const citeElement = linkElement.querySelector("cite");
+    const description = Array.from(templateSearchResult.querySelectorAll("div:not(g-expandable-container *)")).filter(element => {
+        return !element.querySelector("*:not(span):not(em)")
+    }).reduce((largestElement, currentElement) => {
+        return currentElement.textContent.length > largestElement.textContent.length ?
+            currentElement :
+            largestElement
+    });
 
-        const templateInnerDiv = templateElement.querySelector('div');
-        const replacementInnerDiv = templateInnerDiv.cloneNode();
-        replacementElement.appendChild(replacementInnerDiv);
-
-        const templateInnerDivLevel2 = templateInnerDiv.querySelector('div');
-        const replacementInnerDivLevel2 = templateInnerDivLevel2.cloneNode();
-        replacementInnerDiv.appendChild(replacementInnerDivLevel2);
-
-        const templateInnerDivsLevel3 = templateInnerDivLevel2.querySelectorAll('div');
-        const templateHeaderDiv = templateInnerDivsLevel3[0];
-        const templateDescriptionDiv = templateInnerDivsLevel3[1];
-
-        const replacementHeaderDiv = templateHeaderDiv.cloneNode();
-        replacementInnerDivLevel2.appendChild(replacementHeaderDiv);
-        const replacementDescriptionDiv = templateDescriptionDiv.cloneNode();
-        replacementInnerDivLevel2.appendChild(replacementDescriptionDiv);
-
-        const templateHeader = templateHeaderDiv.querySelector('a');
-        const replacementHeader = templateHeader.cloneNode(true);
-        replacementHeaderDiv.appendChild(replacementHeader);
-
-        const templateDescription = templateDescriptionDiv.querySelector('div');
-        const replacementDescription = templateDescription.cloneNode();
-        replacementDescriptionDiv.appendChild(replacementDescription);
-
-        return replacementElement as Element;
-    } catch (error) {
-        // Creation of SER element type 1 did not work
+    if (!headerElement || !citeElement || !description) {
+        return null;
     }
 
-    // Attempt to create type 2 organic SER
-    try {
-        const replacementElement = templateElement.cloneNode();
+    const replacementSearchResult = templateSearchResult.cloneNode() as Element;
+    const elementsToReplace = [headerElement, citeElement, description];
 
-        const templateInnerDiv = templateElement.querySelector('div');
-        const replacementInnerDiv = templateInnerDiv.cloneNode();
-        replacementElement.appendChild(replacementInnerDiv);
+    const templateToReplacementElementMap = new Map();
+    templateToReplacementElementMap.set(templateSearchResult, replacementSearchResult);
 
-        const templateInnerDivsLevel2 = templateInnerDiv.querySelectorAll('div');
-        const templateHeaderDiv = templateInnerDivsLevel2[0];
-        const templateDescriptionDiv = templateInnerDivsLevel2[1];
+    let loopCounter = 0;
 
-        const replacementHeaderDiv = templateHeaderDiv.cloneNode();
-        replacementInnerDiv.appendChild(replacementHeaderDiv);
-        const replacementDescriptionDiv = templateDescriptionDiv.cloneNode();
-        replacementInnerDiv.appendChild(replacementDescriptionDiv);
+    for (const elementToReplace of elementsToReplace) {
+        let childReplacementNode = null;
+        let currentNode = elementToReplace;
 
-        const templateHeader = templateHeaderDiv.querySelector('a');
-        const replacementHeader = templateHeader.cloneNode(true);
-        replacementHeaderDiv.appendChild(replacementHeader);
+        while (!templateToReplacementElementMap.has(currentNode)) {
+            loopCounter += 1;
+            if (loopCounter >= 30) {
+                return null;
+            }
 
-        const templateDescription = templateDescriptionDiv.querySelector('div');
-        const replacementDescription = templateDescription.cloneNode();
-        replacementDescriptionDiv.appendChild(replacementDescription);
+            const newReplacementNode = currentNode.cloneNode();
+            if (currentNode == description) {
+                (newReplacementNode as Element).classList.add("self-preferenced-replacement-description");
+            }
 
-        return replacementElement as Element;
-    } catch (error) {
-        // Creation of SER element type 2 did not work
+            if (childReplacementNode) {
+                (newReplacementNode as Element).append(childReplacementNode);
+            }
+
+            childReplacementNode = newReplacementNode;
+            templateToReplacementElementMap.set(currentNode, newReplacementNode);
+
+            currentNode = currentNode.parentElement;
+        }
+
+        if (childReplacementNode) {
+            templateToReplacementElementMap.get(currentNode).append(childReplacementNode)
+        }
     }
 
-    return null;
+    if (linkElement.children[0].matches("br")) {
+        replacementSearchResult.querySelector("a").prepend(document.createElement('br'))
+    }
+
+    let templateSpan = templateSearchResult.querySelector("a cite > span");
+    if (!templateSpan) {
+        templateSpan = document.querySelector(".g a cite > span");
+    }
+
+    if (templateSpan) {
+        replacementSearchResult.querySelector("cite").append(templateSpan.cloneNode())
+    } else {
+        return null;
+    }
+
+    return replacementSearchResult;
 }
 
 /**
@@ -290,7 +428,7 @@ function getCreatedTemplateSER(): Element {
  */
 function getDefaultTemplateSER(): HTMLDivElement {
     const replacementSER = document.createElement('div');
-    replacementSER.classList.add('g');
+    replacementSER.classList.add('g', 'replacement-result');
     replacementSER.innerHTML = `
 <div class="jtfYYd">
 	<div class="NJo7tc Z26q7c jGGQ5e" data-header-feature="0">
@@ -307,7 +445,7 @@ function getDefaultTemplateSER(): HTMLDivElement {
 		</div>
 	</div>
 	<div class="NJo7tc Z26q7c uUuwM" data-content-feature="1">
-		<div class="VwiC3b yXK7lf MUxGbd yDYNvb lyLwlc lEBKkf">
+		<div class="VwiC3b yXK7lf MUxGbd yDYNvb lyLwlc lEBKkf self-preferenced-replacement-description">
 		</div>
 	</div>
 </div>
@@ -351,21 +489,43 @@ function getDefaultTemplateSER(): HTMLDivElement {
  * @returns the replacement result created with the given parameters.
  */
 function generateReplacementResult(header: string, link: string, description: string, cite: string, citeSpan: string): Element {
-    let replacementSER = getCreatedTemplateSER();
-    if (!replacementSER) replacementSER = getDefaultTemplateSER();
-    if (!replacementSER) return null;
-
     try {
-        replacementSER.querySelector("h3").innerHTML = header;
-        replacementSER.querySelector("a").href = link;
-        replacementSER.querySelector("div > span").innerHTML = description;
-        replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
-        replacementSER.querySelector("cite > span").innerHTML = citeSpan;
-        return replacementSER;
+        const replacementSER = getCreatedTemplateSER();
+        if (replacementSER) {
+            replacementSER.querySelector("a h3").innerHTML = header;
+            replacementSER.querySelector("a").href = link;
+            replacementSER.querySelector(".self-preferenced-replacement-description").innerHTML = description;
+            replacementSER.querySelector("a cite").prepend(document.createTextNode(cite));
+            replacementSER.querySelector("a cite > span").innerHTML = citeSpan;
+
+            console.log("Created from template")
+            return replacementSER;
+        }
+
+
     } catch (error) {
-        return null;
+        // Do nothing
     }
 
+
+    try {
+        const replacementSER = getDefaultTemplateSER();
+        if (replacementSER) {
+            replacementSER.querySelector("h3").innerHTML = header;
+            replacementSER.querySelector("a").href = link;
+            replacementSER.querySelector(".self-preferenced-replacement-description").innerHTML = description;
+            replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
+            replacementSER.querySelector("cite > span").innerHTML = citeSpan;
+
+            console.log("Created from hardcode")
+            return replacementSER;
+        }
+
+    } catch (error) {
+        // Do nothing
+    }
+
+    return null;
 }
 
 /**
@@ -378,13 +538,13 @@ function getLink(element: Element): string {
     // Sometimes the g-more-link element is within the a element and sometimes the a element is within
     // g-more-link element so we try both ways here.
     try {
-        link = (getXPathElement("//a[@href and descendant::g-more-link]", element) as any).href;
+        link = (getXPathElement(".//a[@href and descendant::g-more-link]", element) as any).href;
     } catch (error) {
         // Do nothing
     }
     if (!link) {
         try {
-            link = (getXPathElement("//g-more-link//a[@href]", element) as any).href;
+            link = (getXPathElement(".//g-more-link//a[@href]", element) as any).href;
         } catch (error) {
             // Do nothing
         }
@@ -393,81 +553,26 @@ function getLink(element: Element): string {
 }
 
 /**
- * @returns the data for a replacement result for a Google Flights self preferenced result.
- */
-function getFlightReplacementData(element: Element): ReplacementData {
-    // Attempt to get the origin city.
-    let originCity = null;
-    try {
-        const originValue = (getXPathElement("//*[@placeholder='Enter an origin']", element) as any).value as string;
-        originCity = originValue.substring(0, originValue.indexOf(","));
-    } catch (error) {
-        // Do nothing
-    }
-
-    // Attempt to get the destination city.
-    let destCity = null;
-    try {
-        const destValue = (getXPathElement("//*[@placeholder='Enter a destination']", element) as any).value as string;
-        destCity = destValue.substring(0, destValue.indexOf(","));
-    } catch (error) {
-        // Do nothing
-    }
-
-    let header = null;
-    let link = null;
-    if (originCity && destCity) {
-        header = `Flights from ${originCity} to ${destCity}` + selfPreferencedResultMetadata["flight"].headerTail;
-        link = `https://www.google.com/travel/flights/flights-from-${originCity.replace(/ /g, "-")}-to-${destCity.replace(/ /g, "-")}.html`;
-    } else if (originCity) {
-        header = `Flights from ${originCity}` + selfPreferencedResultMetadata["flight"].headerTail;
-        link = `https://www.google.com/travel/flights/flights-from-${originCity.replace(/ /g, "-")}.html`;
-    } else if (destCity) {
-        header = `Flights to ${destCity}` + selfPreferencedResultMetadata["flight"].headerTail;
-        link = `https://www.google.com/travel/flights/flights-to-${destCity.replace(/ /g, "-")}.html`;
-    } else {
-        link = selfPreferencedResultMetadata["flight"].defaultLink;
-        header = selfPreferencedResultMetadata["flight"].defaultHeader;
-    }
-
-    let description = null;
-    if (destCity) {
-        description = `Find the best flights to ${destCity} fast, track prices, and book with confidence.`;
-    } else {
-        description = selfPreferencedResultMetadata["flight"].defaultDescription;
-    }
-
-    const cite = selfPreferencedResultMetadata["flight"].cite;
-    const citeSpan = selfPreferencedResultMetadata["flight"].citeSpan;
-
-    return { header, link, description, cite, citeSpan };
-}
-
-/**
  * @returns the data for a replacement result for all self preferenced result types except Google Flights.
  */
 function getReplacementData(element, type): ReplacementData {
-    const defaultHeader = selfPreferencedResultMetadata[type].defaultHeader;
-    let header = null;
+    const cite = selfPreferencedResultMetadataReplacement[type].cite;
+    const citeSpan = selfPreferencedResultMetadataReplacement[type].citeSpan;
 
-    let link = getLink(element);
-    if (!link) {
-        link = selfPreferencedResultMetadata[type].defaultLink;
-        header = defaultHeader
-    } else {
-        try {
-            header = getXPathElement(selfPreferencedResultMetadata[type].headerXpath, element).textContent + selfPreferencedResultMetadata[type].headerTail;
-        } catch (error) {
-            // Do nothing
+    try {
+        const replacementData = selfPreferencedResultMetadataReplacement[type].getReplacementData(element);
+        if (replacementData.description && replacementData.header && replacementData.link) {
+            return { ...replacementData, cite, citeSpan };
         }
+    } catch (error) {
+        // Do nothing
     }
 
-    if (!header) header = defaultHeader;
-    const description = selfPreferencedResultMetadata[type].defaultDescription;
-    const cite = selfPreferencedResultMetadata[type].cite;
-    const citeSpan = selfPreferencedResultMetadata[type].citeSpan;
-
-    return { header, link, description, cite, citeSpan };
+    return {
+        ...selfPreferencedResultMetadataReplacement[type].getDefaultReplacementData(),
+        cite,
+        citeSpan
+    };
 }
 
 /**
@@ -483,17 +588,23 @@ const trackedElementClass = "rally-study-self-preferenced-tracking";
  * is the self preferenced results on the SERP of that type.
  */
 function getSelfPreferencedElements(noRepeats: boolean): {
-    [type: string]: { elements: Element[], competingGoogleService: boolean }
+    [type: string]: { elements: Element[], possibleReplacementResult: boolean }
 } {
 
     // Get the self preferenced results for each of the types we are tracking.
     const selfPreferencedResults: {
-        [type: string]: { elements: Element[], competingGoogleService: boolean }
+        [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = {};
-    for (const selfPreferencedResultType in selfPreferencedResultMetadata) {
+    for (const selfPreferencedResultType in selfPreferencedResultMetadataReplacement) {
         selfPreferencedResults[selfPreferencedResultType] = {
-            elements: selfPreferencedResultMetadata[selfPreferencedResultType].getResults().filter(elementFilter),
-            competingGoogleService: selfPreferencedResultMetadata[selfPreferencedResultType].competingGoogleService
+            elements: selfPreferencedResultMetadataReplacement[selfPreferencedResultType].getResults().filter(elementFilter),
+            possibleReplacementResult: true,
+        }
+    }
+    for (const selfPreferencedResultType in selfPreferencedResultMetadataNoReplacement) {
+        selfPreferencedResults[selfPreferencedResultType] = {
+            elements: selfPreferencedResultMetadataNoReplacement[selfPreferencedResultType].getResults().filter(elementFilter),
+            possibleReplacementResult: false,
         }
     }
 
@@ -532,7 +643,7 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
     }
 
     const selfPreferencedResults: {
-        [type: string]: { elements: Element[], competingGoogleService: boolean }
+        [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
 
     // Get details of all self preferenced results
@@ -569,7 +680,7 @@ export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElement
     // We pass false to getSelfPreferencedElements because we want to return details for all self preferenced elements on the page,
     // even if details for a particular element were previously returned by a call to this function.
     const selfPreferencedResults: {
-        [type: string]: { elements: Element[], competingGoogleService: boolean }
+        [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(false);
 
     const selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
@@ -605,7 +716,7 @@ const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, sel
  */
 export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
     const selfPreferencedResults: {
-        [type: string]: { elements: Element[], competingGoogleService: boolean }
+        [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
 
     const selfPreferencedResultsToRemove: {
@@ -615,10 +726,9 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
         [type: string]: Element[]
     } = {};
 
-    // Get all the self preferenced elements that will be removed because Google does not have a competing Service
-    // and all the elements that will be replaced.
+    // Get all the self preferenced elements that will be removed and all the elements that will be replaced.
     for (const selfPreferencedResultType in selfPreferencedResults) {
-        if (selfPreferencedResults[selfPreferencedResultType].competingGoogleService) {
+        if (selfPreferencedResults[selfPreferencedResultType].possibleReplacementResult) {
             selfPreferencedResultsToReplace[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
         } else {
             selfPreferencedResultsToRemove[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
@@ -649,9 +759,7 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     for (const typeOfSelfPreferencedResultToReplace in selfPreferencedResultsToReplace) {
         for (const selfPreferencedResultToReplace of selfPreferencedResultsToReplace[typeOfSelfPreferencedResultToReplace]) {
             // Get the data used to populate a replacement result from the self preferenced result.
-            const replacementData = typeOfSelfPreferencedResultToReplace === "flight" ?
-                getFlightReplacementData(selfPreferencedResultToReplace) :
-                getReplacementData(selfPreferencedResultToReplace, typeOfSelfPreferencedResultToReplace);
+            const replacementData = getReplacementData(selfPreferencedResultToReplace, typeOfSelfPreferencedResultToReplace);
 
             // Generate a replacement result.
             const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
@@ -681,8 +789,8 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     // of a replacement result.
     for (const { selfPreferencedType, selfPreferencedElement } of replacedSelfPreferencedElementsAndType) {
         replacedSelfPreferencedElementDetails.push({
-            topHeight: selfPreferencedElement ? getElementTopHeight(selfPreferencedElement) : -1,
-            bottomHeight: selfPreferencedElement ? getElementBottomHeight(selfPreferencedElement) : -1,
+            topHeight: selfPreferencedElement ? getElementTopHeight(selfPreferencedElement) : Number.MAX_SAFE_INTEGER,
+            bottomHeight: selfPreferencedElement ? getElementBottomHeight(selfPreferencedElement) : Number.MAX_SAFE_INTEGER,
             type: selfPreferencedType
         });
         replacedSelfPreferencedElements.push(selfPreferencedElement);
