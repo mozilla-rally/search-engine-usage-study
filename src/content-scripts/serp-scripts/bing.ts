@@ -25,7 +25,8 @@ const serpScript = function () {
         for (const organicResult of organicResults) {
             organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
             organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')).filter(element => {
-                return !element.closest(".pageRecoContainer");
+                // Exclude links in the "Explore Further" box (.pageRecoContainer) and any missing word links (.wr_hlic)
+                return !element.closest(".pageRecoContainer") && !element.closest(".wr_hlic");
             }));
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };

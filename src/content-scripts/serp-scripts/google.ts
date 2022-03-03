@@ -55,7 +55,18 @@ const serpScript = function () {
         const organicLinkElements: Element[][] = [];
         for (const organicResult of organicResults) {
             organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: getOnlineServiceFromOrganicResult(organicResult) });
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')));
+            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')).filter(organicLinkElement => {
+                // Gets rid of link elements that are relative URLs. This gets rid of "Must include:" links
+                // which are relative links to other Google SERP pages.
+                try {
+                    if (new URL(organicLinkElement.getAttribute("href"))) {
+                        return true;
+                    }
+                } catch (error) {
+                    // Do nothing
+                }
+                return false;
+            }));
 
         }
         return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
