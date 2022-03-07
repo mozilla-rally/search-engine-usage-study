@@ -43,7 +43,7 @@ async function stateChangeCallback(newState: string) {
             });
         }
         // Initialize the study and start it.
-        startStudy(rally);
+        startStudy();
         await browser.storage.local.set({ "state": runStates.RUNNING });
     } else {
         console.log("The study must stop.");

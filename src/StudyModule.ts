@@ -40,12 +40,9 @@ const conditionSet = {
 
 /**
  * Start the Search Engine Usage and Result Quality study
- * @param {Object} rally - Rally study object, used for sending data pings.
  * @async
  **/
-export async function startStudy(rally): Promise<void> {
-  // Printing because this variable is currently unused
-  console.log(rally);
+export async function startStudy(): Promise<void> {
 
   const currentTime = webScience.timing.now();
 
