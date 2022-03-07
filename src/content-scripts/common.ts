@@ -196,7 +196,9 @@ export class PageValues {
     getSerpQueryVertical: () => string) {
 
     this.determinePageValues = () => {
-      console.log("DETERMINING PAGE VALUES")
+      if (__ENABLE_DEVELOPER_MODE__) {
+        console.log("Determining page values");
+      }
       this.isWebSerpPage = getIsWebSerpPage();
       if (!this.isWebSerpPage) return;
 
@@ -210,8 +212,10 @@ export class PageValues {
         } else {
           ({ selfPreferencedElementDetails, selfPreferencedElements } = getSelfPreferencedDetailsAndElements());
         }
-        console.log(selfPreferencedElementDetails);
-        console.log(selfPreferencedElements);
+        if (__ENABLE_DEVELOPER_MODE__) {
+          console.log(selfPreferencedElementDetails);
+          console.log(selfPreferencedElements);
+        }
       }
 
       this.selfPreferencedDetails = selfPreferencedElementDetails;
@@ -235,16 +239,13 @@ export class PageValues {
     }
 
     if (document.readyState === "complete") {
-      console.log("COMPLETE")
       this.determinePageValues();
     } else {
       if (document.readyState === "interactive") {
-        console.log("INTERACTIVE")
         this.determinePageValues();
       }
       this.beforeLoadPageValueRefreshIntervalId = setInterval(() => {
         if (document.readyState !== "loading") {
-          console.log("INTERVAL")
           this.determinePageValues();
         }
         if (document.readyState === "complete") {
@@ -361,17 +362,25 @@ export class PageValues {
   handleClick(event: MouseEvent, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
     if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
       if (type === ElementType.Organic) {
-        console.log("ORGANIC CLICK")
+        if (__ENABLE_DEVELOPER_MODE__) {
+          console.log("Organic Click");
+        }
         this.organicClicks.push({ ranking: ranking, attentionDuration: this.getAttentionDuration(), pageLoaded: this.pageLoaded });
       } else if (type === ElementType.Ad) {
-        console.log("AD CLICK")
+        if (__ENABLE_DEVELOPER_MODE__) {
+          console.log("Ad Click");
+        }
         this.numAdClicks++;
       } else if (type === ElementType.SelfPreferenced) {
-        console.log("POSSIBLE SELF PREFERENCED CLICK")
+        if (__ENABLE_DEVELOPER_MODE__) {
+          console.log("Possible Self Preferenced Result Click");
+        }
         if (event.target instanceof Element) {
           const hrefElement = event.target.closest("[href]");
           if (hrefElement && (hrefElement as any).href) {
-            console.log("SELF PREFERENCED CLICK")
+            if (__ENABLE_DEVELOPER_MODE__) {
+              console.log("Self Preferenced Result Click");
+            }
             this.numSelfPreferencedClicks++;
           } else {
             this.possibleSelfPreferencedClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
@@ -382,7 +391,9 @@ export class PageValues {
         if (event.target instanceof Element) {
           const href = getInternalLink(event.target as Element);
           if (href) {
-            console.log("INTERNAL CLICK")
+            if (__ENABLE_DEVELOPER_MODE__) {
+              console.log("Internal Click");
+            }
             this.numInternalClicks++;
           } else if (href === "") {
             this.possibleInternalClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
@@ -399,7 +410,9 @@ export class PageValues {
    * to open a link without a standard click (ie. by right-clicking and opening in a new tab).
    **/
   handleMousedown(event: MouseEvent, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
-    console.log(`ElementType: ${type}`)
+    if (__ENABLE_DEVELOPER_MODE__) {
+      console.log(`ElementType: ${type}`);
+    }
     if (type === ElementType.Organic) {
       if (event.target instanceof Element) {
         const hrefElement = event.target.closest("[href]");
@@ -453,8 +466,9 @@ export class PageValues {
       }
     }
     if (type === ElementType.SelfPreferenced) {
-      console.log("POSSIBLE SELF PREFERENCED MOUSEDOWN")
-      console.log(event.target)
+      if (__ENABLE_DEVELOPER_MODE__) {
+        console.log("Self Preferenced Result Mousedown");
+      }
       if (event.target instanceof Element) {
         const hrefElement = event.target.closest("[href]");
         if (hrefElement) {
@@ -542,7 +556,9 @@ export class PageValues {
     // we consider the possible internal click to be an internal click.
     if (this.possibleInternalClickTimeStamp &&
       this.possibleInternalClickTimeStamp >= timeStamp - maxClickToPageVisitEndDelay) {
-      console.log("INTERNAL CLICK")
+      if (__ENABLE_DEVELOPER_MODE__) {
+        console.log("Internal Click");
+      }
       this.numInternalClicks++;
     }
 
@@ -550,7 +566,9 @@ export class PageValues {
     // we consider the possible self preferenced click to be a self preferenced click.
     if (this.possibleSelfPreferencedClickTimeStamp &&
       this.possibleSelfPreferencedClickTimeStamp >= timeStamp - maxClickToPageVisitEndDelay) {
-      console.log("SELF PREFERENCED CLICK")
+      if (__ENABLE_DEVELOPER_MODE__) {
+        console.log("Self Preferenced Result Click");
+      }
       this.numSelfPreferencedClicks++;
     }
 

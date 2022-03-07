@@ -236,7 +236,9 @@ const serpScript = function () {
             if (normalizedUrl.includes("googleadservices.com/pagead") ||
                 pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
@@ -244,7 +246,9 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return
@@ -253,7 +257,9 @@ const serpScript = function () {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/") ||
                     normalizedUrl.includes("google.com/search"))) {
-                console.log("INTERNAL CLICK");
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Internal Click");
+                }
                 pageValues.numInternalClicks++;
             }
             return;
@@ -261,13 +267,17 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.SelfPreferenced) {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
-                console.log("SELF PREFERENCED CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Self Preferenced Click");
+                }
                 pageValues.numSelfPreferencedClicks++;
 
                 try {
                     const urlObject = new URL(redirectUrl ? redirectUrl : url);
                     if (urlObject.hostname.includes("google.com")) {
-                        console.log("INTERNAL CLICK");
+                        if (__ENABLE_DEVELOPER_MODE__) {
+                            console.log("Internal Click");
+                        }
                         pageValues.numInternalClicks++;
                     }
                 } catch (error) {

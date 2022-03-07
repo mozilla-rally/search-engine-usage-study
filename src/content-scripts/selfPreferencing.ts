@@ -498,7 +498,9 @@ function generateReplacementResult(header: string, link: string, description: st
             replacementSER.querySelector("a cite").prepend(document.createTextNode(cite));
             replacementSER.querySelector("a cite > span").innerHTML = citeSpan;
 
-            console.log("Created from template")
+            if (__ENABLE_DEVELOPER_MODE__) {
+                console.log("Self preferenced result created from organic results");
+            }
             return replacementSER;
         }
 
@@ -517,7 +519,9 @@ function generateReplacementResult(header: string, link: string, description: st
             replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
             replacementSER.querySelector("cite > span").innerHTML = citeSpan;
 
-            console.log("Created from hardcode")
+            if (__ENABLE_DEVELOPER_MODE__) {
+                console.log("Self preferenced result created from hardcoded template");
+            }
             return replacementSER;
         }
 

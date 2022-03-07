@@ -121,7 +121,9 @@ const serpScript = function () {
             if (event.target instanceof Element) {
                 const href = getInternalLink(event.target as Element);
                 if (href) {
-                    console.log("INTERNAL CLICK")
+                    if (__ENABLE_DEVELOPER_MODE__) {
+                        console.log("Internal Click");
+                    }
                     pageValues.numInternalClicks++;
                     pageValues.mostRecentRecordedClickTimeStamp = timing.fromMonotonicClock(event.timeStamp, true);
                     pageValues.mostRecentMousedown = null;
@@ -164,7 +166,9 @@ const serpScript = function () {
             normalizedUrl.includes("google.com/aclk") ||
             normalizedUrl.includes("revjet") ||
             normalizedUrl.includes("googleadservices.com")) {
-            console.log("AD CLICK")
+            if (__ENABLE_DEVELOPER_MODE__) {
+                console.log("Ad Click");
+            }
             pageValues.numAdClicks++;
             return;
         }
@@ -174,7 +178,9 @@ const serpScript = function () {
 
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (pageValues.mostRecentMousedown.Link === url) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
@@ -183,7 +189,9 @@ const serpScript = function () {
         const normalizedRecentUrl: string = getNormalizedUrl(pageValues.mostRecentMousedown.Link)
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedRecentUrl === normalizedUrl) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
@@ -191,7 +199,9 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl ||
                 normalizedUrl.includes("ask.com")) {
-                console.log("INTERNAL CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Internal Click");
+                }
                 pageValues.numInternalClicks++;
             }
             return;
@@ -222,7 +232,9 @@ const serpScript = function () {
             if ("type" in event.data && event.data.type === "numAds") {
                 askFrameToNumAdsObject[event.data.frameID] = event.data.numAds;
             } else if ("type" in event.data && event.data.type === "adClick") {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
         } catch (error) {

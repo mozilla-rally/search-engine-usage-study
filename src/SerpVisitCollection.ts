@@ -93,34 +93,6 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     storage.set(pageVisitData.searchEngine, searchEngineQueryTimes[pageVisitData.searchEngine]);
   }
 
-
-  const serpVisitData = {
-    SearchEngine: pageVisitData.searchEngine,
-    QueryVertical: pageVisitData.queryVertical,
-    AttentionDuration: pageVisitData.attentionDuration,
-    DwellTime: pageVisitData.dwellTime,
-    PageNum: pageVisitData.pageNum,
-    Attribution: attributionDetailsEngineMatches ? attributionDetails.attribution : null,
-    AttributionID: attributionDetailsEngineMatches ? attributionDetails.attributionID : null,
-    Transition: attributionDetailsEngineMatches ? attributionDetails.transition : null,
-    OrganicDetails: pageVisitData.organicDetails,
-    OrganicClicks: pageVisitData.organicClicks,
-    NumAdResults: pageVisitData.numAdResults,
-    NumAdClicks: pageVisitData.numAdClicks,
-    NumInternalClicks: pageVisitData.numInternalClicks,
-    SelfPreferencedDetails: pageVisitData.selfPreferencedDetails,
-    NumSelfPreferencedClicks: pageVisitData.numSelfPreferencedClicks,
-    SearchAreaTopHeight: pageVisitData.searchAreaTopHeight,
-    SearchAreaBottomHeight: pageVisitData.searchAreaBottomHeight,
-    TimeSinceSameQuery: timeSinceSameQuery,
-    PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
-    CurrentDefaultEngine: await Privileged.getSearchEngine(),
-    NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
-    PageLoaded: pageVisitData.pageLoaded,
-    PingTime: webScience.timing.now(),
-    SelfPreferencingType: pageVisitData.selfPreferencingType
-  }
-
   serpVisitMetrics.attentionDuration.set(Utils.getPositiveInteger(pageVisitData.attentionDuration));
   serpVisitMetrics.attribution.set(attributionDetailsEngineMatches ? attributionDetails.attribution : "");
   serpVisitMetrics.attributionId.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : "");
@@ -169,8 +141,38 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
     });
   }
 
-  console.log(serpVisitData);
   searchUsagePings.serpVisit.submit();
+
+  if (__ENABLE_DEVELOPER_MODE__) {
+    const serpVisitData = {
+      SearchEngine: pageVisitData.searchEngine,
+      QueryVertical: pageVisitData.queryVertical,
+      AttentionDuration: pageVisitData.attentionDuration,
+      DwellTime: pageVisitData.dwellTime,
+      PageNum: pageVisitData.pageNum,
+      Attribution: attributionDetailsEngineMatches ? attributionDetails.attribution : null,
+      AttributionID: attributionDetailsEngineMatches ? attributionDetails.attributionID : null,
+      Transition: attributionDetailsEngineMatches ? attributionDetails.transition : null,
+      OrganicDetails: pageVisitData.organicDetails,
+      OrganicClicks: pageVisitData.organicClicks,
+      NumAds: pageVisitData.numAdResults,
+      NumAdClicks: pageVisitData.numAdClicks,
+      NumInternalClicks: pageVisitData.numInternalClicks,
+      SelfPreferencedDetails: pageVisitData.selfPreferencedDetails,
+      NumSelfPreferencedClicks: pageVisitData.numSelfPreferencedClicks,
+      SearchAreaTopHeight: pageVisitData.searchAreaTopHeight,
+      SearchAreaBottomHeight: pageVisitData.searchAreaBottomHeight,
+      TimeSinceSameQuery: timeSinceSameQuery,
+      PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
+      CurrentDefaultEngine: await Privileged.getSearchEngine(),
+      NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
+      PageLoaded: pageVisitData.pageLoaded,
+      PingTime: webScience.timing.now(),
+      ModificationType: pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None"
+    }
+
+    console.log(serpVisitData);
+  }
 }
 
 /** 

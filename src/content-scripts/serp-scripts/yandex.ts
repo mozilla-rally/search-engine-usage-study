@@ -169,21 +169,27 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("yabs.yandex.ru") || normalizedRecentUrl.includes("yabs.yandex.ru") ||
                 normalizedUrl === normalizedRecentUrl) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (normalizedUrl === normalizedRecentUrl) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (normalizedRecentUrl === normalizedUrl) {
-                console.log("INTERNAL CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Internal Click");
+                }
                 pageValues.numInternalClicks++;
             }
             return;

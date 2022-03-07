@@ -117,21 +117,27 @@ const serpScript = function () {
         const normalizedUrl: string = getNormalizedUrl(url);
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("bing.com/aclick") || pageValues.mostRecentMousedown.Link === url) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (pageValues.mostRecentMousedown.Link === url) {
-                console.log("INTERNAL CLICK");
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Internal Click");
+                }
                 pageValues.numInternalClicks++;
             }
             return;

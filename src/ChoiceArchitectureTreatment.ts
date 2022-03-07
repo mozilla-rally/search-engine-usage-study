@@ -99,17 +99,6 @@ export async function conductTreatment(conditionTypeArg, storageArg): Promise<vo
  * @param {string} newEngine - The search engine that the participant's default was changed to.
  */
 function reportNoticeData(attentionDuration: number, dwellTime: number, revertSelected: boolean, oldEngine: string, newEngine: string, treatmentCompletionTime: number) {
-  const noticeTreatmentData = {
-    AttentionDuration: attentionDuration,
-    DwellTime: dwellTime,
-    RevertSelected: revertSelected,
-    OldEngine: oldEngine,
-    NewEngine: newEngine,
-    TreatmentTime: treatmentStartTime,
-    TreatmentCompletionTime: treatmentCompletionTime,
-    PingTime: webScience.timing.now()
-  };
-
   noticeInteractionMetrics.attentionDuration.set(Utils.getPositiveInteger(attentionDuration));
   noticeInteractionMetrics.dwellTime.set(Utils.getPositiveInteger(dwellTime));
   noticeInteractionMetrics.newSearchEngine.set(oldEngine);
@@ -121,7 +110,20 @@ function reportNoticeData(attentionDuration: number, dwellTime: number, revertSe
 
   studyPings.noticeInteraction.submit();
 
-  console.log(noticeTreatmentData);
+  if (__ENABLE_DEVELOPER_MODE__) {
+    const noticeData = {
+      AttentionDuration: attentionDuration,
+      DwellTime: dwellTime,
+      RevertSelected: revertSelected,
+      OldEngine: oldEngine,
+      NewEngine: newEngine,
+      TreatmentTime: new Date(treatmentStartTime),
+      TreatmentCompletionTime: new Date(treatmentCompletionTime),
+      PingTime: webScience.timing.now()
+    };
+
+    console.log(noticeData);
+  }
 
   completeTreatment();
 }
@@ -233,18 +235,6 @@ function reportChoiceBallotData(
   attempts: number,
   treatmentCompletionTime: number,
   choiceBallotAttemptDetailsList: ChoiceBallotAttemptDetails[]) {
-
-  const choiceBallotTreatmentData = {
-    OldEngine: oldEngine,
-    NewEngine: newEngine,
-    Ordering: ordering,
-    Attempts: attempts,
-    TreatmentCompletionTime: treatmentCompletionTime,
-    PingTime: webScience.timing.now(),
-    AttemptDetails: choiceBallotAttemptDetailsList
-  };
-  console.log(choiceBallotTreatmentData)
-
   ballotInteractionMetrics.ballotOrdering.set(ordering);
   ballotInteractionMetrics.newSearchEngine.set(newEngine);
   ballotInteractionMetrics.oldSearchEngine.set(oldEngine);
@@ -264,6 +254,19 @@ function reportChoiceBallotData(
   }
 
   studyPings.ballotInteraction.submit();
+
+  if (__ENABLE_DEVELOPER_MODE__) {
+    const choiceBallotTreatmentData = {
+      Ordering: ordering,
+      OldEngine: oldEngine,
+      NewEngine: newEngine,
+      Attempts: attempts,
+      TreatmentCompletionTime: new Date(treatmentCompletionTime),
+      PingTime: webScience.timing.now(),
+      AttemptDetails: choiceBallotAttemptDetailsList
+    };
+    console.log(choiceBallotTreatmentData)
+  }
 
   completeTreatment();
 }

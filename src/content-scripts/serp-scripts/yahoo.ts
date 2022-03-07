@@ -118,22 +118,24 @@ const serpScript = function () {
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
-        console.log(pageValues.mostRecentMousedown);
-        console.log(url);
         if (!pageValues.mostRecentMousedown) {
             return;
         }
         const normalizedUrl: string = getNormalizedUrl(url);
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {
             if (normalizedUrl.includes("r.search.yahoo.com/cbclk2") || pageValues.mostRecentMousedown.Link === url) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.Organic) {
             if (pageValues.mostRecentMousedown.Link === url) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return;
@@ -141,7 +143,9 @@ const serpScript = function () {
         if (pageValues.mostRecentMousedown.Type === ElementType.Internal) {
             if (pageValues.mostRecentMousedown.Link === url) {
                 if (!url.includes("r.search.yahoo.com")) {
-                    console.log("INTERNAL CLICK")
+                    if (__ENABLE_DEVELOPER_MODE__) {
+                        console.log("Internal Click");
+                    }
                     pageValues.numInternalClicks++;
                 }
 
@@ -154,7 +158,6 @@ const serpScript = function () {
     const pageValues = new PageValues("Yahoo", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
 
     window.addEventListener("unload", (event) => {
-        console.log("HELLO!!!")
         pageValues.reportResults(timing.fromMonotonicClock(event.timeStamp, true));
     });
 };

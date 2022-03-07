@@ -133,10 +133,6 @@ const serpScript = function () {
      * @param {string} url - the url string of a new tab opened from the page.
      */
     function onNewTab(url: string) {
-        console.log(url)
-        console.log(pageValues.mostRecentMousedown)
-
-
         // If a mousedown has not been recorded on an ad, organic, or internal element then return
         if (!pageValues.mostRecentMousedown) {
             return;
@@ -162,7 +158,9 @@ const serpScript = function () {
                 pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl) ||
                 (redirectUrlBase64 && pageValues.mostRecentMousedown.Link === redirectUrlBase64)) {
-                console.log("AD CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Ad Click");
+                }
                 pageValues.numAdClicks++;
             }
             return;
@@ -171,7 +169,9 @@ const serpScript = function () {
             if (pageValues.mostRecentMousedown.Link === url ||
                 (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl) ||
                 (redirectUrlBase64 && pageValues.mostRecentMousedown.Link === redirectUrlBase64)) {
-                console.log("ORGANIC CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Organic Click");
+                }
                 pageValues.organicClicks.push({ ranking: pageValues.mostRecentMousedown.Ranking, attentionDuration: pageValues.getAttentionDuration(), pageLoaded: pageValues.pageLoaded })
             }
             return
@@ -180,7 +180,9 @@ const serpScript = function () {
             if ((pageValues.mostRecentMousedown.Link === url && normalizedUrl.includes("bing.com") && !normalizedUrl.includes("bing.com/newtabredir") && !normalizedUrl.includes("bing.com/aclk")) ||
                 (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/")) ||
                 (redirectUrlBase64 && (pageValues.mostRecentMousedown.Link === redirectUrlBase64 || redirectUrlBase64[0] === "/"))) {
-                console.log("INTERNAL CLICK")
+                if (__ENABLE_DEVELOPER_MODE__) {
+                    console.log("Internal Click");
+                }
                 pageValues.numInternalClicks++;
             }
             return

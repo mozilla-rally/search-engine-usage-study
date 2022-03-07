@@ -29,14 +29,18 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
     // Current timeStamp - (30 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
     const timeStamp30DaysAgo = currentTime - (30 * 24 * 60 * 60 * 1000);
 
-    const searchEnginesHistoryQueryCount = await getHistoryQueryCount(timeStamp30DaysAgo)
+    const searchEnginesHistoryQueryCount = await getHistoryQueryCount(timeStamp30DaysAgo);
+    const defaultSearchEngine = await Privileged.getSearchEngine();
+    const surveyId = await webScience.userSurvey.getSurveyId();
+    const historyAge = Utils.getPositiveInteger(await getHistoryAge(currentTime, timeStamp30DaysAgo));
+    const enrollmentTimeDate = new Date(enrollmentTime);
 
     studyInitializationMetrics.conditionType.set(conditionType);
-    studyInitializationMetrics.defaultSearchEngine.set(await Privileged.getSearchEngine());
-    studyInitializationMetrics.enrollmentTime.set(new Date(enrollmentTime));
-    studyInitializationMetrics.historyAge.set(Utils.getPositiveInteger(await getHistoryAge(currentTime, timeStamp30DaysAgo)));
+    studyInitializationMetrics.defaultSearchEngine.set(defaultSearchEngine);
+    studyInitializationMetrics.enrollmentTime.set(enrollmentTimeDate);
+    studyInitializationMetrics.historyAge.set(historyAge);
     studyInitializationMetrics.pingTime.set();
-    studyInitializationMetrics.surveyId.set(await webScience.userSurvey.getSurveyId());
+    studyInitializationMetrics.surveyId.set(surveyId);
 
     studyInitializationMetrics.askQueryCount.set(searchEnginesHistoryQueryCount["Ask"]);
     studyInitializationMetrics.baiduQueryCount.set(searchEnginesHistoryQueryCount["Baidu"]);
@@ -48,6 +52,20 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
     studyInitializationMetrics.yandexQueryCount.set(searchEnginesHistoryQueryCount["Yandex"]);
 
     studyPings.studyInitialization.submit();
+
+    if (__ENABLE_DEVELOPER_MODE__) {
+      const initialData = {
+        ConditionType: conditionType,
+        SurveyID: surveyId,
+        DefaultSearchEngine: defaultSearchEngine,
+        EnrollmentTime: enrollmentTimeDate,
+        HistoryAge: Utils.getPositiveInteger(await getHistoryAge(currentTime, timeStamp30DaysAgo)),
+        QueryCounts: searchEnginesHistoryQueryCount,
+        PingTime: Date.now(),
+      };
+
+      console.log(initialData);
+    }
 
     storage.set("InitialDataReported", true);
   }

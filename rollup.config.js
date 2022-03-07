@@ -120,6 +120,10 @@ export default (cliArgs) => {
         sourcemap: isDevMode(cliArgs) ? "inline" : false,
       },
       plugins: [
+        replace({
+          preventAssignment: true,
+          __ENABLE_DEVELOPER_MODE__: isDevMode(cliArgs),
+        }),
         webScienceRollupPlugin(),
         resolve({
           browser: true,
@@ -140,6 +144,10 @@ export default (cliArgs) => {
         sourcemap: isDevMode(cliArgs) ? "inline" : false,
       },
       plugins: [
+        replace({
+          preventAssignment: true,
+          __ENABLE_DEVELOPER_MODE__: isDevMode(cliArgs),
+        }),
         webScienceRollupPlugin(),
         resolve({
           browser: true,

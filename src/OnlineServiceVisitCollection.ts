@@ -165,18 +165,6 @@ function createNewAggregateDataObject(): {
  * data over the current aggregation period.
  **/
 function reportOnlineServiceVisitData() {
-  const currentTime = webScience.timing.now();
-
-  const onlineServiceVisitData = {
-    // Convert aggregate data into array
-    AggregateData: Object.keys(aggregateData).map(serviceName => {
-      return { serviceName, ...aggregateData[serviceName] }
-    }),
-    AggregationPeriodStartTime: aggregationPeriodStartTime,
-    PingTime: currentTime,
-  };
-  console.log(onlineServiceVisitData);
-
   onlineServiceNavigationMetrics.aggregationPeriodStartTime.set(new Date(aggregationPeriodStartTime));
   onlineServiceNavigationMetrics.pingTime.set();
   for (const [serviceName, serviceData] of Object.entries(aggregateData)) {
@@ -191,11 +179,23 @@ function reportOnlineServiceVisitData() {
 
   studyPings.onlineServiceNavigation.submit();
 
+  if (__ENABLE_DEVELOPER_MODE__) {
+    const onlineServiceVisitData = {
+      // Convert aggregate data into array
+      AggregateData: Object.keys(aggregateData).map(serviceName => {
+        return { serviceName, ...aggregateData[serviceName] }
+      }),
+      AggregationPeriodStartTime: aggregationPeriodStartTime,
+      PingTime: webScience.timing.now(),
+    };
+    console.log(onlineServiceVisitData);
+  }
+
   // Reset the aggregate data object for the new aggregation period starting now.
   aggregateData = createNewAggregateDataObject();
   storage.set("OnlineServiceAggregateData", aggregateData);
 
   // Reset the aggregation period start time for the new aggregation period starting now.
-  aggregationPeriodStartTime = currentTime;
+  aggregationPeriodStartTime = webScience.timing.now();
   storage.set("OnlineServiceAggregationPeriodStartTime", aggregationPeriodStartTime);
 }

@@ -66,14 +66,15 @@ async function webNavigationOnCommittedListener(details) {
         modalInteractionMetrics.revertSelected.set(revertChosen);
         studyPings.modalInteraction.submit();
 
+        if (__ENABLE_DEVELOPER_MODE__) {
+            const modalData = {
+                RevertSelected: revertChosen,
+                TreatmentTime: treatmentStartTime,
+                PingTime: webScience.timing.now(),
+            };
 
-        // Report modal treatment data.
-        const modalTreatmentData = {
-            RevertSelected: revertChosen,
-            TreatmentTime: treatmentStartTime,
-            PingTime: webScience.timing.now(),
-        };
-        console.log(modalTreatmentData);
+            console.log(modalData);
+        }
     }
 }
 
