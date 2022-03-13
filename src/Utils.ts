@@ -288,3 +288,20 @@ export function getPositiveInteger(inputNumber: number): number {
   }
   return Number.MAX_SAFE_INTEGER;
 }
+
+/**
+ * Set a timeout. setTimeout uses a 32 bit into to store delay so the max delay value allowed
+ * is 2147483647 (0x7FFFFFFF) which is slightly under 25 days. This method allows for larger
+ * timeouts.
+ * @param {CallableFunction} callback - the callback to execute after the delay.
+ * @param {number} delay - the delay in milliseconds before callback is executed.
+ */
+export function setExtendedTimeout(callback, delay) {
+  if (delay > 0x7FFFFFFF) {
+    setTimeout(() => {
+      setExtendedTimeout(callback, delay - 0x7FFFFFFF);
+    }, 0x7FFFFFFF);
+  } else {
+    setTimeout(callback, delay);
+  }
+}

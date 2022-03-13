@@ -1,5 +1,6 @@
 import { serpScripts, googleRemoveScript, googleReplaceScript, googleDefaultScript } from "./ContentScriptsImport.js"
 import * as webScience from "@mozilla/web-science";
+import { setExtendedTimeout } from "./Utils.js";
 
 let registeredGoogleScript = null;
 
@@ -48,7 +49,7 @@ async function registerGoogleScript(conditionType, treatmentStartTime): Promise<
   if (currentTime < treatmentStartTime) {
     registerGoogleDefaultScript();
 
-    setTimeout(() => {
+    setExtendedTimeout(() => {
       registerGoogleModificationScript(conditionType, treatmentEndTime);
     }, treatmentStartTime - currentTime);
 
@@ -83,22 +84,7 @@ async function registerGoogleModificationScript(conditionType, treatmentEndTime)
     registeredGoogleScript = await browser.contentScripts.register(googleReplaceScript.args);
   }
 
-  setTimeoutForTreatmentEnd(treatmentEndTime);
-}
 
-// setTimeout uses a 32 bit into to store delay so the max delay value allowed is 2147483647 (0x7FFFFFFF)
-// which is slightly under 25 days. The treatment ends after 50 days and so we need this function
-// to accomplish this longer delay.
-function setTimeoutForTreatmentEnd(treatmentEndTime) {
-  const currentTime = webScience.timing.now();
-  const timeUntilTreatmentEndTime = treatmentEndTime - currentTime;
-  if (timeUntilTreatmentEndTime > 0x7FFFFFFF) {
-    setTimeout(() => {
-      setTimeoutForTreatmentEnd(timeUntilTreatmentEndTime - 0x7FFFFFFF);
-    }, 0x7FFFFFFF);
-  } else {
-    setTimeout(() => {
-      registerGoogleDefaultScript();
-    }, timeUntilTreatmentEndTime);
-  }
+  const delay = treatmentEndTime - webScience.timing.now();
+  setExtendedTimeout(registerGoogleDefaultScript, delay);
 }

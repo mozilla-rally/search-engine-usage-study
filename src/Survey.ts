@@ -7,6 +7,7 @@
  */
 
 import * as webScience from "@mozilla/web-science";
+import { setExtendedTimeout } from "./Utils";
 
 const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
@@ -86,7 +87,7 @@ export async function initializeSurvey(treatmentStartTime): Promise<void> {
     // and the current time is before the time to start the followup survey, we set
     // the current survey to be the initial survey and set a timeout to start the followup survey.
     webScience.userSurvey.setSurvey(surveyConfigData.initial);
-    setTimeout(startFollowupSurvey, followupSurveyStartTime - currentTime);
+    setExtendedTimeout(startFollowupSurvey, followupSurveyStartTime - currentTime);
   } else if (currentSurvey === surveyConfigData.initial.surveyName) {
     // If the current survey is the initial survey but the current time is after the start
     // time of the followup survey, we start the followup survey.

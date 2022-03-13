@@ -99,7 +99,7 @@ export async function startStudy(): Promise<void> {
   // If current time is before the treatment start time, set timer to start choice architecture treatment
   // functionality at the treatment start time. Otherwise, start treatment functionality now.
   if (currentTime < treatmentStartTime) {
-    setTimeout(() => {
+    Utils.setExtendedTimeout(() => {
       ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
     }, treatmentStartTime - currentTime);
   } else {
