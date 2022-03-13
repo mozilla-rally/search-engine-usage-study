@@ -51,11 +51,6 @@ export async function startStudy(): Promise<void> {
    * @type {Object}
    */
   const storage = await webScience.storage.createKeyValueStorage("WebScience.Studies.SearchEngineUsage");
-  await webScience.pageManager.initialize();
-  Utils.initializeMatchPatterns();
-  AttributionTracking.initializeAttributionTracking();
-
-  const conditionType = await webScience.randomization.selectCondition(conditionSet);
 
   // Get the start time of the initial survey from storage, which is also the time the study
   // first loaded in participant's browser regardless of if they joined in phase 1 or phase 2.
@@ -88,8 +83,20 @@ export async function startStudy(): Promise<void> {
     }
   }
 
+  // Select the study condition from the set of conditions. If a condition has previously
+  // been selected from the set, that same condition will be returned
+  const conditionType = await webScience.randomization.selectCondition(conditionSet);
+
+  // Initialize the webScience pageManager module as well as study tracking and
+  // collection modules. Utils.initializeMatchPatterns must be called before
+  // any study functionality that depends on match patterns.
+  await webScience.pageManager.initialize();
+  Utils.initializeMatchPatterns();
+  AttributionTracking.initializeAttributionTracking();
   SerpVisitCollection.initializeCollection(conditionType, treatmentStartTime, storage);
   OnlineServiceVisitCollection.initializeCollection(storage);
+
+  // Initialize survey functionality.
   Survey.initializeSurvey(treatmentStartTime);
 
   // We pass in the initialSurveyStartTime as the enrollmentTime parameter because this is the same
