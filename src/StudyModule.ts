@@ -72,7 +72,7 @@ export async function startStudy(): Promise<void> {
   // only begins during the second phase.
   let secondPhaseStartTime: number = await storage.get("SecondPhaseStartTime");
   if (!secondPhaseStartTime) {
-    secondPhaseStartTime = webScience.timing.now();
+    secondPhaseStartTime = currentTime;
     storage.set("SecondPhaseStartTime", secondPhaseStartTime);
   }
 
@@ -84,7 +84,7 @@ export async function startStudy(): Promise<void> {
   if (!treatmentStartTime) {
     treatmentStartTime = secondPhaseStartTime + (millisecondsPerSecond * secondsPerDay * daysUntilTreatment);
     if (treatmentStartTime <= currentTime) {
-      treatmentStartTime = webScience.timing.now();
+      treatmentStartTime = currentTime;
     }
   }
 
