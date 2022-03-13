@@ -125,7 +125,6 @@ function initializeOnlineServicePageNavigationListeners() {
         // Do nothing
       }
 
-
       // Update the aggregate data object in storage
       storage.set("OnlineServiceAggregateData", aggregateData);
     },
@@ -167,14 +166,22 @@ function createNewAggregateDataObject(): {
 function reportOnlineServiceVisitData() {
   onlineServiceNavigationMetrics.aggregationPeriodStartTime.set(new Date(aggregationPeriodStartTime));
   onlineServiceNavigationMetrics.pingTime.set();
+
   for (const [serviceName, serviceData] of Object.entries(aggregateData)) {
-    onlineServiceNavigationMetrics.onlineServiceData.record({
-      service_name: serviceName ? serviceName : "",
-      attention_time: Utils.getPositiveInteger(serviceData.totalAttentionTime),
-      dwell_time: Utils.getPositiveInteger(serviceData.totalDwellTime),
-      page_visit_count: Utils.getPositiveInteger(serviceData.pageVisitCount),
-      completed_transaction_count: Utils.getPositiveInteger(serviceData.completedTransactionCount)
-    });
+
+    // Only report data for services where there was an interaction over the aggregation period.
+    if (!!serviceData.totalAttentionTime || !!serviceData.totalDwellTime ||
+      !!serviceData.pageVisitCount || !!serviceData.completedTransactionCount) {
+
+      onlineServiceNavigationMetrics.onlineServiceData.record({
+        service_name: serviceName ? serviceName : "",
+        attention_time: Utils.getPositiveInteger(serviceData.totalAttentionTime),
+        dwell_time: Utils.getPositiveInteger(serviceData.totalDwellTime),
+        page_visit_count: Utils.getPositiveInteger(serviceData.pageVisitCount),
+        completed_transaction_count: Utils.getPositiveInteger(serviceData.completedTransactionCount)
+      });
+    }
+
   }
 
   studyPings.onlineServiceNavigation.submit();
@@ -182,9 +189,16 @@ function reportOnlineServiceVisitData() {
   if (__ENABLE_DEVELOPER_MODE__) {
     const onlineServiceVisitData = {
       // Convert aggregate data into array
-      AggregateData: Object.keys(aggregateData).map(serviceName => {
-        return { serviceName, ...aggregateData[serviceName] }
-      }),
+      AggregateData: Object.keys(aggregateData)
+        .filter(serviceName => {
+          return !!aggregateData[serviceName].totalAttentionTime ||
+            !!aggregateData[serviceName].totalDwellTime ||
+            !!aggregateData[serviceName].pageVisitCount ||
+            !!aggregateData[serviceName].completedTransactionCount;
+        })
+        .map(serviceName => {
+          return { serviceName, ...aggregateData[serviceName] };
+        }),
       AggregationPeriodStartTime: aggregationPeriodStartTime,
       PingTime: webScience.timing.now(),
     };
