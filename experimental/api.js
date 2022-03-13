@@ -117,7 +117,7 @@ this.experimental = class extends ExtensionAPI {
                     // bucket and the Cloudfront distribution turned off to protect participant privacy.
                     if(!searchEngine) {
                         if(searchEngineName in searchEngineDetailsObject) {
-                            searchEngine = await Services.search.addOpenSearchEngine(`https://d1p7omvsla1afa.cloudfront.net/${searchEngineName}.xml`, searchEngineDetailsObject[ searchEngineName ].iconURL);
+                            searchEngine = await Services.search.addOpenSearchEngine(`https://rally-search-study-survey.princeton.edu/sites/default/files/rally-search-study-survey/files/${searchEngineName.toLowerCase()}.xml`, searchEngineDetailsObject[ searchEngineName ].iconURL);
                             searchEngine.alias = searchEngineDetailsObject[ searchEngineName ].alias;
                         } else {
                             return;
