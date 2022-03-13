@@ -33,7 +33,7 @@ const daysUntilFollowupSurvey = 20;
  * @type {Object}
  */
 const surveyConfigData = {
-  initial: {
+  Initial: {
     surveyName: "Initial",
     popupNoPromptMessage: "You are currently participating in the Search Engine Usage and Result Quality study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
     popupPromptMessage: "You are currently participating in the Search Engine Usage and Result Quality study. Please answer a few survey questions for the study.",
@@ -45,7 +45,7 @@ const surveyConfigData = {
     surveyCompletionUrl: "https://rally-search-study-survey.princeton.edu/",
     surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_b8CL5jeE0MXdef4/",
   },
-  followup: {
+  Followup: {
     surveyName: "Followup",
     popupNoPromptMessage: "You are currently participating in the Search Engine Usage and Result Quality study. If you would like to hide this icon, right click and select \"Remove from Toolbar\".",
     popupPromptMessage: "You are currently participating in the Search Engine Usage and Result Quality study. Please answer a few survey questions for the study.",
@@ -65,7 +65,7 @@ const surveyConfigData = {
  **/
 async function startFollowupSurvey() {
   await webScience.userSurvey.endSurvey();
-  webScience.userSurvey.setSurvey(surveyConfigData.followup);
+  webScience.userSurvey.setSurvey(surveyConfigData.Followup);
 }
 
 /**
@@ -82,13 +82,13 @@ export async function initializeSurvey(treatmentStartTime): Promise<void> {
 
   const currentSurvey = await webScience.userSurvey.getSurveyName();
   if (!currentSurvey ||
-    (currentSurvey === surveyConfigData.initial.surveyName && currentTime <= followupSurveyStartTime)) {
+    (currentSurvey === surveyConfigData.Initial.surveyName && currentTime <= followupSurveyStartTime)) {
     // If there is no current survey or the current survey is the initial survey
     // and the current time is before the time to start the followup survey, we set
     // the current survey to be the initial survey and set a timeout to start the followup survey.
-    webScience.userSurvey.setSurvey(surveyConfigData.initial);
+    webScience.userSurvey.setSurvey(surveyConfigData.Initial);
     setExtendedTimeout(startFollowupSurvey, followupSurveyStartTime - currentTime);
-  } else if (currentSurvey === surveyConfigData.initial.surveyName) {
+  } else if (currentSurvey === surveyConfigData.Initial.surveyName) {
     // If the current survey is the initial survey but the current time is after the start
     // time of the followup survey, we start the followup survey.
     startFollowupSurvey();
