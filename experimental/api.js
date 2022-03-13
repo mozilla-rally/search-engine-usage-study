@@ -116,8 +116,12 @@ this.experimental = class extends ExtensionAPI {
                     // served through AWS S3 + Cloudfront. We have all logging for the S3
                     // bucket and the Cloudfront distribution turned off to protect participant privacy.
                     if(!searchEngine) {
-                        searchEngine = await Services.search.addOpenSearchEngine(`https://d1p7omvsla1afa.cloudfront.net/${searchEngineName}.xml`, searchEngineDetailsObject[ searchEngineName ].iconURL);
-                        searchEngine.alias = searchEngineDetailsObject[ searchEngineName ].alias;
+                        if(searchEngineName in searchEngineDetailsObject) {
+                            searchEngine = await Services.search.addOpenSearchEngine(`https://d1p7omvsla1afa.cloudfront.net/${searchEngineName}.xml`, searchEngineDetailsObject[ searchEngineName ].iconURL);
+                            searchEngine.alias = searchEngineDetailsObject[ searchEngineName ].alias;
+                        } else {
+                            return;
+                        }
                     }
 
                     // Make sure the engine is not hidden, move it to the top of the list of options, and make it the default
