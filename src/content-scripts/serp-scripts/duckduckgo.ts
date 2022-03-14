@@ -92,7 +92,7 @@ const serpScript = function () {
         try {
             const resultElements = document.querySelectorAll("#links > div:not(.js-result-hidden-el):not(.is-hidden):not(.result--more)");
             const element = resultElements[resultElements.length - 1] as HTMLElement;
-            return element.offsetHeight + getElementTopHeight(element)
+            return getElementBottomHeight(element)
         } catch (error) {
             return null;
         }

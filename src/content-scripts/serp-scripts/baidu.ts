@@ -87,7 +87,7 @@ const serpScript = function () {
     function getSearchAreaTopHeight(): number {
         try {
             const element = (document.querySelector("#s_tab") as HTMLElement)
-            return element.offsetHeight + getElementTopHeight(element)
+            return getElementBottomHeight(element)
         } catch (error) {
             return null;
         }
@@ -99,7 +99,7 @@ const serpScript = function () {
     function getSearchAreaBottomHeight(): number {
         try {
             const element = (document.querySelector("#container") as HTMLElement)
-            return element.offsetHeight + getElementTopHeight(element);
+            return getElementBottomHeight(element);
         } catch (error) {
             return null;
         }

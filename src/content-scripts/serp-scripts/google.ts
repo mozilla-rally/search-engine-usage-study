@@ -144,7 +144,7 @@ const serpScript = function () {
     function getSearchAreaTopHeight(): number {
         try {
             const element = (document.querySelector("#top_nav") as HTMLElement)
-            return element.offsetHeight + getElementTopHeight(element);
+            return getElementBottomHeight(element);
         } catch (error) {
             return null;
         }
@@ -157,16 +157,16 @@ const serpScript = function () {
         try {
             let element = document.querySelector("#botstuff") as HTMLElement
             if (element.offsetHeight !== 0) {
-                return element.offsetHeight + getElementTopHeight(element)
+                return getElementBottomHeight(element)
             }
 
             element = document.querySelector("#bottomads") as HTMLElement
             if (element.offsetHeight !== 0) {
-                return element.offsetHeight + getElementTopHeight(element);
+                return getElementBottomHeight(element);
             }
 
             element = document.querySelector("#res") as HTMLElement
-            return element.offsetHeight + getElementTopHeight(element);
+            return getElementBottomHeight(element);
         } catch (error) {
             return null;
         }

@@ -109,9 +109,8 @@ const serpScript = function () {
      */
     function getSearchAreaBottomHeight(): number {
         try {
-            const contentElements = document.querySelectorAll(".main__content .content__left > *:not([class*='pager'])")
-            const element = contentElements[contentElements.length - 1] as HTMLElement
-            return element.offsetHeight + getElementTopHeight(element)
+            const element = document.querySelector(".pager");
+            return getElementTopHeight(element);
         } catch (error) {
             return null;
         }
