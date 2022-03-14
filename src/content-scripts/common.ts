@@ -239,18 +239,31 @@ export class PageValues {
     }
 
     if (document.readyState === "complete") {
+      this.pageLoaded = true;
       this.determinePageValues();
+      // We set a timeout to determine page values again in case
+      // there are minor changes to the DOM shortly after ready state is complete.
+      setTimeout(() => {
+        this.determinePageValues();
+      }, beforeLoadPageValueRefreshInterval);
     } else {
       if (document.readyState === "interactive") {
         this.determinePageValues();
       }
       this.beforeLoadPageValueRefreshIntervalId = setInterval(() => {
+        if (this.pageLoaded) {
+          this.determinePageValues();
+          clearInterval(this.beforeLoadPageValueRefreshIntervalId);
+        }
         if (document.readyState !== "loading") {
           this.determinePageValues();
         }
+        // We don't clear the interval here because there may be small changes to
+        // the DOM after loading so we want to determine page values one more time
+        // slightly after the ready state is complete.
         if (document.readyState === "complete") {
+          this.determinePageValues();
           this.pageLoaded = true;
-          clearInterval(this.beforeLoadPageValueRefreshIntervalId);
         }
       }, beforeLoadPageValueRefreshInterval);
     }
