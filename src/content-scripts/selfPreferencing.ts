@@ -280,7 +280,17 @@ const selfPreferencedResultMetadataNoReplacement: {
 
             // If there is not a knowledge panel, gets the standard lyrics result.
             if (!document.querySelector("[id^='kp-wp-tab']")) {
-                lyricsElements = lyricsElements.concat(getXPathElements("//*[@id='rso']/*[descendant::*[@data-lyricid]]"));
+                lyricsElements = lyricsElements.concat(getXPathElements("//*[@id='rso']/*[not(@aria-label='Lyrics') and descendant::*[@data-lyricid]]")).filter(element => {
+                    return !element.querySelector("[aria-label='Lyrics']");
+                });
+            } else {
+                lyricsElements = lyricsElements.concat(getXPathElements("//*[starts-with(@id, 'kp-wp-tab-default_tab')]/*[not(@aria-label='Lyrics') and descendant::*[@data-lyricid]]")).filter(element => {
+                    return !element.querySelector("[aria-label='Lyrics']");
+                });
+
+                lyricsElements = lyricsElements.concat(getXPathElements("//*[@id='kp-wp-tab-overview']/*[not(@aria-label='Lyrics') and descendant::*[@data-lyricid]]").filter(element => {
+                    return !element.querySelector("[aria-label='Lyrics']");
+                }));
             }
 
             return lyricsElements;
@@ -332,7 +342,9 @@ function elementFilter(element: Element) {
  */
 function getCreatedTemplateSER(): Element {
     // Gets the organic results
-    const organicResults = getGoogleOrganicResults().filter(elementFilter);
+    const organicResults = getGoogleOrganicResults().filter(elementFilter).filter(element => {
+        return !!element.querySelectorAll("[data-content-feature]");
+    });
 
     // Gets the organic element with the smallest height. We are assuming the smallest height element will be
     // the most basic organic result.
@@ -640,11 +652,6 @@ const removedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
  * @returns {string} An array of the details of the self preferenced results that were removed from the page.
  */
 export function removeSelfPreferenced(): SelfPreferencedDetail[] {
-    // Remove lyric tabs
-    const lyricsTabs = getXPathElements("//span[@role='tab' and descendant::span[text()='Lyrics']]");
-    for (const lyricsTab of lyricsTabs) {
-        (lyricsTab as any).style.setProperty("display", "none");
-    }
 
     const selfPreferencedResults: {
         [type: string]: { elements: Element[], possibleReplacementResult: boolean }
@@ -719,6 +726,7 @@ const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, sel
  * the self preferenced results.
  */
 export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
+
     const selfPreferencedResults: {
         [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
