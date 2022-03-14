@@ -163,7 +163,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
       SearchAreaTopHeight: pageVisitData.searchAreaTopHeight,
       SearchAreaBottomHeight: pageVisitData.searchAreaBottomHeight,
       TimeSinceSameQuery: timeSinceSameQuery,
-      PageVisitStartTime: Utils.getCoarsenedTimeStamp(pageVisitData.pageVisitStartTime),
+      PageVisitStartTime: pageVisitData.pageVisitStartTime,
       CurrentDefaultEngine: await Privileged.getSearchEngine(),
       NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
       PageLoaded: pageVisitData.pageLoaded,

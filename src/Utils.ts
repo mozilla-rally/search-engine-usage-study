@@ -8,13 +8,6 @@ import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
 
 /**
- * The number of milliseconds in an hour.
- * (1000 milliseconds/second * 60 seconds/minute  * 60 minutes/hour)
- * @type {number}
- */
-const millisecondsPerHour = 3600000;
-
-/**
  * An object that maps each search engine to metadata for the engine.
  * @type {Array}
  */
@@ -223,14 +216,6 @@ export function getPrimarySearchEngineNames(): string[] {
  */
 export function getAllSearchEngineNames(): string[] {
   return Object.keys(searchEnginesMetadata);
-}
-
-/**
- * @param {number} timeStamp - A timestamp, in milliseconds since the epoch.
- * @returns {number} Returns the timestamp rounded down to the nearest hour.
- */
-export function getCoarsenedTimeStamp(timeStamp: number): number {
-  return Math.trunc(timeStamp / millisecondsPerHour) * millisecondsPerHour;
 }
 
 /**
