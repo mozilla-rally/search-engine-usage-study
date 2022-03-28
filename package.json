@@ -44,7 +44,7 @@
     "selenium-webdriver": "^4.0.0-beta.3",
     "svelte": "^3.38.3",
     "tailwindcss": "^2.2.16",
-    "web-ext": "^6.1.0",
+    "web-ext": "^6.8.0",
     "webextension-polyfill": "^0.8.0"
   },
   "engines": {
