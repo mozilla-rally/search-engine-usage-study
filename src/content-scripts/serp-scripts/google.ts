@@ -46,7 +46,7 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
+        const organicResults = Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
             // Remove shopping results
             return !element.querySelector(":scope > g-card")
         });
@@ -266,7 +266,8 @@ const serpScript = function () {
         }
         if (pageValues.mostRecentMousedown.Type === ElementType.SelfPreferenced) {
             if (pageValues.mostRecentMousedown.Link === url ||
-                (redirectUrl && pageValues.mostRecentMousedown.Link === redirectUrl)) {
+                (redirectUrl && (pageValues.mostRecentMousedown.Link === redirectUrl || redirectUrl[0] === "/") ||
+                    normalizedUrl.includes("google.com/search"))) {
                 if (__ENABLE_DEVELOPER_MODE__) {
                     console.log("Self Preferenced Click");
                 }
