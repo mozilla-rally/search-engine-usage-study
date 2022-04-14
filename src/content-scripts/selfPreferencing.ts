@@ -1,7 +1,13 @@
 import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
 
+/**
+ * An HTML class that identifies results that have previously been retrieved by 
+ * getSelfPreferencedElements if noRepeats is true.
+ */
+const trackedElementClass = "rally-study-self-preferenced-tracking";
+
 function getGoogleOrganicResults(): Element[] {
-    return Array.from(document.querySelectorAll("#rso .g:not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
+    return Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
         // Remove shopping results
         return !element.querySelector(":scope > g-card")
     });
@@ -318,14 +324,6 @@ const selfPreferencedResultMetadataNoReplacement: {
             return adSelfPreferencedProductResult.concat(nonAdSelfPreferencedProductResult);
         },
     },
-    shoppingRhsResults: {
-        getResults: function (): Element[] {
-            // Get the self preferenced shopping results in the column to the right of the main results.
-            return Array.from(document.querySelectorAll(".cu-container")).filter(element => {
-                return !!element.closest("#rhs") || !!element.querySelector(".commercial-unit-desktop-rhs")
-            });
-        },
-    }
 }
 
 function elementFilter(element: Element) {
@@ -513,6 +511,8 @@ function generateReplacementResult(header: string, link: string, description: st
             if (__ENABLE_DEVELOPER_MODE__) {
                 console.log("Self preferenced result created from organic results");
             }
+
+            replacementSER.classList.add(trackedElementClass);
             return replacementSER;
         }
 
@@ -534,6 +534,8 @@ function generateReplacementResult(header: string, link: string, description: st
             if (__ENABLE_DEVELOPER_MODE__) {
                 console.log("Self preferenced result created from hardcoded template");
             }
+
+            replacementSER.classList.add(trackedElementClass);
             return replacementSER;
         }
 
@@ -590,12 +592,6 @@ function getReplacementData(element, type): ReplacementData {
         citeSpan
     };
 }
-
-/**
- * An HTML class that identifies results that have previously been retrieved by 
- * getSelfPreferencedElements if noRepeats is true.
- */
-const trackedElementClass = "rally-study-self-preferenced-tracking";
 
 /**
  * @param {boolean} noRepeats - Whether to get the results that were retrieved with a previous
@@ -717,8 +713,7 @@ export function getSelfPreferencedDetailsAndElements(): { selfPreferencedElement
 const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, selfPreferencedElement: Element }[] = [];
 
 /**
- * Replaces the self preferenced results on the page that are for a Google service and removes
- * the other self preferenced results for which Google does not have a competing own service.
+ * Replaces the self preferenced results on the page for which Google has a competing own service.
  * @returns {string} An object containing:
  *      1) An array of the details of the replacement results created and of the self preferenced results that were
  *         removed without replacement
@@ -731,9 +726,6 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
         [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
 
-    const selfPreferencedResultsToRemove: {
-        [type: string]: Element[]
-    } = {};
     const selfPreferencedResultsToReplace: {
         [type: string]: Element[]
     } = {};
@@ -742,28 +734,6 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     for (const selfPreferencedResultType in selfPreferencedResults) {
         if (selfPreferencedResults[selfPreferencedResultType].possibleReplacementResult) {
             selfPreferencedResultsToReplace[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
-        } else {
-            selfPreferencedResultsToRemove[selfPreferencedResultType] = selfPreferencedResults[selfPreferencedResultType].elements;
-        }
-    }
-
-    // Get the details of all the self preferenced results that do not have a competing Google service and will be removed.
-    for (const selfPreferencedResultsToRemoveType in selfPreferencedResultsToRemove) {
-        const elements = selfPreferencedResultsToRemove[selfPreferencedResultsToRemoveType];
-        for (const element of elements) {
-            removedSelfPreferencedElementDetails.push({
-                topHeight: getElementTopHeight(element),
-                bottomHeight: getElementBottomHeight(element),
-                type: selfPreferencedResultsToRemoveType
-            });
-        }
-    }
-
-    // Remove all the self preferenced results that do not have a competing Google service
-    for (const selfPreferencedResultsToRemoveType in selfPreferencedResultsToRemove) {
-        const elements = selfPreferencedResultsToRemove[selfPreferencedResultsToRemoveType];
-        for (const element of elements) {
-            (element as any).style.setProperty("display", "none");
         }
     }
 
@@ -780,15 +750,21 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
             if (replacementResult) {
                 selfPreferencedResultToReplace.parentElement.insertBefore(replacementResult, selfPreferencedResultToReplace);
                 (selfPreferencedResultToReplace as any).style.setProperty("display", "none");
-            }
 
-            // Add the replacement result to the list of replacement results that is built up across different runs of this function.
-            // We do this because if a future run adds more replacement results, we will want to recalculate the position of
-            // all the previously added replacement results.
-            replacedSelfPreferencedElementsAndType.push({
-                selfPreferencedType: typeOfSelfPreferencedResultToReplace,
-                selfPreferencedElement: replacementResult,
-            })
+                // Add the replacement result to the list of replacement results that is built up across different runs of this function.
+                // We do this because if a future run adds more replacement results, we will want to recalculate the position of
+                // all the previously added replacement results.
+                replacedSelfPreferencedElementsAndType.push({
+                    selfPreferencedType: typeOfSelfPreferencedResultToReplace,
+                    selfPreferencedElement: replacementResult,
+                })
+            } else {
+                // If we failed to generate a replacement result, we just leave the self-preferenced result as-is.
+                replacedSelfPreferencedElementsAndType.push({
+                    selfPreferencedType: typeOfSelfPreferencedResultToReplace,
+                    selfPreferencedElement: selfPreferencedResultToReplace,
+                })
+            }
         }
     }
 
@@ -797,7 +773,7 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     const replacedSelfPreferencedElementDetails: SelfPreferencedDetail[] = [];
 
     // Gets the details of replacement results from all runs of this function. We wait until the end of this function call
-    // to get these details because replacing/removing a self preferenced result may change the top height and bottom height
+    // to get these details because replacing a self preferenced result may change the top height and bottom height
     // of a replacement result.
     for (const { selfPreferencedType, selfPreferencedElement } of replacedSelfPreferencedElementsAndType) {
         replacedSelfPreferencedElementDetails.push({
@@ -809,6 +785,6 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
     }
 
     return {
-        selfPreferencedElementDetails: replacedSelfPreferencedElementDetails.concat(removedSelfPreferencedElementDetails), selfPreferencedElements: replacedSelfPreferencedElements
+        selfPreferencedElementDetails: replacedSelfPreferencedElementDetails, selfPreferencedElements: replacedSelfPreferencedElements
     };
 }
