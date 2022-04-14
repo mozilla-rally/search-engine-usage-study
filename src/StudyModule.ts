@@ -26,15 +26,15 @@ const conditionSet = {
   conditions: [
     { name: "NoTreatment", weight: 10 },
     { name: "NoticeDefault", weight: 20 },
-    { name: "NoticeRevert", weight: 20 },
+    { name: "NoticeRevert", weight: 0 },
     { name: "ChoiceBallotDefault", weight: 10 },
-    { name: "ChoiceBallotHidden", weight: 10 },
-    { name: "ChoiceBallotDescriptions", weight: 10 },
-    { name: "ChoiceBallotExtended", weight: 20 },
+    { name: "ChoiceBallotHidden", weight: 0 },
+    { name: "ChoiceBallotDescriptions", weight: 0 },
+    { name: "ChoiceBallotExtended", weight: 10 },
     { name: "ModalPrimaryRevert", weight: 10 },
-    { name: "ModalSecondaryRevert", weight: 10 },
-    { name: "SelfPreferencedRemoval", weight: 10 },
-    { name: "SelfPreferencedReplacement", weight: 10 },
+    { name: "ModalSecondaryRevert", weight: 0 },
+    { name: "SelfPreferencedRemoval", weight: 20 },
+    { name: "SelfPreferencedReplacement", weight: 20 },
   ]
 };
 

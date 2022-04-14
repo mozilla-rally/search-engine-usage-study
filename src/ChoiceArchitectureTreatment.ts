@@ -82,9 +82,9 @@ export async function conductTreatment(conditionTypeArg, storageArg): Promise<vo
   } else if (conditionType === "ChoiceBallotExtended") {
     choiceBallotTreatment(ChoiceBallotType.Extended);
   } else if (conditionType === "ModalPrimaryRevert") {
-    choiceBallotTreatment(ChoiceBallotType.Descriptions);
+    choiceBallotTreatment(ChoiceBallotType.Default);
   } else if (conditionType === "ModalSecondaryRevert") {
-    choiceBallotTreatment(ChoiceBallotType.Descriptions);
+    choiceBallotTreatment(ChoiceBallotType.Default);
   } else {
     completeTreatment();
   }
