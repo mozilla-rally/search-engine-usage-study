@@ -13,21 +13,19 @@ export enum ElementType {
  * The maximum number of milliseconds after a click where we consider a createdNavigationTarget message
  * to have been caused by the click.
  */
-// TODO: the delay of 500 ms should maybe be even less?
 const maxClickToCreatedNavigationTargetMessageDelay = 500;
 
 /**
- * The maximum number of milliseconds after a click where we consider a createdNavigationTarget message
- * to have been caused by the click.
+ * The interval at which to determine page values before the page has fully loaded. We cannot wait
+ * for the page to load to determine page values because we may miss out on participant interaction
+ * if we were to do so.
  */
-// TODO: the delay of 500 ms should maybe be even less?
 const beforeLoadPageValueRefreshInterval = 500;
 
 /**
  * The maximum number of milliseconds after a click where we consider the end of the page visit
  * to have been caused by the click.
  */
-// TODO: maybe use different delay than 1 second?
 const maxClickToPageVisitEndDelay = 1000;
 
 /**
@@ -137,9 +135,15 @@ export class PageValues {
   numSelfPreferencedClicks = 0;
 
   /**
-   * An array of the listeners tracking elements on the page.
+   * An array of the listeners tracking elements on the page. This does not include
+   * self preferenced result listeners which are tracked with selfPreferencedListenersList
    */
   elementListenersList: ElementListeners[] = [];
+
+  /**
+   * An array of the self preferenced result listeners on the page.
+   */
+  selfPreferencedElementListenersList: ElementListeners[] = [];
 
   /**
    * Details about the element that most recently had the mousedown event fired for it.
@@ -202,24 +206,6 @@ export class PageValues {
       this.isWebSerpPage = getIsWebSerpPage();
       if (!this.isWebSerpPage) return;
 
-      let selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
-      let selfPreferencedElements: Element[] = [];
-      if (this.searchEngine == "Google") {
-        if (this.selfPreferencingType == "Remove") {
-          selfPreferencedElementDetails = removeSelfPreferenced();
-        } else if (this.selfPreferencingType == "Replace") {
-          ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced());
-        } else {
-          ({ selfPreferencedElementDetails, selfPreferencedElements } = getSelfPreferencedDetailsAndElements());
-        }
-        if (__ENABLE_DEVELOPER_MODE__) {
-          console.log(selfPreferencedElementDetails);
-          console.log(selfPreferencedElements);
-        }
-      }
-
-      this.selfPreferencedDetails = selfPreferencedElementDetails;
-
       this.query = getSerpQuery(window.location.href, this.searchEngine);
 
       this.queryVertical = getSerpQueryVertical ? getSerpQueryVertical() : null;
@@ -233,9 +219,52 @@ export class PageValues {
       const { organicDetails, organicLinkElements } = getOrganicDetailsAndLinkElements();
       this.organicDetails = organicDetails;
 
-      this.addListeners(organicLinkElements, getAdLinkElements(), getInternalLink, selfPreferencedElements);
+      this.addListeners(organicLinkElements, getAdLinkElements(), getInternalLink);
 
       if (extraCallback) extraCallback();
+    }
+
+    let mutationObserverForSelfPreferencedResults: MutationObserver = null;
+
+    // Handle self preferenced element tracking on Google
+    if (this.searchEngine == "Google") {
+      // Add a mutation observer to check for the document.body load
+      const bodyObserver = new MutationObserver(() => {
+        if (document.body) {
+          // document.body exists now so disconnect the observer and add an observer to document.body
+          bodyObserver.disconnect();
+
+          // Mutation observer for document.body that refreshes the tracked self preferenced elements
+          // on the SERP whenever there is a mutation. This will be disconnected after the document
+          // has fully loaded.
+          mutationObserverForSelfPreferencedResults = new MutationObserver(() => {
+            let selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+            let selfPreferencedElements: Element[] = [];
+
+            if (this.selfPreferencingType == "Remove") {
+              selfPreferencedElementDetails = removeSelfPreferenced();
+            } else if (this.selfPreferencingType == "Replace") {
+              ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced());
+            } else {
+              ({ selfPreferencedElementDetails, selfPreferencedElements } = getSelfPreferencedDetailsAndElements());
+            }
+            if (__ENABLE_DEVELOPER_MODE__) {
+              console.log(selfPreferencedElementDetails);
+              console.log(selfPreferencedElements);
+            }
+
+
+            this.selfPreferencedDetails = selfPreferencedElementDetails;
+            this.addSelfPreferencedListeners(selfPreferencedElements);
+          });
+
+          mutationObserverForSelfPreferencedResults.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+        }
+      });
+      bodyObserver.observe(document.documentElement, { childList: true });
     }
 
     if (document.readyState === "complete") {
@@ -244,6 +273,10 @@ export class PageValues {
       // We set a timeout to determine page values again in case
       // there are minor changes to the DOM shortly after ready state is complete.
       setTimeout(() => {
+        // Disconnect the mutation observer that refreshes the tracked self preferenced results.
+        if (mutationObserverForSelfPreferencedResults) {
+          mutationObserverForSelfPreferencedResults.disconnect();
+        }
         this.determinePageValues();
       }, beforeLoadPageValueRefreshInterval);
     } else {
@@ -252,6 +285,10 @@ export class PageValues {
       }
       this.beforeLoadPageValueRefreshIntervalId = setInterval(() => {
         if (this.pageLoaded) {
+          // Disconnect the mutation observer that refreshes the tracked self preferenced results.
+          if (mutationObserverForSelfPreferencedResults) {
+            mutationObserverForSelfPreferencedResults.disconnect();
+          }
           this.determinePageValues();
           clearInterval(this.beforeLoadPageValueRefreshIntervalId);
         }
@@ -267,8 +304,6 @@ export class PageValues {
         }
       }, beforeLoadPageValueRefreshInterval);
     }
-
-
   }
 
   /**
@@ -424,7 +459,15 @@ export class PageValues {
    **/
   handleMousedown(event: MouseEvent, type: ElementType, ranking: number, getInternalLink: (target: Element) => string) {
     if (__ENABLE_DEVELOPER_MODE__) {
-      console.log(`ElementType: ${type}`);
+      if (type === ElementType.Ad) {
+        console.log("ElementType: Ad");
+      } else if (type === ElementType.Organic) {
+        console.log("ElementType: Organic");
+      } else if (type === ElementType.Internal) {
+        console.log("ElementType: Internal");
+      } else if (type === ElementType.SelfPreferenced) {
+        console.log("ElementType: Self Preferenced");
+      }
     }
     if (type === ElementType.Organic) {
       if (event.target instanceof Element) {
@@ -511,7 +554,13 @@ export class PageValues {
     const mousedownListener = (event: MouseEvent) => this.handleMousedown(event, type, ranking, getInternalLink);
     element.addEventListener("click", clickListener, true);
     element.addEventListener("mousedown", mousedownListener, true);
-    this.elementListenersList.push({ element: element, clickListener: clickListener, mousedownListener: mousedownListener });
+
+    if (type === ElementType.SelfPreferenced) {
+      this.selfPreferencedElementListenersList.push({ element: element, clickListener: clickListener, mousedownListener: mousedownListener });
+    } else {
+      this.elementListenersList.push({ element: element, clickListener: clickListener, mousedownListener: mousedownListener });
+    }
+
   }
 
   /**
@@ -522,7 +571,7 @@ export class PageValues {
    * @param getInternalLink - returns a link (the href) if target was an internal link element in the search area, an empty string if a click
    * on target a possible internal link click, and null otherwise.
    */
-  addListeners(organicLinkElements: Element[][], adLinkElements: Element[], getInternalLink: (target: Element) => string, selfPreferencedElements: Element[]) {
+  addListeners(organicLinkElements: Element[][], adLinkElements: Element[], getInternalLink: (target: Element) => string) {
     // Remove any previously added listeners.
     for (const elementListeners of this.elementListenersList) {
       elementListeners.element.removeEventListener("click", elementListeners.clickListener, true);
@@ -547,6 +596,19 @@ export class PageValues {
         this.addElementListeners(organicLinkElement, ElementType.Organic, i, null);
       }
     }
+  }
+
+  /**
+   * Add listeners to the self preferenced elements to track self preferenced result clicks.
+   * @param selfPreferencedElements - An array of self preferenced result elements on the page.
+   */
+  addSelfPreferencedListeners(selfPreferencedElements: Element[]) {
+    // Remove any previously added self preferenced result listeners.
+    for (const elementListeners of this.selfPreferencedElementListenersList) {
+      elementListeners.element.removeEventListener("click", elementListeners.clickListener, true);
+      elementListeners.element.removeEventListener("mousedown", elementListeners.mousedownListener, true);
+    }
+    this.selfPreferencedElementListenersList = [];
 
     // Add the self preferenced tracking listeners.
     for (const selfPreferencedElement of selfPreferencedElements) {
@@ -725,4 +787,3 @@ export function waitForPageManagerLoad(callback) {
     (window as any).pageManagerHasLoaded.push(callback);
   }
 }
-
