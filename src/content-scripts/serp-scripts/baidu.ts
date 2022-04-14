@@ -113,7 +113,7 @@ const serpScript = function () {
             const pageNumElement = document.querySelector("strong > .pc")
             return Number(pageNumElement.textContent);
         } catch (error) {
-            return -1;
+            return 1;
         }
     }
 
@@ -213,12 +213,17 @@ const serpScript = function () {
     const bodyConfig = { childList: true, subtree: true };
     documentObserver.observe(document, bodyConfig);
 
+    let pnUrlQueryVariable = null;
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         const newPageIsCorrect = getIsWebSerpPage();
+        const newPnUrlQueryVariable = getQueryVariable(window.location.href, "pn");
 
         if (newPageIsCorrect) {
             const newQuery = getSerpQuery(window.location.href, "Baidu");
             if (newQuery && pageValues.query && newQuery !== pageValues.query) {
+                pageValues.reportResults(timeStamp);
+                pageValues.resetTracking(timeStamp);
+            } else if (pageValues.isWebSerpPage && (newPnUrlQueryVariable !== pnUrlQueryVariable)) {
                 pageValues.reportResults(timeStamp);
                 pageValues.resetTracking(timeStamp);
             } else if (!pageValues.isWebSerpPage) {
@@ -227,6 +232,8 @@ const serpScript = function () {
         } else if (pageValues.isWebSerpPage) {
             pageValues.reportResults(timeStamp);
         }
+
+        pnUrlQueryVariable = newPnUrlQueryVariable;
         wrapperModified = false;
         pageValues.determinePageValues();
     });
