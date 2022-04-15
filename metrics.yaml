@@ -33,9 +33,9 @@ rally:
       indicates a test payload. A value of 11111111-1111-1111-1111-111111111111
       indicates that the Rally id was not found or properly set.
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -50,9 +50,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -65,9 +65,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -79,9 +79,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -96,9 +96,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -112,9 +112,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -128,9 +128,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -144,9 +144,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -160,9 +160,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -176,9 +176,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -192,9 +192,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -208,9 +208,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -226,9 +226,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -241,9 +241,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -256,9 +256,9 @@ study_initialization:
     send_in_pings:
       - study-initialization
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -273,9 +273,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -288,9 +288,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -302,9 +302,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -319,9 +319,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -336,9 +336,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -351,9 +351,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -365,9 +365,9 @@ ballot_interaction:
     send_in_pings:
       - ballot-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -409,9 +409,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -424,9 +424,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -438,9 +438,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -453,9 +453,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -467,9 +467,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -482,9 +482,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -497,9 +497,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -512,9 +512,9 @@ notice_interaction:
     send_in_pings:
       - notice-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -528,9 +528,9 @@ modal_interaction:
     send_in_pings:
       - modal-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -544,9 +544,9 @@ modal_interaction:
     send_in_pings:
       - modal-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -560,9 +560,9 @@ modal_interaction:
     send_in_pings:
       - modal-interaction
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -576,9 +576,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -591,9 +591,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -606,9 +606,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -622,9 +622,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -638,9 +638,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -654,9 +654,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -669,9 +669,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -684,9 +684,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -699,9 +699,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -714,9 +714,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -751,9 +751,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -780,9 +780,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -796,9 +796,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -813,9 +813,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -846,9 +846,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -865,9 +865,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -884,9 +884,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -901,9 +901,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -918,9 +918,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -934,9 +934,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -950,9 +950,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -965,9 +965,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -982,9 +982,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -999,9 +999,9 @@ serp_visit:
     send_in_pings:
       - serp-visit
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -1016,9 +1016,9 @@ online_service_navigation:
     send_in_pings:
       - online-service-navigation
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -1053,9 +1053,9 @@ online_service_navigation:
     send_in_pings:
       - online-service-navigation
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
@@ -1068,9 +1068,9 @@ online_service_navigation:
     send_in_pings:
       - online-service-navigation
     bugs:
-      - TODO
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
     data_reviews:
-      - TODO
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
     notification_emails:
       - than@mozilla.com
     expires: never
