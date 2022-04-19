@@ -25,9 +25,9 @@ study-initialization:
     web browser.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
 ballot-interaction:
@@ -37,9 +37,9 @@ ballot-interaction:
     selection three times.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
 notice-interaction:
@@ -51,9 +51,9 @@ notice-interaction:
     it is present, or exiting the browser.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
 modal-interaction:
@@ -62,9 +62,9 @@ modal-interaction:
     interacts with the modal.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
 serp-visit:
@@ -72,9 +72,9 @@ serp-visit:
     This ping is sent when there is a visit to a search engine results page.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
 online-service-navigation:
@@ -83,8 +83,8 @@ online-service-navigation:
     about participant navigation to the tracked online services.
   include_client_id: false
   bugs:
-    - TODO
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
   data_reviews:
-    - TODO
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
   notification_emails:
     - than@mozilla.com
