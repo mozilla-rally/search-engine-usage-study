@@ -7,7 +7,7 @@
   "homepage_url": "https://github.com/mozilla-rally/search-engine-usage-study",
   "applications": {
     "gecko": {
-      "id": "search-engine-usage-study@rally.mozilla.org",
+      "id": "search-engine-usage@rally.mozilla.org",
       "strict_min_version": "77.0a1"
     }
   },
