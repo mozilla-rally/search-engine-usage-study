@@ -75,12 +75,12 @@ class GetPingsUploader extends Uploader {
 }
 
 if (__ENABLE_DEVELOPER_MODE__) {
-    Glean.initialize("my-app-id", true, {
+    Glean.initialize("rally-citp-search-engine-usage", true, {
         debug: { logPings: true },
         httpClient: new GetPingsUploader(),
     });
 } else {
-    Glean.initialize("my-app-id", true, {
+    Glean.initialize("rally-citp-search-engine-usage", true, {
         plugins: [
             new PingEncryptionPlugin(publicKey)
         ],
