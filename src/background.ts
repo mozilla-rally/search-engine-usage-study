@@ -90,8 +90,8 @@ if (__ENABLE_DEVELOPER_MODE__) {
 // Initialize the Rally API.
 const rally = new Rally();
 rally.initialize(
-    // A sample key id used for encrypting data.
-    "sample-invalid-key-id",
+    // The schemaNamespace for this study.
+    "rally-citp-search-engine-usage",
     // A sample *valid* JWK object for the encryption.
     publicKey,
     // The following constant is automatically provided by
