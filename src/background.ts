@@ -13,11 +13,11 @@ import * as rallyManagementMetrics from "../src/generated/rally";
 import * as searchUsagePings from "../src/generated/pings";
 
 const publicKey = {
-    "kty": "EC",
     "crv": "P-256",
-    "x": "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU",
-    "y": "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0",
-    "kid": "Public key used in JWS spec Appendix A.3 example"
+    "kid": "rally-citp-search-engine-usage",
+    "kty": "EC",
+    "x": "GT9k6e_o9Mmg8rzpODDHubvW9vnn2YX-6jvs7XiyLxc",
+    "y": "shZ66v0JgXOH5U3yJ4B07Hqooi12KD9nSe9466o5vLY"
 };
 
 async function stateChangeCallback(newState: string) {
@@ -75,12 +75,12 @@ class GetPingsUploader extends Uploader {
 }
 
 if (__ENABLE_DEVELOPER_MODE__) {
-    Glean.initialize("my-app-id", true, {
+    Glean.initialize("rally-citp-search-engine-usage", true, {
         debug: { logPings: true },
         httpClient: new GetPingsUploader(),
     });
 } else {
-    Glean.initialize("my-app-id", true, {
+    Glean.initialize("rally-citp-search-engine-usage", true, {
         plugins: [
             new PingEncryptionPlugin(publicKey)
         ],
@@ -90,8 +90,8 @@ if (__ENABLE_DEVELOPER_MODE__) {
 // Initialize the Rally API.
 const rally = new Rally();
 rally.initialize(
-    // A sample key id used for encrypting data.
-    "sample-invalid-key-id",
+    // The schemaNamespace for this study.
+    "rally-citp-search-engine-usage",
     // A sample *valid* JWK object for the encryption.
     publicKey,
     // The following constant is automatically provided by
