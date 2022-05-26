@@ -120,8 +120,11 @@ rally.initialize(
                 browser.runtime.openOptionsPage()
             )
         );
+    } else {
+        stateChangeCallback("resume").then(() => console.debug("Data collection start"));
     }
-}, _reject => {
+}).catch(err => {
     // Do not start the study in this case. Something
     // went wrong.
+    console.error(err);
 });
