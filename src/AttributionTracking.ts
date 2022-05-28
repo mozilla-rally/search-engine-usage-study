@@ -135,23 +135,17 @@ export function initializeAttributionTracking(): void {
           transition: "forward_back"
         };
       }
-    } else if (pageTransitionDataEvent.transitionType === "reload" || pageTransitionDataEvent.isHistoryChange
-      || pageTransitionDataEvent.transitionQualifiers.includes("client_redirect") || pageTransitionDataEvent.transitionQualifiers.includes("server_redirect")) {
-
+    } else if (pageTransitionDataEvent.transitionType === "reload" || pageTransitionDataEvent.isHistoryChange) {
       let transition = null;
       if (pageTransitionDataEvent.transitionType === "reload") {
         transition = "reload";
-      } else if (pageTransitionDataEvent.isHistoryChange) {
-        transition = "history_change";
-      } else if (pageTransitionDataEvent.transitionQualifiers.includes("client_redirect")) {
-        transition = "client_redirect";
       } else {
-        transition = "server_redirect";
+        transition = "history_change";
       }
 
       if (sourcePageAttributionInfo && sourcePageAttributionInfo.engine === engine) {
-        // If the transition was due to a reload, a url change with the History API, or a redirect 
-        // and the source page engine is the same as the new page engine, then we continue the 
+        // If the transition was due to a reload or a url change with the History API and the
+        // source page engine is the same as the new page engine, then we continue the 
         // attribution of the source page.
         pageIdToAttributionData[pageId] = {
           attribution: sourcePageAttributionInfo.attribution,
@@ -205,6 +199,31 @@ export function initializeAttributionTracking(): void {
           attributionID: webScience.id.generateId(),
           engine: engine,
           transition: pageTransitionDataEvent.transitionType
+        };
+      }
+    } else if (pageTransitionDataEvent.transitionQualifiers.includes("client_redirect") || pageTransitionDataEvent.transitionQualifiers.includes("server_redirect")) {
+      let transition = null;
+      if (pageTransitionDataEvent.transitionQualifiers.includes("client_redirect")) {
+        transition = "client_redirect";
+      } else {
+        transition = "server_redirect";
+      }
+
+      if (sourcePageAttributionInfo && sourcePageAttributionInfo.engine === engine) {
+        // If the transition was due to a redirect and the source page engine is the same as
+        // the new page engine, then we continue the attribution of the source page.
+        pageIdToAttributionData[pageId] = {
+          attribution: sourcePageAttributionInfo.attribution,
+          attributionID: sourcePageAttributionInfo.attributionID,
+          engine: engine,
+          transition: transition
+        };
+      } else {
+        pageIdToAttributionData[pageId] = {
+          attribution: "unknown",
+          attributionID: webScience.id.generateId(),
+          engine: engine,
+          transition: transition
         };
       }
     } else {
