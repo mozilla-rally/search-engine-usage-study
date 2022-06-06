@@ -1,4 +1,5 @@
 import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathElements } from "./common.js";
+import DOMPurify from 'dompurify';
 
 /**
  * An HTML class that identifies results that have previously been retrieved by 
@@ -7,7 +8,7 @@ import { getElementBottomHeight, getElementTopHeight, getXPathElement, getXPathE
 const trackedElementClass = "rally-study-self-preferenced-tracking";
 
 function getGoogleOrganicResults(): Element[] {
-    return Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not(.replacement-result):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
+    return Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not(.g-blk):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
         // Remove shopping results
         return !element.querySelector(":scope > g-card")
     });
@@ -365,7 +366,7 @@ function getCreatedTemplateSER(): Element {
     const headerElement = linkElement.querySelector("h3");
     const citeElement = linkElement.querySelector("cite");
     const description = Array.from(templateSearchResult.querySelectorAll("div:not(g-expandable-container *)")).filter(element => {
-        return !element.querySelector("*:not(span):not(em)")
+        return !element.querySelector("*:not(span):not(em)") && (element.closest(".g").isSameNode(headerElement.closest(".g")));
     }).reduce((largestElement, currentElement) => {
         return currentElement.textContent.length > largestElement.textContent.length ?
             currentElement :
@@ -438,7 +439,7 @@ function getCreatedTemplateSER(): Element {
  */
 function getDefaultTemplateSER(): HTMLDivElement {
     const replacementSER = document.createElement('div');
-    replacementSER.classList.add('g', 'replacement-result');
+    replacementSER.classList.add('g');
     replacementSER.innerHTML = `
 <div class="jtfYYd">
 	<div class="NJo7tc Z26q7c jGGQ5e" data-header-feature="0">
@@ -474,7 +475,10 @@ function getDefaultTemplateSER(): HTMLDivElement {
 
 
     // A list of all the classes in the hardcoded HTML above
-    const classes = ["jtfYYd", "NJo7tc", "Z26q7c", "jGGQ5e", "yuRUbf", "LC20lb", "MBeuO", "DKV0Md", "TbwUpd", "NJjxre", "iUh30", "qLRx3b", "tjvcx", "dyjrff", "qzEoUe", "NJo7tc", "Z26q7c", "uUuwM", "VwiC3b", "yXK7lf", "MUxGbd", "yDYNvb", "lyLwlc", "lEBKkf",];
+    const classes = ['DKV0Md', 'LC20lb', 'MBeuO', 'MUxGbd', 'NJjxre', 'NJo7tc',
+        'TbwUpd', 'VwiC3b', 'Z26q7c', 'dyjrff', 'iUh30', 'jGGQ5e',
+        'jtfYYd', 'lEBKkf', 'lyLwlc', 'qLRx3b', 'qzEoUe', 'tjvcx', 'uUuwM',
+        'yDYNvb', 'yXK7lf', 'yuRUbf'];
 
     // Check that each of the classes in the default template HTML is either in the CSS or in the DOM.
     for (const className of classes) {
@@ -502,11 +506,11 @@ function generateReplacementResult(header: string, link: string, description: st
     try {
         const replacementSER = getCreatedTemplateSER();
         if (replacementSER) {
-            replacementSER.querySelector("a h3").innerHTML = header;
+            replacementSER.querySelector("a h3").textContent = header;
             replacementSER.querySelector("a").href = link;
-            replacementSER.querySelector(".self-preferenced-replacement-description").innerHTML = description;
+            replacementSER.querySelector(".self-preferenced-replacement-description").textContent = description;
             replacementSER.querySelector("a cite").prepend(document.createTextNode(cite));
-            replacementSER.querySelector("a cite > span").innerHTML = citeSpan;
+            replacementSER.querySelector("a cite > span").textContent = citeSpan;
 
             if (__ENABLE_DEVELOPER_MODE__) {
                 console.log("Self preferenced result created from organic results");
@@ -525,11 +529,11 @@ function generateReplacementResult(header: string, link: string, description: st
     try {
         const replacementSER = getDefaultTemplateSER();
         if (replacementSER) {
-            replacementSER.querySelector("h3").innerHTML = header;
+            replacementSER.querySelector("h3").textContent = header;
             replacementSER.querySelector("a").href = link;
-            replacementSER.querySelector(".self-preferenced-replacement-description").innerHTML = description;
+            replacementSER.querySelector(".self-preferenced-replacement-description").textContent = description;
             replacementSER.querySelector("cite").prepend(document.createTextNode(cite));
-            replacementSER.querySelector("cite > span").innerHTML = citeSpan;
+            replacementSER.querySelector("cite > span").textContent = citeSpan;
 
             if (__ENABLE_DEVELOPER_MODE__) {
                 console.log("Self preferenced result created from hardcoded template");
@@ -594,12 +598,13 @@ function getReplacementData(element, type): ReplacementData {
 }
 
 /**
- * @param {boolean} noRepeats - Whether to get the results that were retrieved with a previous
+ * @param {boolean} excludeTrackedElements - Whether to get the results that have been marked
+ * as already being tracked.
  * call to this function.
  * @returns an object where each key is a self preferenced result type and each value
  * is the self preferenced results on the SERP of that type.
  */
-function getSelfPreferencedElements(noRepeats: boolean): {
+function getSelfPreferencedElements(excludeTrackedElements: boolean): {
     [type: string]: { elements: Element[], possibleReplacementResult: boolean }
 } {
 
@@ -620,21 +625,12 @@ function getSelfPreferencedElements(noRepeats: boolean): {
         }
     }
 
-    if (noRepeats) {
-        // Filter out the results that have previously been returned by this function.
+    if (excludeTrackedElements) {
+        // Filter out the results that have been marked as being tracked.
         for (const selfPreferencedResultType in selfPreferencedResults) {
             selfPreferencedResults[selfPreferencedResultType].elements = selfPreferencedResults[selfPreferencedResultType].elements.filter(element => {
                 return !element.classList.contains(trackedElementClass);
             });
-        }
-
-        // Add trackedElementClass to the results that will be returned by this function call so that they can be identified
-        // on subsequent calls to this function.
-        for (const selfPreferencedResultType in selfPreferencedResults) {
-            const elements = selfPreferencedResults[selfPreferencedResultType].elements;
-            for (const element of elements) {
-                element.classList.add(trackedElementClass);
-            }
         }
     }
 
@@ -652,6 +648,15 @@ export function removeSelfPreferenced(): SelfPreferencedDetail[] {
     const selfPreferencedResults: {
         [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
+
+    // Add trackedElementClass to all all the identified self preferenced results so that we do not try
+    // to remove them again on a subsequent call to this method.
+    for (const selfPreferencedResultType in selfPreferencedResults) {
+        const elements = selfPreferencedResults[selfPreferencedResultType].elements;
+        for (const element of elements) {
+            element.classList.add(trackedElementClass);
+        }
+    }
 
     // Get details of all self preferenced results
     for (const selfPreferencedResultType in selfPreferencedResults) {
@@ -714,14 +719,14 @@ const replacedSelfPreferencedElementsAndType: { selfPreferencedType: string, sel
 
 /**
  * Replaces the self preferenced results on the page for which Google has a competing own service.
+ * @param {boolean} lastCall -  Whether this is the last call to this function.
  * @returns {string} An object containing:
  *      1) An array of the details of the replacement results created and of the self preferenced results that were
  *         removed without replacement
  *      2) An array of the replacement results that have been created.
  * the self preferenced results.
  */
-export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
-
+export function replaceSelfPreferenced(lastCall: boolean): { selfPreferencedElementDetails: SelfPreferencedDetail[], selfPreferencedElements: Element[] } {
     const selfPreferencedResults: {
         [type: string]: { elements: Element[], possibleReplacementResult: boolean }
     } = getSelfPreferencedElements(true);
@@ -743,8 +748,13 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
             // Get the data used to populate a replacement result from the self preferenced result.
             const replacementData = getReplacementData(selfPreferencedResultToReplace, typeOfSelfPreferencedResultToReplace);
 
-            // Generate a replacement result.
-            const replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
+            // Generate a sanitized replacement result.
+            let replacementResult = generateReplacementResult(replacementData.header, replacementData.link, replacementData.description, replacementData.cite, replacementData.citeSpan);
+            if (replacementResult) {
+                const temp = document.createElement('div');
+                temp.innerHTML = DOMPurify.sanitize(replacementResult);
+                replacementResult = (temp.firstChild as Element);
+            }
 
             // Insert the replacement result right before the self preferenced result and then remove the self preferenced result.
             if (replacementResult) {
@@ -757,9 +767,13 @@ export function replaceSelfPreferenced(): { selfPreferencedElementDetails: SelfP
                 replacedSelfPreferencedElementsAndType.push({
                     selfPreferencedType: typeOfSelfPreferencedResultToReplace,
                     selfPreferencedElement: replacementResult,
-                })
-            } else {
-                // If we failed to generate a replacement result, we just leave the self-preferenced result as-is.
+                });
+
+                // Add trackedElementClass to the element that has been replaced so that we do not try
+                // to replace it again on a subsequent call to this method.
+                selfPreferencedResultToReplace.classList.add(trackedElementClass);
+            } else if (lastCall) {
+                // If this is the last call and we failed to generate a replacement result, we just leave the self-preferenced result as-is.
                 replacedSelfPreferencedElementsAndType.push({
                     selfPreferencedType: typeOfSelfPreferencedResultToReplace,
                     selfPreferencedElement: selfPreferencedResultToReplace,

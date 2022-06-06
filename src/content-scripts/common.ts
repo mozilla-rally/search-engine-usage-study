@@ -244,7 +244,7 @@ export class PageValues {
             if (this.selfPreferencingType == "Remove") {
               selfPreferencedElementDetails = removeSelfPreferenced();
             } else if (this.selfPreferencingType == "Replace") {
-              ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced());
+              ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced(false));
             } else {
               ({ selfPreferencedElementDetails, selfPreferencedElements } = getSelfPreferencedDetailsAndElements());
             }
@@ -276,6 +276,16 @@ export class PageValues {
         // Disconnect the mutation observer that refreshes the tracked self preferenced results.
         if (mutationObserverForSelfPreferencedResults) {
           mutationObserverForSelfPreferencedResults.disconnect();
+
+          // We try to replace self preferenced results one last time. We do this in case previous calls failed
+          // because other organic results had not loaded yet, causing a failure in generating a replacement template.
+          if (this.selfPreferencingType == "Replace") {
+            let selfPreferencedElementDetails: SelfPreferencedDetail[] = [];
+            let selfPreferencedElements: Element[] = [];
+            ({ selfPreferencedElementDetails, selfPreferencedElements } = replaceSelfPreferenced(true));
+            this.selfPreferencedDetails = selfPreferencedElementDetails;
+            this.addSelfPreferencedListeners(selfPreferencedElements);
+          }
         }
         this.determinePageValues();
       }, beforeLoadPageValueRefreshInterval);
