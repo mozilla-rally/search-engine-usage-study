@@ -150,7 +150,7 @@ this.experimental = class extends ExtensionAPI {
                             const searchEngineDetails = searchEngineDetailsObject[ searchEngineName ];
 
                             searchEngine = await Services.search.wrappedJSObject._createAndAddEngine({
-                                extensionID: "set-via-rally-<name>",
+                                extensionID: "set-via-rally-search-engine-usage-study",
                                 extensionBaseURI: "",
                                 isAppProvided: false,
                                 manifest: {
