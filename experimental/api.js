@@ -62,36 +62,68 @@ this.experimental = class extends ExtensionAPI {
                 async changeSearchEngine(searchEngineName) {
                     const searchEngineDetailsObject = {
                         Google: {
-                            iconURL: "https://www.google.com/favicon.ico",
-                            alias: "@google",
+                            name: "Google",
+                            search_url: encodeURI("https://www.google.com/search?q={searchTerms}"),
+                            suggest_url: encodeURI("http://suggestqueries.google.com/complete/search"),
+                            suggest_url_get_params: "output=firefox&q={searchTerms}",
+                            favicon_url: "https://www.google.com/favicon.ico",
+                            keyword: "@google",
                         },
                         Bing: {
-                            iconURL: "https://www.bing.com/favicon.ico",
-                            alias: "@bing",
+                            name: "Bing",
+                            search_url: encodeURI("http://www.bing.com/search?q={searchTerms}"),
+                            suggest_url: encodeURI("http://api.bing.com/osjson.aspx"),
+                            suggest_url_get_params: "query={searchTerms}&language={language}&form=OSDJAS",
+                            favicon_url: "https://www.bing.com/favicon.ico",
+                            keyword: "@bing",
                         },
                         Yahoo: {
-                            iconURL: "https://www.yahoo.com/favicon.ico",
-                            alias: "@yahoo",
+                            name: "Yahoo!",
+                            search_url: encodeURI("https://search.yahoo.com/search?p={searchTerms}"),
+                            suggest_url: encodeURI("https://search.yahoo.com/sugg/os"),
+                            suggest_url_get_params: "command={searchTerms}&output=fxjson&fr=opensearch",
+                            favicon_url: "https://www.yahoo.com/favicon.ico",
+                            keyword: "@yahoo",
                         },
                         DuckDuckGo: {
-                            iconURL: "https://duckduckgo.com/favicon.ico",
-                            alias: "@duckduckgo",
+                            name: "DuckDuckGo",
+                            search_url: encodeURI("https://duckduckgo.com/?q={searchTerms}"),
+                            suggest_url: encodeURI("https://duckduckgo.com/ac"),
+                            suggest_url_get_params: "q={searchTerms}&type=list",
+                            favicon_url: "https://duckduckgo.com/favicon.ico",
+                            keyword: "@duckduckgo",
                         },
                         Ecosia: {
-                            iconURL: "https://cdn.ecosia.org/assets/images/ico/favicon.ico",
-                            alias: "@ecosia",
+                            name: "Ecosia",
+                            search_url: encodeURI("https://www.ecosia.org/search?q={searchTerms}"),
+                            suggest_url: encodeURI("https://ac.ecosia.org/autocomplete"),
+                            suggest_url_get_params: "q={searchTerms}&type=list",
+                            favicon_url: "https://cdn.ecosia.org/assets/images/ico/favicon.ico",
+                            keyword: "@ecosia",
                         },
                         Yandex: {
-                            iconURL: "https://yastatic.net/iconostasis/_/KKii9ECKxo3QZnchF7ayZhbzOT8.png",
-                            alias: "@yandex",
+                            name: "Yandex",
+                            search_url: encodeURI("https://yandex.com/search/?text={searchTerms}"),
+                            suggest_url: encodeURI("https://suggest.yandex.com/suggest-ff.cgi"),
+                            suggest_url_get_params: "part={searchTerms}&uil=en&v=3&sn=5&lr=110509&yu=9622919671616011800",
+                            favicon_url: "https://yastatic.net/iconostasis/_/KKii9ECKxo3QZnchF7ayZhbzOT8.png",
+                            keyword: "@yandex",
                         },
                         Baidu: {
-                            iconURL: "https://www.baidu.com/favicon.ico",
-                            alias: "@baidu",
+                            name: "Baidu",
+                            search_url: encodeURI("https://www.baidu.com/s?wd={searchTerms}"),
+                            suggest_url: encodeURI("https://suggestion.baidu.com/su"),
+                            suggest_url_get_params: "wd={searchTerms}&action=opensearch",
+                            favicon_url: "https://www.baidu.com/favicon.ico",
+                            keyword: "@baidu",
                         },
                         Ask: {
-                            iconURL: "https://www.ask.com/logo.png",
-                            alias: "@ask",
+                            name: "Ask.com",
+                            search_url: encodeURI("https://www.ask.com/web?q={searchTerms}"),
+                            suggest_url: encodeURI("https://amg-ss.ask.com/query"),
+                            suggest_url_get_params: "q={searchTerms}",
+                            favicon_url: "https://www.ask.com/logo.png",
+                            keyword: "@ask",
                         },
                     };
 
@@ -112,16 +144,34 @@ this.experimental = class extends ExtensionAPI {
                     }
 
                     // If the engine we are attempting to make default is not
-                    // already installed, we add it through an OpenSearch xml file
-                    // served through AWS S3 + Cloudfront. We have all logging for the S3
-                    // bucket and the Cloudfront distribution turned off to protect participant privacy.
+                    // already installed, we manually add the search engine.
                     if(!searchEngine) {
                         if(searchEngineName in searchEngineDetailsObject) {
-                            searchEngine = await Services.search.addOpenSearchEngine(`https://rally-search-study-survey.princeton.edu/sites/default/files/rally-search-study-survey/files/${searchEngineName.toLowerCase()}.xml`, searchEngineDetailsObject[ searchEngineName ].iconURL);
-                            searchEngine.alias = searchEngineDetailsObject[ searchEngineName ].alias;
+                            const searchEngineDetails = searchEngineDetailsObject[ searchEngineName ];
+
+                            searchEngine = await Services.search.wrappedJSObject._createAndAddEngine({
+                                extensionID: "set-via-rally-<name>",
+                                extensionBaseURI: "",
+                                isAppProvided: false,
+                                manifest: {
+                                    chrome_settings_overrides: {
+                                        search_provider: {
+                                            name: searchEngineDetails.name,
+                                            search_url: searchEngineDetails.search_url,
+                                            suggest_url: searchEngineDetails.suggest_url,
+                                            suggest_url_get_params: searchEngineDetails.suggest_url_get_params,
+                                            keyword: searchEngineDetails.keyword,
+                                            favicon_url: searchEngineDetails.favicon_url,
+                                        },
+                                    },
+                                    description: `${searchEngineDetails.name} Search`,
+                                },
+                            });
                         } else {
                             return;
                         }
+
+
                     }
 
                     // Make sure the engine is not hidden, move it to the top of the list of options, and make it the default
