@@ -34,7 +34,6 @@ export async function getHomepage(): Promise<string> {
 /**
  * Changes the current default search engine.
  * @param {string} searchEngine - the search engine that the default will be changed to.
- * Should be either "Google", "DuckDuckGo", "Yahoo", "Bing", "Ecosia", "Yandex", "Baidu", or "Ask".
  * @async
  */
 export async function changeSearchEngine(searchEngine: string): Promise<void> {

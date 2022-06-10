@@ -57,7 +57,6 @@ this.experimental = class extends ExtensionAPI {
                 /**
                  * Changes the participant's default search engine.
                  * @param {string} searchEngineName - the name of the search engine to make default.
-                 * Should be either "Google", "DuckDuckGo", "Yahoo", "Bing", "Ecosia", "Yandex", "Baidu", or "Ask".
                  */
                 async changeSearchEngine(searchEngineName) {
                     const searchEngineDetailsObject = {
