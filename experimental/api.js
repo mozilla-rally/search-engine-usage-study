@@ -1,5 +1,5 @@
 /**
- * @file Implementation for experimental API. This API implements the functionality for getting/setting 
+ * @file Implementation for experimental API. This API implements the functionality for getting/setting
  * the browser's default search engine and homepage and also for popping up a modal dialog. This experimental
  * component is needed because the functionality described requires full chrome privileges which are not available from
  * the environment that a WebExtension runs in.
@@ -7,9 +7,12 @@
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
+// This pref stores the original search engine name, which will be restored on uninstall and the pref cleared.
+const ORIGINAL_ENGINE_PREF = "extensions.search-engine-usage.oldEngine";
+
 /**
  * Using experiments_api feature to define new APIs linked to 
- * the extension. experimental is exposed under the global browser object and 
+ * the extension. experimental is exposed under the global browser object and
  * is accessible from background scripts.
  */
 this.experimental = class extends ExtensionAPI {
@@ -59,6 +62,8 @@ this.experimental = class extends ExtensionAPI {
                  * @param {string} searchEngineName - the name of the search engine to make default.
                  */
                 async changeSearchEngine(searchEngineName) {
+                    const originalSearchEngine = await this.getSearchEngine();
+                    Services.prefs.setCharPref(ORIGINAL_ENGINE_PREF, originalSearchEngine);
                     const searchEngineDetailsObject = {
                         Google: {
                             name: "Google",
@@ -135,8 +140,8 @@ this.experimental = class extends ExtensionAPI {
                     // Retrieves the engine we are attempting to make default
                     // from the list of installed engines
                     const installedSearchEngines = await Services.search.getEngines();
-                    for(const installedSearchEngine of installedSearchEngines) {
-                        if(installedSearchEngine.name.toLowerCase().includes(searchEngineName.toLowerCase())) {
+                    for (const installedSearchEngine of installedSearchEngines) {
+                        if (installedSearchEngine.name.toLowerCase().includes(searchEngineName.toLowerCase())) {
                             searchEngine = installedSearchEngine;
                             break;
                         }
@@ -144,9 +149,9 @@ this.experimental = class extends ExtensionAPI {
 
                     // If the engine we are attempting to make default is not
                     // already installed, we manually add the search engine.
-                    if(!searchEngine) {
-                        if(searchEngineName in searchEngineDetailsObject) {
-                            const searchEngineDetails = searchEngineDetailsObject[ searchEngineName ];
+                    if (!searchEngine) {
+                        if (searchEngineName in searchEngineDetailsObject) {
+                            const searchEngineDetails = searchEngineDetailsObject[searchEngineName];
 
                             searchEngine = await Services.search.wrappedJSObject._createAndAddEngine({
                                 extensionID: "set-via-rally-search-engine-usage-study",
@@ -198,10 +203,31 @@ this.experimental = class extends ExtensionAPI {
                  */
                 async getHomepage() {
                     return Services.prefs.getCharPref("browser.startup.homepage");
-                },
-
-
+                }
             }
         }
+    }
+
+    onShutdown() {
+        let searchEngine = null;
+        const searchEngineName = Services.prefs.getCharPref(ORIGINAL_ENGINE_PREF);
+
+        // Retrieves the engine we are attempting to make default
+        // from the list of installed engines
+        Services.search.getEngines().then(installedSearchEngines => {
+            for (const installedSearchEngine of installedSearchEngines) {
+                if (installedSearchEngine.name.toLowerCase().includes(searchEngineName.toLowerCase())) {
+                    searchEngine = installedSearchEngine;
+                    break;
+                }
+            }
+
+            // Make sure the engine is not hidden, move it to the top of the list of options, and make it the default
+            searchEngine.hidden = false;
+            Services.search.moveEngine(searchEngine, 0);
+            Services.search.defaultEngine = searchEngine;
+        });
+
+        Services.prefs.clearUserPref(ORIGINAL_ENGINE_PREF);
     }
 }
