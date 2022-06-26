@@ -156,7 +156,7 @@ async function noticeTreatment(noticeType: NoticeType) {
 
   // Change the participant's default engine to a random selection from the list of options for a new default
   const newEngine = newSearchEngineOptions[Math.floor(Math.random() * newSearchEngineOptions.length)];
-  Privileged.changeSearchEngine(newEngine);
+  Privileged.changeSearchEngine(newEngine, false);
 
   // If the current home page is a search engine page, change it to the default Firefox homepage
   const homepageChange = Utils.getHomepageChangeNeeded(originalHomepage);
@@ -196,7 +196,7 @@ async function noticeTreatment(noticeType: NoticeType) {
     // If the participant clicked on the button to revert the change, we restore their original default search engine and homepage
     if (message.revert) {
       Privileged.changeHomepage(originalHomepage);
-      Privileged.changeSearchEngine(oldEngine);
+      Privileged.changeSearchEngine(oldEngine, true);
     }
 
     reportNoticeData(message.attentionDuration, message.dwellTime, message.revert, oldEngine, newEngine, message.completionTime);
@@ -387,7 +387,7 @@ async function choiceBallotTreatment(choiceBallotType: ChoiceBallotType) {
       storage.set("NewEngine", message.newEngine);
 
       // Modify the participant's default search engine to their choice ballot response
-      Privileged.changeSearchEngine(message.newEngine);
+      Privileged.changeSearchEngine(message.newEngine, false);
 
       // If the current home page is a search engine page, change it to the default Firefox homepage
       if (homepageChangeNeeded) {

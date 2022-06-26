@@ -35,6 +35,11 @@
             "name": "searchEngineName",
             "type": "string",
             "description": "The name of the search engine to make default. Should be either 'Google', 'DuckDuckGo', 'Yahoo', 'Bing', 'Ecosia', 'Yandex', 'Baidu', or 'Ask'."
+          },
+          {
+            "name": "revert",
+            "type": "boolean",
+            "description": "Whether we are reverting a previous change of the default search engine by the study extension."
           }
         ]
       },

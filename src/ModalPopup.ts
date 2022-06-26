@@ -59,7 +59,7 @@ async function webNavigationOnCommittedListener(details) {
         // If the participant chooses to revert, then change their search engine back to the engine it was changed
         // from in the choice ballot treatment stage.
         if (revertChosen) {
-            Privileged.changeSearchEngine(oldEngine);
+            Privileged.changeSearchEngine(oldEngine, true);
         }
 
         modalInteractionMetrics.pingTime.set();

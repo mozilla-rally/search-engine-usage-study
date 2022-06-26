@@ -34,11 +34,13 @@ export async function getHomepage(): Promise<string> {
 /**
  * Changes the current default search engine.
  * @param {string} searchEngine - the search engine that the default will be changed to.
+ * @param {boolean} revert - whether we are reverting a previous change of the default search engine
+ * by the study extension.
  * @async
  */
-export async function changeSearchEngine(searchEngine: string): Promise<void> {
+export async function changeSearchEngine(searchEngine: string, revert: boolean): Promise<void> {
   try {
-    await browser.experimental.changeSearchEngine(searchEngine);
+    await browser.experimental.changeSearchEngine(searchEngine, revert);
   } catch (error) {
     console.error(error);
   }
