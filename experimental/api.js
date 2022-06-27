@@ -238,8 +238,7 @@ this.experimental = class extends ExtensionAPI {
             }
             Services.prefs.clearUserPref(ORIGINAL_ENGINE_PREF);
         } catch(error) {
-            // Do nothing
+            Services.search.resetToOriginalDefaultEngine();
         }
-
     }
 }
