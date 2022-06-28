@@ -112,12 +112,12 @@ export const searchEnginesMetadata: {
       return false;
     },
   },
-  Yandex: {
+  Brave: {
     primary: false,
-    domains: ["yandex.com", "yandex.ru"],
-    searchQueryParameters: ["text"],
+    domains: ["brave.com"],
+    searchQueryParameters: ["q"],
     getIsSerpPage: function (url: string): boolean {
-      return !!url.match(/(?:^(?:https?):\/\/(?:www\.)?yandex\.(?:ru|com)(?::[0-9]+)?\/search(?:\/\?|\?))/i);
+      return !!url.match(/(?:^(?:https?):\/\/(?:www\.)?search\.brave\.com(?::[0-9]+)?\/search(?:\/\?|\?))/i);
     },
   },
 }

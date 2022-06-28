@@ -34,7 +34,7 @@
           {
             "name": "searchEngineName",
             "type": "string",
-            "description": "The name of the search engine to make default. Should be either 'Google', 'DuckDuckGo', 'Yahoo', 'Bing', 'Ecosia', 'Yandex', 'Baidu', or 'Ask'."
+            "description": "The name of the search engine to make default. Should be either 'Google', 'DuckDuckGo', 'Yahoo', 'Bing', 'Ecosia', 'Brave', 'Baidu', or 'Ask'."
           },
           {
             "name": "revert",

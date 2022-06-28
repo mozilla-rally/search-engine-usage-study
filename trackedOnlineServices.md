@@ -4,11 +4,11 @@
 - Ask.com
 - Baidu
 - Bing
+- Brave
 - DuckDuckGo
 - Ecosia
 - Google
 - Yahoo!
-- Yandex
 
 ## Google Services
 - Google Maps (which provides restaurant and other business recommendations)

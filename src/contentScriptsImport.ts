@@ -34,8 +34,8 @@ export const serpScripts = [
   },
   {
     args: {
-      matches: ["*://*.yandex.com/search*", "*://*.yandex.ru/search*"],
-      js: [{ file: "dist/content-scripts/serp-scripts/yandex.js" }]
+      matches: ["*://*.search.brave.com/search*"],
+      js: [{ file: "dist/content-scripts/serp-scripts/brave.js" }]
     }
   },
   {

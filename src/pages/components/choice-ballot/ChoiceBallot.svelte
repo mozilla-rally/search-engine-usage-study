@@ -26,9 +26,10 @@
                 "Yahoo! Search helps you find the information you need.",
         },
         {
-            engine: "Yandex",
-            engineDisplayName: "Yandex",
-            description: "Yandex is the leading search provider in Russia.",
+            engine: "Brave",
+            engineDisplayName: "Brave",
+            description:
+                "Brave Search doesn't track you or your queries. Ever.",
         },
         {
             engine: "Baidu",

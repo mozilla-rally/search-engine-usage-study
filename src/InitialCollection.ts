@@ -49,7 +49,7 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
     studyInitializationMetrics.ecosiaQueryCount.set(searchEnginesHistoryQueryCount["Ecosia"]);
     studyInitializationMetrics.googleQueryCount.set(searchEnginesHistoryQueryCount["Google"]);
     studyInitializationMetrics.yahooQueryCount.set(searchEnginesHistoryQueryCount["Yahoo"]);
-    studyInitializationMetrics.yandexQueryCount.set(searchEnginesHistoryQueryCount["Yandex"]);
+    studyInitializationMetrics.yandexQueryCount.set(searchEnginesHistoryQueryCount["Brave"]);
 
     studyPings.studyInitialization.submit();
 

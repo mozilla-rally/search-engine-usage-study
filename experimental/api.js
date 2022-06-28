@@ -112,13 +112,13 @@ this.experimental = class extends ExtensionAPI {
                             favicon_url: "https://cdn.ecosia.org/assets/images/ico/favicon.ico",
                             keyword: "@ecosia",
                         },
-                        Yandex: {
-                            name: "Yandex",
-                            search_url: encodeURI("https://yandex.com/search/?text={searchTerms}"),
-                            suggest_url: encodeURI("https://suggest.yandex.com/suggest-ff.cgi"),
-                            suggest_url_get_params: "part={searchTerms}&uil=en&v=3&sn=5&lr=110509&yu=9622919671616011800",
-                            favicon_url: "https://yastatic.net/iconostasis/_/KKii9ECKxo3QZnchF7ayZhbzOT8.png",
-                            keyword: "@yandex",
+                        Brave: {
+                            name: "Brave",
+                            search_url: encodeURI("https://search.brave.com/search?q={searchTerms}"),
+                            suggest_url: encodeURI("https://search.brave.com/api/suggest"),
+                            suggest_url_get_params: "q={searchTerms}",
+                            favicon_url: "https://cdn.search.brave.com/serp/v1/static/brand/eebf5f2ce06b0b0ee6bbd72d7e18621d4618b9663471d42463c692d019068072-brave-lion-favicon.png",
+                            keyword: "@brave",
                         },
                         Baidu: {
                             name: "Baidu",
