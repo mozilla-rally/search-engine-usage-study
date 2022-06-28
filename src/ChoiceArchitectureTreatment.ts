@@ -195,7 +195,9 @@ async function noticeTreatment(noticeType: NoticeType) {
   webScience.messaging.onMessage.addListener((message) => {
     // If the participant clicked on the button to revert the change, we restore their original default search engine and homepage
     if (message.revert) {
-      Privileged.changeHomepage(originalHomepage);
+      if (homepageChange) {
+        Privileged.changeHomepage(originalHomepage);
+      }
       Privileged.changeSearchEngine(oldEngine, true);
     }
 

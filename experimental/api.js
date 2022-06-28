@@ -10,6 +10,9 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 // This pref stores the original search engine name, which will be restored on uninstall and the pref cleared.
 const ORIGINAL_ENGINE_PREF = "extensions.search-engine-usage.oldEngine";
 
+// This pref stores the original homepage, which will be restored on uninstall and the pref cleared.
+const ORIGINAL_HOMEPAGE_PREF = "extensions.search-engine-usage.homepage";
+
 /**
  * Using experiments_api feature to define new APIs linked to 
  * the extension. experimental is exposed under the global browser object and
@@ -203,6 +206,10 @@ this.experimental = class extends ExtensionAPI {
                  * @param {string} homepage - The URL that the homepage should be changed to.
                  */
                 changeHomepage(homepage) {
+                    if(homepage == "about:home") {
+                        Services.prefs.setCharPref(ORIGINAL_HOMEPAGE_PREF, Services.prefs.getCharPref("browser.startup.homepage"));
+                    }
+
                     Services.prefs.setCharPref("browser.startup.homepage", homepage);
                 },
                 /**
@@ -239,6 +246,16 @@ this.experimental = class extends ExtensionAPI {
             Services.prefs.clearUserPref(ORIGINAL_ENGINE_PREF);
         } catch(error) {
             Services.search.resetToOriginalDefaultEngine();
+        }
+
+        try {
+            const homepage = Services.prefs.getCharPref(ORIGINAL_HOMEPAGE_PREF);
+            if(homepage) {
+                Services.prefs.setCharPref("browser.startup.homepage", homepage);
+            }
+            Services.prefs.clearUserPref(ORIGINAL_HOMEPAGE_PREF);
+        } catch(error) {
+            // Do nothing
         }
     }
 }
