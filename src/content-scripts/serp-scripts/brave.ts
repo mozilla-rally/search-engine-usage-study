@@ -50,8 +50,7 @@ const serpScript = function () {
      */
     function getSearchAreaTopHeight(): number {
         try {
-            const element = document.querySelector(".navbar-row") as HTMLElement;
-            return getElementBottomHeight(element);
+            return getElementTopHeight(document.querySelector("#results"));
         } catch (error) {
             return null;
         }
@@ -62,8 +61,8 @@ const serpScript = function () {
      */
     function getSearchAreaBottomHeight(): number {
         try {
-            const element = document.querySelector(".pagination").previousElementSibling as HTMLElement;
-            return getElementBottomHeight(element);
+            const resultsElements = document.querySelectorAll("#results > *:not(#pagination)");
+            return getElementBottomHeight(resultsElements[resultsElements.length - 1]);
         } catch (error) {
             return null;
         }
@@ -85,7 +84,7 @@ const serpScript = function () {
      */
     function getInternalLink(target: Element): string {
         if (target.matches("#search-main *")) {
-            if (!target.matches(".footer *, #pagination #")) {
+            if (!(target.matches(".footer *, #pagination *"))) {
                 const hrefElement = target.closest("[href]");
                 if (hrefElement) {
                     const href = (hrefElement as any).href;
