@@ -237,10 +237,14 @@ export function getHomepageChangeNeeded(homepage: string): boolean {
     return false;
   }
 
+  // Add a protocol to the url if it does not have one. This is needed for
+  // the match pattern checking to work in getEngineFromURL.
+  if (!/^(?:f|ht)tps?:\/\//.test(homepage)) {
+    homepage = "http://" + homepage;
+  }
   if (getEngineFromURL(homepage)) {
     return true;
   }
-
   return false;
 }
 
