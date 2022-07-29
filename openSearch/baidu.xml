@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+    <ShortName>Baidu</ShortName>
+    <LongName>Baidu Search</LongName>
+    <Description>Baidu Search</Description>
+    <InputEncoding>UTF-8</InputEncoding>
+    <Image height="16" type="image/icon" width="16">https://www.baidu.com/favicon.ico</Image>
+    <Url type="text/html" template="https://www.baidu.com/s?wd={searchTerms}"/>
+    <Url type="application/x-suggestions+json" rel="suggestions" template="https://www.baidu.com/su?wd={searchTerms}&amp;action=opensearch"/>
+</OpenSearchDescription>

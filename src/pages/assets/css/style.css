@@ -1,0 +1,174 @@
+@charset "UTF-8";
+
+@font-face{font-display:block;font-family:Zilla Slab;font-style:normal;font-weight:700;src:url(/dist/pages/assets/webfonts/ZillaSlabBold.woff2) format("woff2"),url(/dist/pages/assets/webfonts/ZillaSlabBold.woff) format("woff")}
+
+@font-face{font-display:block;font-family:Inter;font-style:normal;font-weight:400;src:url(/dist/pages/assets/webfonts/Inter.woff) format("woff")}
+
+@font-face{font-display:block;font-family:Inter;font-style:normal;font-weight:700;src:url(/dist/pages/assets/webfonts/InterBold.woff) format("woff")}
+
+html {
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+/*standardized font*/
+html {
+  /* Never get smaller than this */
+  font-size: 8px;
+}
+@media (min-width:600px) {
+  html {
+    font-size: 9px;
+  }
+}
+@media (min-width:800px) {
+  html {
+    font-size: 10px;
+  }
+}
+@media (min-width:1000px) {
+  html {
+    /* Never get larger than this */
+    font-size: 12px;
+  }
+}
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+h1 {
+  font-family: 'Zilla Slab', sans-serif;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+h2 {
+  font-size: 1.75rem;
+}
+h4 {
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
+}
+p {
+  line-height: 1;
+  font-size: 1.75rem;
+}
+
+.chevron-container {
+    display: flex;
+    align-items: center;
+    font-size: 40px;;
+}
+.radio-container {
+    display: flex;
+    align-items: center;
+}
+
+.rotate {
+  -moz-transition: all 0.3s linear;
+  -webkit-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+}
+
+.rotate.down {
+  -moz-transform:rotate(180deg);
+  -webkit-transform:rotate(180deg);
+  transform:rotate(180deg);
+}
+.hiding {
+  display: none;
+}
+
+.logo {
+  max-height:85px;
+}
+
+.logo-div {
+  text-align: right;
+}
+
+.fa-chevron-down {
+  height: 40px;
+  width: 40px;
+}
+
+.radio-button {
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.button {
+  font-size: 2rem;
+  font-weight: 700;
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #000;
+}
+
+.button:hover:not([disabled]) {
+  background-color: #ededf0;
+  border-color: #000;
+  box-shadow: none;
+  color: #000;
+}
+
+
+#notice-logo {
+  max-height:100px;
+  margin-bottom: 1rem;
+}
+.notice-title {
+  margin-bottom: 2rem;
+}
+
+.continue {
+  margin: 10px;
+}
+
+
+#page-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.footer-notice {
+  background-color: #000;
+  color: white;
+}
+
+.notice-wrapper {
+  padding-top: 5rem;
+  padding-bottom: 15rem;    /* Footer height */
+}
+
+#engine-info {
+  padding-bottom: 2rem;
+}
+
+.choice-ballot-wrapper {
+  padding-top: 10px;
+  margin-bottom: 25px;
+}
+
+.choice-ballot-description{
+  padding-bottom: 10px;
+}
+
+a:not([class]) {
+  color: black;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+a:not([class]):hover {
+  text-decoration: none;
+}
+
+footer {
+  position: sticky;
+  bottom: 0px;
+}
