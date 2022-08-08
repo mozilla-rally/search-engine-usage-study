@@ -124,6 +124,16 @@ export const searchEnginesMetadata: {
 }
 
 /**
+ * @param {string} query - The query to normalize.
+ * @returns {string} A normalization of the query to account for minor variations. The normalization consists of
+ * converting the query to its compatibility decomposition form, removing all non-alphanumeric characters, and lowercasing everything.
+ */
+function normalizeQuery(query: string): string {
+  if (!query) return query;
+  return query.normalize('NFKD').replace(/[^a-z0-9]/gi, '').toLowerCase();
+}
+
+/**
  * @param {string} url - a URL string.
  * @param {string} engine - a search engine.
  * @returns {string} The search query parameter for url if it is a SERP page for engine. Otherwise, an empty string.
@@ -140,7 +150,7 @@ export function getSerpQuery(url: string, engine: string): string {
   for (const parameter of searchQueryParameters) {
     const query = getQueryVariable(url, parameter);
     if (query) {
-      return query.toLowerCase();
+      return normalizeQuery(query);
     }
   }
 
@@ -152,7 +162,7 @@ export function getSerpQuery(url: string, engine: string): string {
     if (pathnameSplit.length === 2 && pathnameSplit[1]) {
       const query = decodeURIComponent(pathnameSplit[1].replace(/_/g, " "))
       if (query) {
-        return query.toLowerCase();
+        return normalizeQuery(query);
       }
     }
   }
