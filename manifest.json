@@ -20,7 +20,8 @@
     "tabs",
     "webRequest",
     "webNavigation",
-    "history"
+    "history",
+    "mozillaAddons"
   ],
   "experiment_apis": {
     "experimental": {
