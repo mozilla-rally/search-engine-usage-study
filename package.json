@@ -9,7 +9,7 @@
     "lint:glean": "glean glinter ./metrics.yaml ./pings.yaml",
     "tailwind": "tailwindcss -o dist/tailwind.css",
     "dev": "npm run build:glean && rollup -c --config-enable-developer-mode && npm run tailwind",
-    "lint": "eslint . && web-ext lint && npm run lint:glean",
+    "lint": "npm run --silent skip-taskcluster || (eslint . && web-ext lint && npm run lint:glean)",
     "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\" -n search_engine_usage_study.xpi",
     "start": "web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
