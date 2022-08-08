@@ -27,7 +27,7 @@ async function findAndAct(driver, element, action) {
   await driver.findElement(element).then(e => action(e));
 }
 
-describe("Study Template integration test example", function () {
+describe("Search Engine Usage Study", function () {
   // eslint-disable-next-line mocha/no-hooks-for-single-case
   beforeEach(async function () {
     this.driver = await utils.getFirefoxDriver(true);
