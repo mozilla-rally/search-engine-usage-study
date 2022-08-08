@@ -2,7 +2,7 @@
   "name": "search_engine_usage_study",
   "version": "1.1.0",
   "scripts": {
-    "build": "npm run build:glean && rollup -c && rollup -c rollup.config.content-scripts.js",
+    "build": "npm run build:glean && rollup -c && rollup -c rollup.config.content-scripts.js && npm run package",
     "build:glean": "npm run build:glean:metrics && npm run build:glean:docs",
     "build:glean:metrics": "glean translate ./metrics.yaml ./pings.yaml -f typescript -o src/generated",
     "build:glean:docs": "glean translate ./metrics.yaml ./pings.yaml -f markdown -o docs",
@@ -10,7 +10,7 @@
     "tailwind": "tailwindcss -o dist/tailwind.css",
     "dev": "npm run build:glean && rollup -c --config-enable-developer-mode && rollup -c --config-enable-developer-mode rollup.config.content-scripts.js && npm run tailwind",
     "lint": "npm run --silent skip-taskcluster || (eslint . && web-ext lint && npm run lint:glean)",
-    "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\" -n search_engine_usage_study.xpi",
+    "package": "web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\" -n search_engine_usage_study.xpi",
     "start": "web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
     "test-integration": "npm run --silent skip-taskcluster || (npm run package && mocha --timeout 30000 \"./tests/integration/*.js\")",
