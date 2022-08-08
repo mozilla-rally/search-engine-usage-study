@@ -10,13 +10,14 @@
     "tailwind": "tailwindcss -o dist/tailwind.css",
     "dev": "npm run build:glean && rollup -c --config-enable-developer-mode && npm run tailwind",
     "lint": "eslint . && web-ext lint && npm run lint:glean",
-    "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\"",
+    "package": "npm run build && web-ext build --overwrite-dest --ignore-files \"./tests/**/*\" --ignore-files \"./src/**/*\" --ignore-files \"./rollup.config.js\" -n search_engine_usage_study.xpi",
     "start": "web-ext run --browser-console",
     "start-dev": "npm run dev && web-ext run --browser-console",
     "test-integration": "npm run package && mv web-ext-artifacts/*.zip web-ext-artifacts/study.xpi && mocha --timeout 30000 \"./tests/integration/*.js\"",
     "watch": "npm-run-all --parallel watch-raw watch-bundled",
     "watch-raw": "npm run dev -- -w",
-    "watch-bundled": "web-ext run --browser-console --watch-file dist/background.js"
+    "watch-bundled": "web-ext run --browser-console --watch-file dist/background.js",
+    "skip-taskcluster": "node -e \"process.exit(!('TASK_ID' in process.env))\""
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",
