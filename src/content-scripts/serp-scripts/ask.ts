@@ -84,6 +84,35 @@ const serpScript = function () {
     }
 
     /**
+     * @returns {number} The number of results produced for the query by the search engine.
+     */
+    function getNumResults(): number {
+        try {
+            // The DOM element that contains the count
+            const element = document.querySelector(".PartialResultsHeader-summary");
+
+            // If the DOM element doesn't exist, we assume this means there are no results.
+            if (!element) {
+                return 0;
+            } else {
+                const sentence = element.textContent;
+
+
+                // Format of string on Ask.com is "1-10 of 100 results"
+                const matches = sentence.match(/[0-9,]+/g);
+                const extractedNumber: string = matches[matches.length - 1].replace(/\D/g, '');
+                if (extractedNumber == null || extractedNumber == "") {
+                    return null;
+                } else {
+                    return Number(extractedNumber);
+                }
+            }
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
      * @param {Element} target - the target of a click event.
      * @returns {string} A link if the target was an internal link element in the search area.
      * An empty string if it was a possible internal link element. null otherwise.
@@ -209,7 +238,7 @@ const serpScript = function () {
     }
 
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback);
+    const pageValues = new PageValues("Ask", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, null, getOrganicDetailsAndLinkElements, getAdLinkElements, null, extraCallback, null, null, getNumResults);
 
     window.addEventListener("unload", (event) => {
         // Get the number of ads from iFrames

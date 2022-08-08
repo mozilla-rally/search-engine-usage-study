@@ -95,6 +95,33 @@ const serpScript = function () {
     }
 
     /**
+     * @returns {number} The number of results produced for the query by the search engine.
+     */
+    function getNumResults(): number {
+        try {
+            // The DOM element that contains the count
+            const element = document.querySelector(".sb_count");
+
+            // If the DOM element doesn't exist, we assume this means there are no results.
+            if (!element) {
+                return 0;
+            } else {
+                const sentence = element.textContent;
+
+                // Format of string on Bing is "6,930,000,000 Results"
+                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                if (extractedNumber == null || extractedNumber == "") {
+                    return null;
+                } else {
+                    return Number(extractedNumber);
+                }
+            }
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
      * @param {Element} target - the target of a click event.
      * @returns {string} A link if the target was an internal link element in the search area.
      * An empty string if it was a possible internal link element. null otherwise.
@@ -190,7 +217,7 @@ const serpScript = function () {
     }
 
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Bing", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
+    const pageValues = new PageValues("Bing", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, null, null, getNumResults);
 
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         const newPageIsCorrect = getIsWebSerpPage();

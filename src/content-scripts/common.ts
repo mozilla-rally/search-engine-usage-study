@@ -60,6 +60,11 @@ export class PageValues {
   pageId: string = null;
 
   /**
+   * The number of results produced for the query by the search engine.
+   */
+  numResults: number = null;
+
+  /**
    * Whether the page is a basic web SERP.
    */
   isWebSerpPage = false;
@@ -197,7 +202,8 @@ export class PageValues {
     getAdLinkElements: () => Element[],
     getInternalLink: (target: Element) => string,
     extraCallback: () => void,
-    getSerpQueryVertical: () => string) {
+    getSerpQueryVertical: () => string,
+    getNumResults: () => number) {
 
     this.determinePageValues = () => {
       if (__ENABLE_DEVELOPER_MODE__) {
@@ -209,6 +215,8 @@ export class PageValues {
       this.query = getSerpQuery(window.location.href, this.searchEngine);
 
       this.queryVertical = getSerpQueryVertical ? getSerpQueryVertical() : null;
+
+      this.numResults = getNumResults ? getNumResults() : null;
 
       this.pageNum = getPageNum();
       this.searchAreaBottomHeight = getSearchAreaBottomHeight();
@@ -338,7 +346,8 @@ export class PageValues {
     getInternalLink: (target: Element) => string,
     extraCallback: () => void = null,
     selfPreferencingType = null,
-    getSerpQueryVertical: () => string = null) {
+    getSerpQueryVertical: () => string = null,
+    getNumResults: () => number = null) {
 
     this.searchEngine = searchEngine;
     this.selfPreferencingType = selfPreferencingType;
@@ -355,7 +364,8 @@ export class PageValues {
       getAdLinkElements,
       getInternalLink,
       extraCallback,
-      getSerpQueryVertical);
+      getSerpQueryVertical,
+      getNumResults);
 
     // Receives messages from the background when the background receives 
     // onCreatedNavigationTarget messages with the tab of this page as the source.
@@ -664,6 +674,7 @@ export class PageValues {
         searchEngine: this.searchEngine,
         query: this.query,
         queryVertical: this.queryVertical,
+        numResults: this.numResults,
         pageId: this.pageId,
         attentionDuration: this.getAttentionDuration(),
         dwellTime: timeStamp - this.pageVisitStartTime,

@@ -6,6 +6,7 @@
  */
 import * as webScience from "@mozilla/web-science";
 import * as Privileged from "./Privileged.js"
+import { pbkdf2Sync } from "browser-crypto"
 
 /**
  * An object that maps each search engine to metadata for the engine.
@@ -256,6 +257,41 @@ export async function changeHomepageToDefault(): Promise<void> {
 }
 
 /**
+ * The salt to be used for the hashing function in getQueryHash.
+ */
+let salt = null;
+
+/**
+ * @param {string} query - A search query for a SERP page.
+ * @param {Object} storageArg - A persistent key-value storage object for the study
+ * @returns {string} A salted hash of the query that will be reported to the backend analysis environment.
+ * This salted hash will allow for identification of requeries over time without knowledge of what the queries
+ * actually were.
+ */
+export async function getQueryHash(query, storage) {
+  try {
+    if (!salt) {
+      salt = await storage.get("QueryHashSalt");
+      if (!salt) {
+        const byteArray = new Uint8Array(16);
+        crypto.getRandomValues(byteArray);
+        salt = Array.prototype.map.call(byteArray, function (byte) {
+          return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+        }).join('');
+
+        storage.set("QueryHashSalt", salt);
+      }
+    }
+
+    const iterations = 1000;
+    const hash = pbkdf2Sync(query, salt, iterations, 32, 'sha256');
+    return hash.toString('hex');
+  } catch (error) {
+    return "";
+  }
+}
+
+/**
  * Retrieve a query string variable from a url.
  * @param {string} url - the url to retrieve the query string variable from.
  * @param {string} parameter - the parameter of the variable in the URL you want to retrieve
@@ -267,11 +303,22 @@ export function getQueryVariable(url, parameter) {
   return urlObject.searchParams.get(parameter);
 }
 
+/**
+ * Retrieve a positive integer from an input number. If the number is less than 0, returns
+ * Number.MAX_SAFE_INTEGER. Otherwise, returns the number rounded to the nearest integer.
+ * @param {number} inputNumber - The number we are getting a positive integer from.
+ * @returns {number} A positive integer.
+ */
 export function getPositiveInteger(inputNumber: number): number {
-  if (!inputNumber) return Number.MAX_SAFE_INTEGER;
   try {
-    const roundedNumber = Math.round(inputNumber);
-    return roundedNumber >= 0 ? roundedNumber : Number.MAX_SAFE_INTEGER;
+    if (inputNumber == null) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+    if (inputNumber < 0) {
+      return Number.MAX_SAFE_INTEGER
+    } else {
+      return Math.round(inputNumber);
+    }
   } catch (error) {
     // Do nothing
   }

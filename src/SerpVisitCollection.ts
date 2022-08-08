@@ -35,7 +35,9 @@ let navigationalQueryRegExps: {
 
 /**
  * Start SERP visit collection
+ * @param {string} conditionType - The participant's study condition.
  * @param {number} treatmentStartTime - The start time of the treatment.
+ * @param {Object} storageArg - A persistent key-value storage object for the study
  * @async
  **/
 export async function initializeCollection(conditionType, treatmentStartTime, storageArg): Promise<void> {
@@ -108,7 +110,9 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   serpVisitMetrics.pageNumber.set(Utils.getPositiveInteger(pageVisitData.pageNum));
   serpVisitMetrics.pageVisitStartTime.set(new Date(pageVisitData.pageVisitStartTime));
   serpVisitMetrics.pingTime.set();
+  serpVisitMetrics.queryHash.set(await Utils.getQueryHash(pageVisitData.query, storage));
   serpVisitMetrics.queryVertical.set(pageVisitData.queryVertical ? pageVisitData.queryVertical : "");
+  serpVisitMetrics.resultsNum.set(pageVisitData.numResults ? pageVisitData.numResults : Number.MAX_SAFE_INTEGER);
   serpVisitMetrics.searchAreaBottomHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaBottomHeight));
   serpVisitMetrics.searchAreaTopHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaTopHeight));
   serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine ? pageVisitData.searchEngine : "");
@@ -146,6 +150,8 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   if (__ENABLE_DEVELOPER_MODE__) {
     const serpVisitData = {
       SearchEngine: pageVisitData.searchEngine,
+      QueryHash: await Utils.getQueryHash(pageVisitData.query, storage),
+      NumResults: pageVisitData.numResults,
       QueryVertical: pageVisitData.queryVertical,
       AttentionDuration: pageVisitData.attentionDuration,
       DwellTime: pageVisitData.dwellTime,

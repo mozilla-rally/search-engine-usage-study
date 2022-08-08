@@ -118,6 +118,34 @@ const serpScript = function () {
     }
 
     /**
+     * @returns {number} The number of results produced for the query by the search engine.
+     */
+    function getNumResults(): number {
+        try {
+            // The DOM element that contains the count
+            const element = document.querySelector("#tsn_inner span[class^='hint']");
+
+            // Baidu explicitly says if there are no results, so if this element does not exist then
+            // that does not mean we can assume there are 0 results.
+            if (!element) {
+                return null;
+            } else {
+                const sentence = element.textContent;
+
+                // Format of string on Baidu is "百度为您找到相关结果约100,000,000个" or "Baidu finds about 100,000,000 related results for you"
+                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                if (extractedNumber == null || extractedNumber == "") {
+                    return null;
+                } else {
+                    return Number(extractedNumber);
+                }
+            }
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
      * @param {Element} target - the target of a click event.
      * @returns {string} A link if the target was an internal link element in the search area.
      * An empty string if it was a possible internal link element. null otherwise.
@@ -187,7 +215,7 @@ const serpScript = function () {
     }
 
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink);
+    const pageValues = new PageValues("Baidu", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, null, null, getNumResults);
 
     // This variable tracks whether the #wrapper_wrapper element has been modified
     // for the current page visit. This variable is used to prevent reporting on unload
