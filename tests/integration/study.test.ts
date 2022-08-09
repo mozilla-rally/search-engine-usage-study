@@ -47,7 +47,7 @@ describe("Rally Web Platform UX flows", function () {
 
     // If installed, the extension will open its options page.
     if (loadExtension) {
-      await driver.wait(until.titleIs("Rally Study Template"), WAIT_FOR_PROPERTY);
+      await driver.wait(until.titleIs("Search Engine Usage Study"), WAIT_FOR_PROPERTY);
     }
   });
 
@@ -159,7 +159,7 @@ describe("Rally Web Platform UX flows", function () {
       await driver.get(`${extensionUrl}/public/options.html`);
     }
 
-    await driver.wait(until.titleIs("Rally Study Template"), WAIT_FOR_PROPERTY);
+    await driver.wait(until.titleIs("Search Engine Usage Study"), WAIT_FOR_PROPERTY);
 
     // Fail if the CSV already exists in /tmp/ instead of overwriting or letting the browser download a copy.
     const expectedError = new Error();

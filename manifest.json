@@ -3,7 +3,7 @@
   "author": "Kartikeya Kandula",
   "manifest_version": 2,
   "name": "Search Engine Usage and Result Quality Study",
-  "version": "0.4.1",
+  "version": "1.1.0",
   "homepage_url": "https://github.com/mozilla-rally/search-engine-usage-study",
   "applications": {
     "gecko": {
@@ -20,7 +20,8 @@
     "tabs",
     "webRequest",
     "webNavigation",
-    "history"
+    "history",
+    "mozillaAddons"
   ],
   "experiment_apis": {
     "experimental": {
