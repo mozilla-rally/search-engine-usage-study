@@ -147,29 +147,5 @@ export default (cliArgs) => {
     });
   }
 
-  const contentScriptPaths = globby.sync([ `src/content-scripts/serp-scripts/*.ts` ]);
-  for(const contentScriptPath of contentScriptPaths) {
-    rollupConfig.push({
-      input: contentScriptPath,
-      output: {
-        file: `dist/${contentScriptPath.slice("src/".length, -3)}.js`,
-        format: "iife",
-        sourcemap: isDevMode(cliArgs) ? "inline" : false,
-      },
-      plugins: [
-        replace({
-          preventAssignment: true,
-          __ENABLE_DEVELOPER_MODE__: isDevMode(cliArgs),
-        }),
-        webScienceRollupPlugin(),
-        resolve({
-          browser: true,
-        }),
-        typescript(),
-        commonjs(),
-      ],
-    });
-  }
-
   return rollupConfig;
 }

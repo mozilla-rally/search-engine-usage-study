@@ -47,7 +47,7 @@ describe("Rally Web Platform UX flows", function () {
 
     // If installed, the extension will open its options page.
     if (loadExtension) {
-      await driver.wait(until.titleIs("Rally Study Template"), WAIT_FOR_PROPERTY);
+      await driver.wait(until.titleIs("Search Engine Usage Study"), WAIT_FOR_PROPERTY);
     }
   });
 
@@ -142,7 +142,7 @@ describe("Rally Web Platform UX flows", function () {
     if (testBrowser === "firefox") {
       // Switch context to web content to interact with options page.
       await driver.setContext(firefox.Context.CHROME);
-      await findAndAct(driver, By.id("rally-study-template_mozilla_org-browser-action"), e => e.click());
+      await findAndAct(driver, By.id("search-engine-usage-study_mozilla_org-browser-action"), e => e.click());
       await driver.setContext(firefox.Context.CONTENT);
 
       // We expect the extension to load its options page in a new tab.
@@ -159,16 +159,16 @@ describe("Rally Web Platform UX flows", function () {
       await driver.get(`${extensionUrl}/public/options.html`);
     }
 
-    await driver.wait(until.titleIs("Rally Study Template"), WAIT_FOR_PROPERTY);
+    await driver.wait(until.titleIs("Search Engine Usage Study"), WAIT_FOR_PROPERTY);
 
     // Fail if the CSV already exists in /tmp/ instead of overwriting or letting the browser download a copy.
     const expectedError = new Error();
     expectedError["code"] = "ENOENT";
     expectedError["errno"] = -2;
-    expectedError["path"] = "/tmp/rally-study-template.csv";
+    expectedError["path"] = "/tmp/search-engine-usage-study.csv";
     expectedError["syscall"] = "access";
 
-    await expect(fs.promises.access(`/tmp/rally-study-template.csv`)).rejects.toEqual(expectedError);
+    await expect(fs.promises.access(`/tmp/search-engine-usage-study.csv`)).rejects.toEqual(expectedError);
 
     // FIXME Selenium does not work well with system dialogs like the download dialog.
     // TODO enable auto-download, which needs to be done per-browser.
@@ -177,11 +177,11 @@ describe("Rally Web Platform UX flows", function () {
     // Expect there to be a new line in the CSV for each link clicked during the test.
     // TODO we could do a more in-depth test here, to ensure the data actually matches. This might
     // be better to do as a test in web-science though.
-    const csvData = await fs.promises.readFile(`/tmp/rally-study-template.csv`);
+    const csvData = await fs.promises.readFile(`/tmp/search-engine-usage-study.csv`);
     expect(csvData.toString().split('\n').length).toEqual(6);
 
-    await fs.promises.access(`/tmp/rally-study-template.csv`);
-    await fs.promises.rm(`/tmp/rally-study-template.csv`)
+    await fs.promises.access(`/tmp/search-engine-usage-study.csv`);
+    await fs.promises.rm(`/tmp/search-engine-usage-study.csv`)
 
     await driver.executeScript(`document.getElementById("toggleEnabled").click()`);
     await driver.wait(
