@@ -20,7 +20,8 @@
     "tabs",
     "webRequest",
     "webNavigation",
-    "history"
+    "history",
+    "alarms"
   ],
   "experiment_apis": {
     "experimental": {

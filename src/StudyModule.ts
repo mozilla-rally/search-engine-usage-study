@@ -12,10 +12,12 @@ import * as Utils from "./Utils.js";
 import * as Survey from "./Survey.js"
 import * as SerpVisitCollection from "./SerpVisitCollection.js"
 import * as OnlineServiceVisitCollection from "./OnlineServiceVisitCollection.js"
+import * as Lottery from "./Lottery.js"
 
 const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
 const daysUntilTreatment = 10;
+const secondsPerMinute = 60;
 
 /**
  * The set of study conditions and their relative weights.
@@ -103,12 +105,20 @@ export async function startStudy(): Promise<void> {
   // as the enrollment time regardless of if participant joined during v1 or v2 of the study.
   InitialCollection.run(initialSurveyStartTime, conditionType, storage);
 
+  // Initialize lottery functionality
+  Lottery.initialize();
+
   // If current time is before the treatment start time, set timer to start choice architecture treatment
   // functionality at the treatment start time. Otherwise, start treatment functionality now.
   if (currentTime < treatmentStartTime) {
-    Utils.setExtendedTimeout(() => {
-      ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
-    }, treatmentStartTime - currentTime);
+    const treatmentStartAlarmName = "TreatmentStartAlarmName";
+    browser.alarms.create(treatmentStartAlarmName, {
+      delayInMinutes: (treatmentStartTime - currentTime) / (millisecondsPerSecond * secondsPerMinute)
+    });
+
+    browser.alarms.onAlarm.addListener(function (alarm) {
+      if (alarm.name == treatmentStartAlarmName) ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
+    });
   } else {
     ChoiceArchitectureTreatment.conductTreatment(conditionType, storage);
   }
