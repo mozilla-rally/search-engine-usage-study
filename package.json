@@ -29,7 +29,7 @@
     "@typescript-eslint/parser": "^4.19.0",
     "browser-crypto": "^1.4.0",
     "dompurify": "^2.3.8",
-    "eslint": "^7.26.0",
+    "eslint": "^8.22.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-mocha": "^10.1.0",
     "eslint-plugin-node": "^11.1.0",
