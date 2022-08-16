@@ -43,7 +43,7 @@ const surveyConfigData = {
     reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
     reminderTitle: "Rally survey available",
     surveyCompletionUrl: "https://rally-search-study-survey.princeton.edu/",
-    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_b8CL5jeE0MXdef4/",
+    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_ey5oC7XNZ7B3c3A/",
   },
   Followup: {
     surveyName: "Followup",
