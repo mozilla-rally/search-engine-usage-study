@@ -125,15 +125,15 @@ const serpScript = function () {
             // The DOM element that contains the count
             const element = document.querySelector("#tsn_inner span[class^='hint']");
 
-            // Baidu explicitly says if there are no results, so if this element does not exist then
-            // that does not mean we can assume there are 0 results.
-            if (!element) {
+            if (document.querySelector(".nors")) {
+                return 0;
+            } else if (!element) {
                 return null;
             } else {
-                const sentence = element.textContent;
+                const sentence = element.textContent.replace(/[.,\s]/g, '');
 
                 // Format of string on Baidu is "百度为您找到相关结果约100,000,000个" or "Baidu finds about 100,000,000 related results for you"
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {

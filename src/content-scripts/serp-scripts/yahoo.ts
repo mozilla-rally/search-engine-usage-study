@@ -97,10 +97,10 @@ const serpScript = function () {
             if (!element) {
                 return 0;
             } else {
-                const sentence = element.textContent;
+                const sentence = element.textContent.replace(/[.,\s]/g, '');
 
                 // Format of string on Yahoo is "About 326,000 search results"
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {

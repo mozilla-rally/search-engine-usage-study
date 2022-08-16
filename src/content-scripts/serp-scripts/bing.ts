@@ -102,14 +102,18 @@ const serpScript = function () {
             // The DOM element that contains the count
             const element = document.querySelector(".sb_count");
 
-            // If the DOM element doesn't exist, we assume this means there are no results.
-            if (!element) {
+            if (document.querySelector(".b_no")) {
                 return 0;
+            } else if (!element) {
+                return null;
             } else {
-                const sentence = element.textContent;
+                // Format of string on Bing is "6,930,000,000 Results" or "11-24 Of 359,000 Results"
+                let sentence = element.textContent.replace(/[.,\s]/g, '');
 
-                // Format of string on Bing is "6,930,000,000 Results"
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                // Removes the "-" and surrounding numerical characters.
+                sentence = element.textContent.replace(/\d*-\d*/g, '');
+
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {

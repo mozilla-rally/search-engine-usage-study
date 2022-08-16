@@ -193,14 +193,24 @@ const serpScript = function () {
             if (!element) {
                 return 0;
             } else {
-                const sentence = element.textContent;
+                // Format of string on Google is "About 1 results (0.34 seconds)" or "Page 2 of about 313 results (0.28 seconds)"
+                let sentence = element.textContent.replace(/[.,\s]/g, '');
 
-                // Format of string on Google is "About 1 results (0.34 seconds) "
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
-                if (extractedNumber == null || extractedNumber == "") {
+                // Remove the text within parentheses
+                sentence = sentence.replace(/\([^()]*\)/g, '');
+
+                const matches = sentence.match(/[0-9]+/g);
+                if (!matches || matches.length == 0) {
                     return null;
                 } else {
-                    return Number(extractedNumber);
+                    let maximum = 0;
+                    for (const match of matches) {
+                        if (Number(match) > maximum) {
+                            maximum = Number(match)
+                        }
+                    }
+
+                    return maximum;
                 }
             }
         } catch (error) {

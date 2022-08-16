@@ -91,16 +91,16 @@ const serpScript = function () {
             // The DOM element that contains the count
             const element = document.querySelector(".PartialResultsHeader-summary");
 
-            // If the DOM element doesn't exist, we assume this means there are no results.
             if (!element) {
-                return 0;
+                return null;
             } else {
-                const sentence = element.textContent;
-
-
                 // Format of string on Ask.com is "1-10 of 100 results"
-                const matches = sentence.match(/[0-9,]+/g);
-                const extractedNumber: string = matches[matches.length - 1].replace(/\D/g, '');
+                let sentence = element.textContent.replace(/[.,\s]/g, '');
+
+                // Removes the "-" and surrounding numerical characters.
+                sentence = element.textContent.replace(/\d*-\d*/g, '');
+
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {

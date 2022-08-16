@@ -4,7 +4,7 @@ import * as webScience from "@mozilla/web-science";
  * Call API
  * @param {string} action - Which action to execute ("fetch" or "update")
  */
-export async function callAPI(action) {
+async function callAPI(action) {
     let url;
     if (action == "fetch") {
         url = "https://bmq4h2slkvngosxcy7vevdy7xm0yxfyg.lambda-url.us-east-1.on.aws/"

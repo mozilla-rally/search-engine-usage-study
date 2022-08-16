@@ -22,7 +22,7 @@
     "webNavigation",
     "history",
     "alarms",
-    "mozillaAddons",
+    "mozillaAddons"
   ],
   "experiment_apis": {
     "experimental": {
