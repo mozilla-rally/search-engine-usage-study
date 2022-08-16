@@ -1,5 +1,18 @@
 import * as webScience from "@mozilla/web-science";
 
+
+/**
+ * Link to lambda function that returns whether the posted survey ID is a lottery winner and, if so,
+ * the Amazon gift code and whether the participant has indicated that they have redeemed the code.
+ */
+const fetchLambdaUrl = "https://bmq4h2slkvngosxcy7vevdy7xm0yxfyg.lambda-url.us-east-1.on.aws/";
+
+/**
+ * Link to lambda function to post an update to when the participant has indicated that they have redeemed
+ * their Amazon gift code.
+ */
+const updateLambdaUrl = "https://4n2pucnmrh76jw3mmb27q6bvaq0wytaz.lambda-url.us-east-1.on.aws/";
+
 /**
  * Call API
  * @param {string} action - Which action to execute ("fetch" or "update")
@@ -7,9 +20,9 @@ import * as webScience from "@mozilla/web-science";
 async function callAPI(action) {
     let url;
     if (action == "fetch") {
-        url = "https://bmq4h2slkvngosxcy7vevdy7xm0yxfyg.lambda-url.us-east-1.on.aws/"
+        url = fetchLambdaUrl;
     } else if (action == "update") {
-        url = "https://4n2pucnmrh76jw3mmb27q6bvaq0wytaz.lambda-url.us-east-1.on.aws/"
+        url = updateLambdaUrl;
     }
 
     try {
