@@ -128,7 +128,7 @@ export const searchEnginesMetadata: {
  * @returns {string} A normalization of the query to account for minor variations. The normalization consists of
  * converting the query to its compatibility decomposition form, removing all non-alphanumeric characters, and lowercasing everything.
  */
-function normalizeQuery(query: string): string {
+export function normalizeQuery(query: string): string {
   if (!query) return query;
   return query.normalize('NFKD').replace(/[^a-z0-9]/gi, '').toLowerCase();
 }
@@ -150,7 +150,7 @@ export function getSerpQuery(url: string, engine: string): string {
   for (const parameter of searchQueryParameters) {
     const query = getQueryVariable(url, parameter);
     if (query) {
-      return normalizeQuery(query);
+      return query;
     }
   }
 
@@ -162,7 +162,7 @@ export function getSerpQuery(url: string, engine: string): string {
     if (pathnameSplit.length === 2 && pathnameSplit[1]) {
       const query = decodeURIComponent(pathnameSplit[1].replace(/_/g, " "))
       if (query) {
-        return normalizeQuery(query);
+        return query;
       }
     }
   }
@@ -349,5 +349,43 @@ export function setExtendedTimeout(callback, delay) {
     }, 0x7FFFFFFF);
   } else {
     setTimeout(callback, delay);
+  }
+}
+
+/**
+ * @param {Document} doc - A Google SERP page.
+ * @returns {number} The number of results produced for a query extracted from a Google SERP page.
+ */
+export function getNumResultsGoogle(doc = document) {
+  try {
+    // The DOM element that contains the count
+    const element = doc.querySelector("#result-stats");
+
+    // If the DOM element doesn't exist, we assume this means there are no results.
+    if (!element) {
+      return 0;
+    } else {
+      // Format of string on Google is "About 1 results (0.34 seconds)" or "Page 2 of about 313 results (0.28 seconds)"
+      let sentence = element.textContent.replace(/[.,\s]/g, '');
+
+      // Remove the text within parentheses
+      sentence = sentence.replace(/\([^()]*\)/g, '');
+
+      const matches = sentence.match(/[0-9]+/g);
+      if (!matches || matches.length == 0) {
+        return null;
+      } else {
+        let maximum = 0;
+        for (const match of matches) {
+          if (Number(match) > maximum) {
+            maximum = Number(match)
+          }
+        }
+
+        return maximum;
+      }
+    }
+  } catch (error) {
+    return null;
   }
 }
