@@ -20,37 +20,45 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        // The organic results are .PartialSearchResults-item elements.
-        const organicResults = document.querySelectorAll(".PartialSearchResults-item");
+        try {
+            // The organic results are .PartialSearchResults-item elements.
+            const organicResults = document.querySelectorAll(".PartialSearchResults-item");
 
-        const organicDetails: OrganicDetail[] = []
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            // Get the details of all the organic elements.
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" });
+            const organicDetails: OrganicDetail[] = []
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                // Get the details of all the organic elements.
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" });
 
-            // Get all the links (elements with an "href" attribute).
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+                // Get all the links (elements with an "href" attribute).
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        const adLinkElements: Element[] = [];
+        try {
+            const adLinkElements: Element[] = [];
 
-        // The image ads on the side are .display-ad-block elements. The advertisements
-        // in the main search area are in iframes and handled by askgoogleads.js
-        const displayAds = Array.from(document.querySelectorAll(".display-ad-block"));
-        const amazonResults = Array.from(document.querySelectorAll(".PartialAmazonResults"));
+            // The image ads on the side are .display-ad-block elements. The advertisements
+            // in the main search area are in iframes and handled by askgoogleads.js
+            const displayAds = Array.from(document.querySelectorAll(".display-ad-block"));
+            const amazonResults = Array.from(document.querySelectorAll(".PartialAmazonResults"));
 
-        const adElements = displayAds.concat(amazonResults);
-        for (const adElement of adElements) {
-            adLinkElements.push(...adElement.querySelectorAll("[href]"));
+            const adElements = displayAds.concat(amazonResults);
+            for (const adElement of adElements) {
+                adLinkElements.push(...adElement.querySelectorAll("[href]"));
+            }
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
-        return adLinkElements;
     }
 
     /**
@@ -79,8 +87,13 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = getQueryVariable(window.location.href, "page");
-        return pageNumFromUrl ? Number(pageNumFromUrl) : 1;
+        try {
+            const pageNumFromUrl = getQueryVariable(window.location.href, "page");
+            return pageNumFromUrl ? Number(pageNumFromUrl) : 1;
+        } catch (error) {
+            return -1;
+        }
+
     }
 
     /**
@@ -118,25 +131,29 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches(".main *")) {
-            if (!target.matches(".PartialWebPagination *, .PartialPageFooter *")) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("ask.com")) {
-                            return href;
+        try {
+            if (target.matches(".main *")) {
+                if (!target.matches(".PartialWebPagination *, .PartialPageFooter *")) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("ask.com")) {
+                                return href;
+                            }
+                        } else {
+                            return "";
                         }
                     } else {
                         return "";
                     }
-                } else {
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     function addInternalListeners(getInternalLink: (target: Element) => string) {

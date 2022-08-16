@@ -129,8 +129,13 @@ export const searchEnginesMetadata: {
  * converting the query to its compatibility decomposition form, removing all non-alphanumeric characters, and lowercasing everything.
  */
 export function normalizeQuery(query: string): string {
-  if (!query) return query;
-  return query.normalize('NFKD').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  try {
+    if (!query) return query;
+    return query.normalize('NFKD').replace(/[^a-z0-9]/gi, '').toLowerCase();
+  } catch (error) {
+    return null;
+  }
+
 }
 
 /**
@@ -139,34 +144,39 @@ export function normalizeQuery(query: string): string {
  * @returns {string} The search query parameter for url if it is a SERP page for engine. Otherwise, an empty string.
  */
 export function getSerpQuery(url: string, engine: string): string {
-  if (!url || !engine) {
-    return "";
-  }
-
-  // Get the possible search query parameters for the engine.
-  const searchQueryParameters = searchEnginesMetadata[engine].searchQueryParameters;
-
-  // If any of the search query parameters are in the URL, return the query.
-  for (const parameter of searchQueryParameters) {
-    const query = getQueryVariable(url, parameter);
-    if (query) {
-      return query;
+  try {
+    if (!url || !engine) {
+      return "";
     }
-  }
 
-  // For DuckDuckGo, the search parameter can be specified in the pathname.
-  // eg. https://duckduckgo.com/Example?ia=web
-  if (engine === "DuckDuckGo") {
-    const pathname = (new URL(url)).pathname
-    const pathnameSplit = pathname.split("/")
-    if (pathnameSplit.length === 2 && pathnameSplit[1]) {
-      const query = decodeURIComponent(pathnameSplit[1].replace(/_/g, " "))
+    // Get the possible search query parameters for the engine.
+    const searchQueryParameters = searchEnginesMetadata[engine].searchQueryParameters;
+
+    // If any of the search query parameters are in the URL, return the query.
+    for (const parameter of searchQueryParameters) {
+      const query = getQueryVariable(url, parameter);
       if (query) {
         return query;
       }
     }
+
+    // For DuckDuckGo, the search parameter can be specified in the pathname.
+    // eg. https://duckduckgo.com/Example?ia=web
+    if (engine === "DuckDuckGo") {
+      const pathname = (new URL(url)).pathname
+      const pathnameSplit = pathname.split("/")
+      if (pathnameSplit.length === 2 && pathnameSplit[1]) {
+        const query = decodeURIComponent(pathnameSplit[1].replace(/_/g, " "))
+        if (query) {
+          return query;
+        }
+      }
+    }
+    return "";
+  } catch (error) {
+    return null;
   }
-  return "";
+
 }
 
 /**

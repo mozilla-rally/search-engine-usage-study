@@ -18,67 +18,80 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = Array.from(document.querySelectorAll("[tpl='se_com_default']")).filter(element => {
-            if (getXPathElements(`descendant::*[
-                normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
-                normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
-            ]`, element).length) {
-                return false;
-            }
-            return true;
-        });
+        try {
+            const organicResults = Array.from(document.querySelectorAll("[tpl='se_com_default']")).filter(element => {
+                if (getXPathElements(`descendant::*[
+                    normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
+                    normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
+                ]`, element).length) {
+                    return false;
+                }
+                return true;
+            });
 
-        const organicDetails: OrganicDetail[] = []
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            const organicDetails: OrganicDetail[] = []
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return Array.from(document.querySelectorAll(".c-container")).filter(element => {
-            if (getXPathElements(`descendant::*[
-                normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
-                normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
-            ]`, element).length) {
-                return true;
-            }
-            return false;
-        }).length + document.querySelectorAll("#top-ad").length;
+        try {
+            return Array.from(document.querySelectorAll(".c-container")).filter(element => {
+                if (getXPathElements(`descendant::*[
+                    normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
+                    normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
+                ]`, element).length) {
+                    return true;
+                }
+                return false;
+            }).length + document.querySelectorAll("#top-ad").length;
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        const adLinkElements: Element[] = [];
-        document.querySelectorAll(".c-container");
+        try {
+            const adLinkElements: Element[] = [];
+            document.querySelectorAll(".c-container");
 
-        const adElements: Element[] = Array.from(document.querySelectorAll(".c-container")).filter(element => {
-            if (getXPathElements(`descendant::*[
+            const adElements: Element[] = Array.from(document.querySelectorAll(".c-container")).filter(element => {
+                if (getXPathElements(`descendant::*[
                 normalize-space(text()) = 'advertising' or normalize-space(text()) = '广告' or
                 normalize-space(text()) = '品牌广告' or normalize-space(text()) = 'brand advertisement'
             ]`, element).length) {
-                return true;
+                    return true;
+                }
+                return false;
+            });
+
+            adElements.push(...document.querySelectorAll("#top-ad"));
+
+            for (const adElement of adElements) {
+                adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
+                    const href = (adLinkElement as any).href;
+                    return href && !href.includes("javascript");
+                }));
             }
-            return false;
-        });
 
-        adElements.push(...document.querySelectorAll("#top-ad"));
-
-        for (const adElement of adElements) {
-            adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
-                const href = (adLinkElement as any).href;
-                return href && !href.includes("javascript");
-            }));
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
 
-        return adLinkElements;
     }
 
     /**
@@ -151,25 +164,29 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches("#container *")) {
-            const hrefElement = target.closest("[href]");
-            if (hrefElement) {
-                const href = (hrefElement as any).href;
-                if (isValidLinkToDifferentPage(href)) {
-                    const normalizedUrl = getNormalizedUrl(href);
-                    if (normalizedUrl.includes("baidu.com") &&
-                        !normalizedUrl.includes("baidu.com/link") &&
-                        !normalizedUrl.includes("baidu.com/baidu.php")) {
-                        return href
+        try {
+            if (target.matches("#container *")) {
+                const hrefElement = target.closest("[href]");
+                if (hrefElement) {
+                    const href = (hrefElement as any).href;
+                    if (isValidLinkToDifferentPage(href)) {
+                        const normalizedUrl = getNormalizedUrl(href);
+                        if (normalizedUrl.includes("baidu.com") &&
+                            !normalizedUrl.includes("baidu.com/link") &&
+                            !normalizedUrl.includes("baidu.com/baidu.php")) {
+                            return href
+                        }
+                    } else {
+                        return "";
                     }
                 } else {
                     return "";
                 }
-            } else {
-                return "";
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     /**

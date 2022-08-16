@@ -16,32 +16,32 @@ import { id } from "@mozilla/web-science";
         addElementsAndListeners(adResults);
     }
 
-    function getAds() {
-        const adList: Element[] = []
-        const adBlocks = document.querySelectorAll("#adBlock");
-        for (let i = 0; i < adBlocks.length; i++) {
-            const adBlock = adBlocks[i] as HTMLElement;
-            if (adBlock && adBlock.style.flexDirection === "row") {
-                adList.push(adBlock)
-            } else {
-                for (const adBlockChild of adBlock.children) {
-                    if ((adBlockChild as HTMLElement).offsetParent) {
-                        adList.push((adBlockChild as HTMLElement))
+    function getAds(): Element[] {
+        try {
+            const adList: Element[] = []
+            const adBlocks = document.querySelectorAll("#adBlock");
+            for (let i = 0; i < adBlocks.length; i++) {
+                const adBlock = adBlocks[i] as HTMLElement;
+                if (adBlock && adBlock.style.flexDirection === "row") {
+                    adList.push(adBlock);
+                } else {
+                    for (const adBlockChild of adBlock.children) {
+                        if ((adBlockChild as HTMLElement).offsetParent) {
+                            adList.push((adBlockChild as HTMLElement));
+                        }
                     }
                 }
             }
+            return adList.concat(Array.from(document.querySelectorAll("#google_image_div")));
+        } catch (error) {
+            return [];
         }
-        return adList.concat(Array.from(document.querySelectorAll("#google_image_div")))
     }
 
     const adLinksWithListeners = []
 
     function addElementsAndListeners(
         adResults: Element[]) {
-        // Removes any existing listeners from ad elements that we previously added
-        for (const adLinkWithListeners of adLinksWithListeners) {
-            adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener, true);
-        }
 
         function adClickListener(event: MouseEvent) {
             if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
@@ -51,14 +51,23 @@ import { id } from "@mozilla/web-science";
             }
         }
 
-        // For each ad element, adds mousedown and click listeners to any elements with an href attribute
-        // Also adds the listeners to a list so that we can later remove them if we want to refresh these listeners  
-        for (const adResult of adResults) {
-            const adLinkElements = adResult.querySelectorAll("[href]");
-            for (const adLinkElement of adLinkElements) {
-                adLinkElement.addEventListener("click", adClickListener, true);
-                adLinksWithListeners.push({ element: adLinkElement, clickListener: adClickListener });
+        try {
+            // Removes any existing listeners from ad elements that we previously added
+            for (const adLinkWithListeners of adLinksWithListeners) {
+                adLinkWithListeners.element.removeEventListener("click", adLinkWithListeners.clickListener, true);
             }
+
+            // For each ad element, adds mousedown and click listeners to any elements with an href attribute
+            // Also adds the listeners to a list so that we can later remove them if we want to refresh these listeners  
+            for (const adResult of adResults) {
+                const adLinkElements = adResult.querySelectorAll("[href]");
+                for (const adLinkElement of adLinkElements) {
+                    adLinkElement.addEventListener("click", adClickListener, true);
+                    adLinksWithListeners.push({ element: adLinkElement, clickListener: adClickListener });
+                }
+            }
+        } catch (error) {
+            return;
         }
     }
 

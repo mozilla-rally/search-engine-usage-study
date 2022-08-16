@@ -19,30 +19,44 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("div.card-web > div.result");
-        const organicDetails: OrganicDetail[] = [];
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        try {
+            const organicResults = document.querySelectorAll("div.card-web > div.result");
+            const organicDetails: OrganicDetail[] = [];
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return document.querySelectorAll(".card-ad > div, .card-productads > div").length;
+        try {
+            return document.querySelectorAll(".card-ad > div, .card-productads > div").length;
+        } catch (error) {
+            return -1;
+        }
+
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        return Array.from(document.querySelectorAll(".card-ad > div [href], .card-productads > div [href]")).filter(adLinkElement => {
-            return !adLinkElement.matches('.ad-hint-wrapper, .ad-hint-wrapper *');
-        });
+        try {
+            return Array.from(document.querySelectorAll(".card-ad > div [href], .card-productads > div [href]")).filter(adLinkElement => {
+                return !adLinkElement.matches('.ad-hint-wrapper, .ad-hint-wrapper *');
+            });
+        } catch (error) {
+            return [];
+        }
     }
 
     /**
@@ -74,8 +88,13 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = getQueryVariable(window.location.href, "p");
-        return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
+        try {
+            const pageNumFromUrl = getQueryVariable(window.location.href, "p");
+            return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
+        } catch (error) {
+            return -1;
+        }
+
     }
 
     /**
@@ -84,25 +103,29 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches(".results-wrapper *")) {
-            if (!target.matches(".pagination *")) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("ecosia.org")) {
-                            return href;
+        try {
+            if (target.matches(".results-wrapper *")) {
+                if (!target.matches(".pagination *")) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("ecosia.org")) {
+                                return href;
+                            }
+                        } else {
+                            return "";
                         }
                     } else {
                         return "";
                     }
-                } else {
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     /**
