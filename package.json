@@ -47,7 +47,7 @@
   "dependencies": {
     "@mozilla/glean": "^0.24.0",
     "@mozilla/rally": "^0.7.1",
-    "@mozilla/web-science": "^0.4.0",
+    "@mozilla/web-science": "^0.5.3",
     "svelte": "^3.38.3",
     "tailwindcss": "^2.2.16",
     "webextension-polyfill": "^0.9.0",
