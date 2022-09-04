@@ -232,6 +232,20 @@ study_initialization:
     notification_emails:
       - than@mozilla.com
     expires: never
+  landing_page_history:
+    type: boolean
+    description: |
+      If the advertisement landing page is in browser history.
+    lifetime: ping
+    send_in_pings:
+      - study-initialization
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+    data_reviews:
+      - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+    notification_emails:
+      - than@mozilla.com
+    expires: never
   enrollment_time:
     type: datetime
     time_unit: millisecond

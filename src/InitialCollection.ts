@@ -39,6 +39,7 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
     studyInitializationMetrics.defaultSearchEngine.set(defaultSearchEngine);
     studyInitializationMetrics.enrollmentTime.set(enrollmentTimeDate);
     studyInitializationMetrics.historyAge.set(historyAge);
+    studyInitializationMetrics.landingPageHistory.set(await getAdvertisingLandingPageInHistory());
     studyInitializationMetrics.pingTime.set();
     studyInitializationMetrics.surveyId.set(surveyId);
 
@@ -60,6 +61,7 @@ export async function run(enrollmentTime, conditionType, storage): Promise<void>
         DefaultSearchEngine: defaultSearchEngine,
         EnrollmentTime: enrollmentTimeDate,
         HistoryAge: Utils.getPositiveInteger(await getHistoryAge(currentTime, timeStamp30DaysAgo)),
+        LandingPageHistory: await getAdvertisingLandingPageInHistory(),
         QueryCounts: searchEnginesHistoryQueryCount,
         PingTime: Date.now(),
       };
@@ -102,6 +104,11 @@ async function getHistoryQueryCount(startTime: number): Promise<{ [searchEngine:
   }
 
   return searchEngineQueryCounts;
+}
+
+async function getAdvertisingLandingPageInHistory(): Promise<boolean> {
+  const historyItems = await browser.history.search({ text: "https://rally.mozilla.org/join-search-study", startTime: 0, maxResults: 1 });
+  return !!historyItems.length;
 }
 
 /**
