@@ -20,7 +20,7 @@ const serpScript = function () {
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         try {
-            const organicResults = document.querySelectorAll("div.card-web > div.result");
+            const organicResults = document.querySelectorAll(".web .mainline .web-result");
             const organicDetails: OrganicDetail[] = [];
             const organicLinkElements: Element[][] = [];
             for (const organicResult of organicResults) {
@@ -39,11 +39,10 @@ const serpScript = function () {
      */
     function getNumAdResults(): number {
         try {
-            return document.querySelectorAll(".card-ad > div, .card-productads > div").length;
+            return document.querySelectorAll(".ad-result:not(.meta-results *), .snippet--product-ads:not(.meta-results *)").length;
         } catch (error) {
             return -1;
         }
-
     }
 
     /**
@@ -51,8 +50,8 @@ const serpScript = function () {
      */
     function getAdLinkElements(): Element[] {
         try {
-            return Array.from(document.querySelectorAll(".card-ad > div [href], .card-productads > div [href]")).filter(adLinkElement => {
-                return !adLinkElement.matches('.ad-hint-wrapper, .ad-hint-wrapper *');
+            return Array.from(document.querySelectorAll(".ad-result [href]:not(.meta-results *), .snippet--product-ads .carousel [href]:not(.meta-results *)")).filter(adLinkElement => {
+                return !adLinkElement.matches('.ecosia-label, .ad-hint-wrapper *');
             });
         } catch (error) {
             return [];
@@ -64,8 +63,8 @@ const serpScript = function () {
      */
     function getSearchAreaTopHeight(): number {
         try {
-            const element = document.querySelector(".navbar-row") as HTMLElement;
-            return getElementBottomHeight(element);
+            const element = document.querySelector("#main");
+            return getElementTopHeight(element);
         } catch (error) {
             return null;
         }
@@ -76,8 +75,8 @@ const serpScript = function () {
      */
     function getSearchAreaBottomHeight(): number {
         try {
-            const element = document.querySelector(".pagination").previousElementSibling as HTMLElement;
-            return getElementBottomHeight(element);
+            const element = document.querySelector(".mainline__pagination");
+            return getElementTopHeight(element);
         } catch (error) {
             return null;
         }
@@ -104,7 +103,7 @@ const serpScript = function () {
      */
     function getInternalLink(target: Element): string {
         try {
-            if (target.matches(".results-wrapper *")) {
+            if (target.matches("#main *")) {
                 if (!target.matches(".pagination *")) {
                     const hrefElement = target.closest("[href]");
                     if (hrefElement) {

@@ -38,7 +38,7 @@ const serpScript = function () {
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         try {
-            const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
+            const organicResults = document.querySelectorAll("#links > div[id^='r1-'], #links > div.nrn-react-div");
             const organicDetails: OrganicDetail[] = []
             const organicLinkElements: Element[][] = [];
             for (const organicResult of organicResults) {

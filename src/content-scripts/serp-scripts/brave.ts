@@ -20,7 +20,7 @@ const serpScript = function () {
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
         try {
-            const organicResults = document.querySelectorAll("#results > .snippet.fdb");
+            const organicResults = document.querySelectorAll("#results > .snippet");
             const organicDetails: OrganicDetail[] = [];
             const organicLinkElements: Element[][] = [];
             for (const organicResult of organicResults) {

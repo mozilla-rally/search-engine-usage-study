@@ -177,6 +177,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
       PageNum: pageVisitData.pageNum,
       Attribution: attributionDetailsEngineMatches ? attributionDetails.attribution : null,
       AttributionID: attributionDetailsEngineMatches ? attributionDetails.attributionID : null,
+      GoogleResultsNum: Utils.getPositiveInteger(numGoogleResults),
       Transition: attributionDetailsEngineMatches ? attributionDetails.transition : null,
       OrganicDetails: pageVisitData.organicDetails,
       OrganicClicks: pageVisitData.organicClicks,

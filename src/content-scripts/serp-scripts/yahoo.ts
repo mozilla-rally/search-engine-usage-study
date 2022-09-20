@@ -38,7 +38,7 @@ const serpScript = function () {
      */
     function getNumAdResults(): number {
         try {
-            return document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li").length;
+            return document.querySelectorAll("ol.searchCenterTopAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterBottomAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterMiddle > li > div .compProductList, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li").length;
         } catch (error) {
             return -1;
         }
@@ -52,7 +52,7 @@ const serpScript = function () {
         try {
             const adLinkElements: Element[] = [];
 
-            const adElements = document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
+            const adElements = document.querySelectorAll("ol.searchCenterTopAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterBottomAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterMiddle > li > div .compProductList, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
             for (const adElement of adElements) {
                 adLinkElements.push(...adElement.querySelectorAll('[href]'));
             }
