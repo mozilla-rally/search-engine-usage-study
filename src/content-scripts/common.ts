@@ -1076,7 +1076,12 @@ const selfPreferencedResultMetadataReplacement: {
     cite: "https://www.google.com",
     citeSpan: " › travel › flights",
     getResults: function (): Element[] {
-      return getXPathElements("//*[@id='rso']/*[descendant::g-more-link[descendant::span[text()='Search on Google Flights']]]");
+
+      if (document.querySelector("#kp-wp-tab-AIRFARES")) {
+        return [];
+      } else {
+        return getXPathElements("//*[@id='rso']/*[descendant::g-more-link[descendant::span[text()='Search on Google Flights']]]");
+      }
     },
     getReplacementData: function (element: Element): ReplacementDataVariableSubset {
       return {
