@@ -21,6 +21,7 @@
     "webRequest",
     "webNavigation",
     "history",
+    "alarms",
     "mozillaAddons"
   ],
   "experiment_apis": {

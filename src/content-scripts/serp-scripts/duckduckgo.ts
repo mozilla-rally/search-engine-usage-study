@@ -20,58 +20,74 @@ const serpScript = function () {
      * @returns {number} The page number of the given element.
      */
     function getPageNumForElement(element: Element) {
-        while (element) {
-            if (element.classList.contains("has-pagenum")) {
-                return Number(element.querySelector(".result__pagenum").textContent)
+        try {
+            while (element) {
+                if (element.classList.contains("has-pagenum")) {
+                    return Number(element.querySelector(".result__pagenum").textContent)
+                }
+                element = element.previousElementSibling;
             }
-            element = element.previousElementSibling;
+            return 1;
+        } catch (error) {
+            return -1;
         }
-        return 1
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#links > div[id^='r1-']");
-        const organicDetails: OrganicDetail[] = []
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: getPageNumForElement(organicResult), onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        try {
+            const organicResults = document.querySelectorAll("#links > div[id^='r1-'], #links > div.nrn-react-div");
+            const organicDetails: OrganicDetail[] = []
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: getPageNumForElement(organicResult), onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return document.querySelectorAll(".badge--ad").length;
+        try {
+            return document.querySelectorAll(".badge--ad").length;
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        const adLinkElements: Element[] = [];
+        try {
+            const adLinkElements: Element[] = [];
 
-        // Add all the carousel items. We can't just add the elements in the carousel with an href attribute because each item is clickable through a JS event
-        const modules = document.querySelectorAll(".module--carousel");
-        for (const module of modules) {
-            if (module.querySelector(".badge--ad")) {
-                adLinkElements.push(...module.querySelectorAll(".module--carousel__item"));
+            // Add all the carousel items. We can't just add the elements in the carousel with an href attribute because each item is clickable through a JS event
+            const modules = document.querySelectorAll(".module--carousel");
+            for (const module of modules) {
+                if (module.querySelector(".badge--ad")) {
+                    adLinkElements.push(...module.querySelectorAll(".module--carousel__item"));
+                }
             }
+
+            const regularAdLinkElements = Array.from(document.querySelectorAll("#ads [href], .result--ad [href]")).filter(adLinkElement => {
+                return !adLinkElement.matches(
+                    '.report-ad, .report-ad *, .feedback-prompt, .feedback-prompt *, .badge--ad__tooltip, .badge--ad__tooltip *, .module--carousel *')
+            });
+
+            adLinkElements.push(...regularAdLinkElements);
+
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
-
-        const regularAdLinkElements = Array.from(document.querySelectorAll("#ads [href], .result--ad [href]")).filter(adLinkElement => {
-            return !adLinkElement.matches(
-                '.report-ad, .report-ad *, .feedback-prompt, .feedback-prompt *, .badge--ad__tooltip, .badge--ad__tooltip *, .module--carousel *')
-        });
-
-        adLinkElements.push(...regularAdLinkElements);
-
-        return adLinkElements;
     }
 
     /**
@@ -122,23 +138,27 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches("#zero_click_wrapper *, #vertical_wrapper *, #web_content_wrapper *")) {
-            const hrefElement = target.closest("[href]");
-            if (hrefElement) {
-                const href = (hrefElement as any).href;
-                if (isValidLinkToDifferentPage(href)) {
-                    const url = new URL(href);
-                    if (url.hostname.includes("duckduckgo.com")) {
-                        return href;
+        try {
+            if (target.matches("#zero_click_wrapper *, #vertical_wrapper *, #web_content_wrapper *")) {
+                const hrefElement = target.closest("[href]");
+                if (hrefElement) {
+                    const href = (hrefElement as any).href;
+                    if (isValidLinkToDifferentPage(href)) {
+                        const url = new URL(href);
+                        if (url.hostname.includes("duckduckgo.com")) {
+                            return href;
+                        }
+                    } else {
+                        return "";
                     }
                 } else {
                     return "";
                 }
-            } else {
-                return "";
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     function extraCallback(): void {
@@ -158,7 +178,6 @@ const serpScript = function () {
         if (!pageValues.mostRecentMousedown) {
             return;
         }
-
 
         const normalizedUrl: string = getNormalizedUrl(url);
         if (pageValues.mostRecentMousedown.Type === ElementType.Ad) {

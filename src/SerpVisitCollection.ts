@@ -80,19 +80,37 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   const attributionDetails = AttributionTracking.getAttributionForPageId(pageVisitData.pageId);
   const attributionDetailsEngineMatches = attributionDetails && attributionDetails.engine === pageVisitData.searchEngine;
 
+  const normalizedQuery = Utils.normalizeQuery(pageVisitData.query);
+
 
   // The last time the query was made to the search engine, Number.MAX_SAFE_INTEGER if it has not previously been made.
   let timeSinceSameQuery = Number.MAX_SAFE_INTEGER;
-  if (pageVisitData.query && pageVisitData.searchEngine in searchEngineQueryTimes) {
+  if (normalizedQuery && pageVisitData.searchEngine in searchEngineQueryTimes) {
     // If the query was made to the search engine before, get the time since it was last made.
-    if (pageVisitData.query in searchEngineQueryTimes[pageVisitData.searchEngine]) {
-      const timeOfLastQuery = searchEngineQueryTimes[pageVisitData.searchEngine][pageVisitData.query];
+    if (normalizedQuery in searchEngineQueryTimes[pageVisitData.searchEngine]) {
+      const timeOfLastQuery = searchEngineQueryTimes[pageVisitData.searchEngine][normalizedQuery];
       timeSinceSameQuery = pageVisitData.pageVisitStartTime - timeOfLastQuery;
     }
 
     // Update searchEngineQueryTimes with the time the query was made to the engine and update the corresponding engine's object in storage.
-    searchEngineQueryTimes[pageVisitData.searchEngine][pageVisitData.query] = pageVisitData.pageVisitStartTime;
+    searchEngineQueryTimes[pageVisitData.searchEngine][normalizedQuery] = pageVisitData.pageVisitStartTime;
     storage.set(pageVisitData.searchEngine, searchEngineQueryTimes[pageVisitData.searchEngine]);
+  }
+
+
+  let numGoogleResults: number = null
+  try {
+    if (pageVisitData.searchEngine == "Google") {
+      numGoogleResults = pageVisitData.numResults;
+    } else if (pageVisitData.query) {
+      const response = await fetch(`https://www.google.com/search?q=${pageVisitData.query}`, { cache: "no-store" });
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      numGoogleResults = Utils.getNumResultsGoogle(doc);
+    }
+  } catch (error) {
+    // Do nothing
   }
 
   serpVisitMetrics.attentionDuration.set(Utils.getPositiveInteger(pageVisitData.attentionDuration));
@@ -100,8 +118,9 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   serpVisitMetrics.attributionId.set(attributionDetailsEngineMatches ? attributionDetails.attributionID : "");
   serpVisitMetrics.currentDefaultEngine.set(await Privileged.getSearchEngine());
   serpVisitMetrics.dwellTime.set(Utils.getPositiveInteger(pageVisitData.dwellTime));
+  serpVisitMetrics.googleResultsNum.set(Utils.getPositiveInteger(numGoogleResults));
   serpVisitMetrics.modificationType.set(pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None");
-  serpVisitMetrics.navigationalQuery.set(getNavigationalQueryType(pageVisitData.query))
+  serpVisitMetrics.navigationalQuery.set(getNavigationalQueryType(normalizedQuery))
   serpVisitMetrics.numAdClicks.set(Utils.getPositiveInteger(pageVisitData.numAdClicks));
   serpVisitMetrics.numAds.set(Utils.getPositiveInteger(pageVisitData.numAdResults));
   serpVisitMetrics.numInternalClicks.set(Utils.getPositiveInteger(pageVisitData.numInternalClicks));
@@ -110,9 +129,9 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   serpVisitMetrics.pageNumber.set(Utils.getPositiveInteger(pageVisitData.pageNum));
   serpVisitMetrics.pageVisitStartTime.set(new Date(pageVisitData.pageVisitStartTime));
   serpVisitMetrics.pingTime.set();
-  serpVisitMetrics.queryHash.set(await Utils.getQueryHash(pageVisitData.query, storage));
+  serpVisitMetrics.queryHash.set(await Utils.getQueryHash(normalizedQuery, storage));
   serpVisitMetrics.queryVertical.set(pageVisitData.queryVertical ? pageVisitData.queryVertical : "");
-  serpVisitMetrics.resultsNum.set(pageVisitData.numResults ? pageVisitData.numResults : Number.MAX_SAFE_INTEGER);
+  serpVisitMetrics.resultsNum.set(Utils.getPositiveInteger(pageVisitData.numResults));
   serpVisitMetrics.searchAreaBottomHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaBottomHeight));
   serpVisitMetrics.searchAreaTopHeight.set(Utils.getPositiveInteger(pageVisitData.searchAreaTopHeight));
   serpVisitMetrics.searchEngine.set(pageVisitData.searchEngine ? pageVisitData.searchEngine : "");
@@ -150,7 +169,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
   if (__ENABLE_DEVELOPER_MODE__) {
     const serpVisitData = {
       SearchEngine: pageVisitData.searchEngine,
-      QueryHash: await Utils.getQueryHash(pageVisitData.query, storage),
+      QueryHash: await Utils.getQueryHash(normalizedQuery, storage),
       NumResults: pageVisitData.numResults,
       QueryVertical: pageVisitData.queryVertical,
       AttentionDuration: pageVisitData.attentionDuration,
@@ -158,6 +177,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
       PageNum: pageVisitData.pageNum,
       Attribution: attributionDetailsEngineMatches ? attributionDetails.attribution : null,
       AttributionID: attributionDetailsEngineMatches ? attributionDetails.attributionID : null,
+      GoogleResultsNum: Utils.getPositiveInteger(numGoogleResults),
       Transition: attributionDetailsEngineMatches ? attributionDetails.transition : null,
       OrganicDetails: pageVisitData.organicDetails,
       OrganicClicks: pageVisitData.organicClicks,
@@ -171,7 +191,7 @@ async function reportSerpVisitData(pageVisitData): Promise<void> {
       TimeSinceSameQuery: timeSinceSameQuery,
       PageVisitStartTime: pageVisitData.pageVisitStartTime,
       CurrentDefaultEngine: await Privileged.getSearchEngine(),
-      NavigationalQuery: getNavigationalQueryType(pageVisitData.query),
+      NavigationalQuery: getNavigationalQueryType(normalizedQuery),
       PageLoaded: pageVisitData.pageLoaded,
       PingTime: webScience.timing.now(),
       ModificationType: pageVisitData.selfPreferencingType ? pageVisitData.selfPreferencingType : "None"

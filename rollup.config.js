@@ -26,6 +26,19 @@ function makeTemplate(templateData, svelteComponent, props, scriptSrc) {
 
 const htmlPages = [];
 
+htmlPages.push(
+  html({
+    fileName: `pages/lottery_popup.html`,
+    title: "Search Engine Study Lottery Winner",
+    template: makeTemplate(
+      fs.readFileSync("./src/pages/template.html", "utf8"),
+      require("./src/pages/components/lottery-popup/LotteryPopup.svelte").default,
+      null,
+      "assets/js/lotteryPopup.js"
+    ),
+  })
+);
+
 const choiceBallotTypes = [ "Default", "HiddenDescription", "VisibleDescription", "Extended" ];
 for(let index = 0; index < choiceBallotTypes.length; index++) {
   const choiceBallotType = choiceBallotTypes[ index ];
@@ -110,7 +123,7 @@ export default (cliArgs) => {
     }
   ];
 
-  const pageScriptPaths = globby.sync([ `src/page-scripts/choiceBallot.ts`, `src/page-scripts/notice.ts` ]);
+  const pageScriptPaths = globby.sync([ `src/page-scripts/choiceBallot.ts`, `src/page-scripts/notice.ts`, `src/page-scripts/lotteryPopup.ts` ]);
   for(const pageScriptPath of pageScriptPaths) {
     rollupConfig.push({
       input: pageScriptPath,

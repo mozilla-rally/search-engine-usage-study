@@ -18,35 +18,49 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#web > .searchCenterMiddle > li > .algo");
-        const organicDetails: OrganicDetail[] = []
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        try {
+            const organicResults = document.querySelectorAll("#web > .searchCenterMiddle > li > .algo");
+            const organicDetails: OrganicDetail[] = []
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li").length;
+        try {
+            return document.querySelectorAll("ol.searchCenterTopAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterBottomAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterMiddle > li > div .compProductList, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li").length;
+        } catch (error) {
+            return -1;
+        }
+
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        const adLinkElements: Element[] = [];
+        try {
+            const adLinkElements: Element[] = [];
 
-        const adElements = document.querySelectorAll("ol.searchCenterTopAds > li > .ads, ol.searchCenterBottomAds > li > .ads, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
-        for (const adElement of adElements) {
-            adLinkElements.push(...adElement.querySelectorAll('[href]'));
+            const adElements = document.querySelectorAll("ol.searchCenterTopAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterBottomAds > li > div:not([class*='AdTitle']):not([class*='AdHdr']), ol.searchCenterMiddle > li > div .compProductList, ol.searchRightTopAds > li, ol.searchRightMiddleAds > li, ol.searchRightBottomAds > li");
+            for (const adElement of adElements) {
+                adLinkElements.push(...adElement.querySelectorAll('[href]'));
+            }
+
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
-
-        return adLinkElements;
     }
 
     /**
@@ -77,10 +91,14 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageElement = document.querySelector(".pages strong");
-        if (pageElement) {
-            return Number(pageElement.textContent)
-        } else {
+        try {
+            const pageElement = document.querySelector(".pages strong");
+            if (pageElement) {
+                return Number(pageElement.textContent)
+            } else {
+                return -1;
+            }
+        } catch (error) {
             return -1;
         }
     }
@@ -97,10 +115,10 @@ const serpScript = function () {
             if (!element) {
                 return 0;
             } else {
-                const sentence = element.textContent;
+                const sentence = element.textContent.replace(/[.,\s]/g, '');
 
                 // Format of string on Yahoo is "About 326,000 search results"
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {
@@ -118,25 +136,30 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches("#bd *")) {
-            if (!target.matches(".pagination *")) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("yahoo.com") && !url.hostname.includes("r.search.yahoo.com")) {
-                            return href;
+        try {
+            if (target.matches("#bd *")) {
+                if (!target.matches(".pagination *")) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("yahoo.com") && !url.hostname.includes("r.search.yahoo.com")) {
+                                return href;
+                            }
+                        } else {
+                            return "";
                         }
                     } else {
                         return "";
                     }
-                } else {
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
+
     }
 
     /**

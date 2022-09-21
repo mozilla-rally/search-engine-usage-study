@@ -19,14 +19,19 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#results > .snippet.fdb");
-        const organicDetails: OrganicDetail[] = [];
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+        try {
+            const organicResults = document.querySelectorAll("#results > .snippet");
+            const organicDetails: OrganicDetail[] = [];
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+
     }
 
     /**
@@ -73,8 +78,13 @@ const serpScript = function () {
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageNumFromUrl = getQueryVariable(window.location.href, "offset");
-        return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
+        try {
+            const pageNumFromUrl = getQueryVariable(window.location.href, "offset");
+            return pageNumFromUrl ? Number(pageNumFromUrl) + 1 : 1;
+        } catch (error) {
+            return -1;
+        }
+
     }
 
     /**
@@ -83,25 +93,29 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches("#search-main *")) {
-            if (!(target.matches(".footer *, #pagination *"))) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("brave.com")) {
-                            return href;
+        try {
+            if (target.matches("#search-main *")) {
+                if (!(target.matches(".footer *, #pagination *"))) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("brave.com")) {
+                                return href;
+                            }
+                        } else {
+                            return "";
                         }
                     } else {
                         return "";
                     }
-                } else {
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     /**

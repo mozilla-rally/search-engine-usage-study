@@ -7,10 +7,10 @@
  */
 
 import * as webScience from "@mozilla/web-science";
-import { setExtendedTimeout } from "./Utils";
 
 const millisecondsPerSecond = 1000;
 const secondsPerDay = 86400;
+const secondsPerMinute = 60;
 
 /**
  * How often, in days, to wait before reminding the user with a
@@ -43,7 +43,7 @@ const surveyConfigData = {
     reminderMessage: "A survey is available for your Rally study. Click the Search icon in the toolbar to continue.",
     reminderTitle: "Rally survey available",
     surveyCompletionUrl: "https://rally-search-study-survey.princeton.edu/",
-    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_b8CL5jeE0MXdef4/",
+    surveyUrl: "https://princetonsurvey.az1.qualtrics.com/jfe/form/SV_ey5oC7XNZ7B3c3A/",
   },
   Followup: {
     surveyName: "Followup",
@@ -87,7 +87,16 @@ export async function initializeSurvey(treatmentStartTime): Promise<void> {
     // and the current time is before the time to start the followup survey, we set
     // the current survey to be the initial survey and set a timeout to start the followup survey.
     webScience.userSurvey.setSurvey(surveyConfigData.Initial);
-    setExtendedTimeout(startFollowupSurvey, followupSurveyStartTime - currentTime);
+
+
+    const followupSurveyAlarmName = "FollowupSurveyAlarmName";
+    browser.alarms.create(followupSurveyAlarmName, {
+      delayInMinutes: (followupSurveyStartTime - currentTime) / (millisecondsPerSecond * secondsPerMinute)
+    });
+
+    browser.alarms.onAlarm.addListener(function (alarm) {
+      if (alarm.name == followupSurveyAlarmName) startFollowupSurvey();
+    });
   } else if (currentSurvey === surveyConfigData.Initial.surveyName) {
     // If the current survey is the initial survey but the current time is after the start
     // time of the followup survey, we start the followup survey.

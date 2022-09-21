@@ -19,52 +19,64 @@ const serpScript = function () {
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = document.querySelectorAll("#b_results > li.b_algo");
-        const organicDetails: OrganicDetail[] = []
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')).filter(element => {
-                // Exclude links in the "Explore Further" box (.pageRecoContainer) and any missing word links (.wr_hlic)
-                return !element.closest(".pageRecoContainer") && !element.closest(".wr_hlic");
-            }));
+        try {
+            const organicResults = document.querySelectorAll("#b_results > li.b_algo");
+            const organicDetails: OrganicDetail[] = []
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: "" })
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]')).filter(element => {
+                    // Exclude links in the "Explore Further" box (.pageRecoContainer) and any missing word links (.wr_hlic)
+                    return !element.closest(".pageRecoContainer") && !element.closest(".wr_hlic");
+                }));
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        return document.querySelectorAll(".b_adSlug").length;
+        try {
+            return document.querySelectorAll(".b_adSlug").length;
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        const adLinkElements: Element[] = [];
+        try {
+            const adLinkElements: Element[] = [];
 
-        // Get link elements from ad carousels
-        const adCarousels = document.querySelectorAll(".adsMvCarousel");
-        for (const adCarousel of adCarousels) {
-            if (adCarousel.parentElement.parentElement.querySelector(".b_adSlug")) {
-                adLinkElements.push(...adCarousel.querySelectorAll(".slide:not(.see_more) [href]"));
+            // Get link elements from ad carousels
+            const adCarousels = document.querySelectorAll(".adsMvCarousel");
+            for (const adCarousel of adCarousels) {
+                if (adCarousel.parentElement.parentElement.querySelector(".b_adSlug")) {
+                    adLinkElements.push(...adCarousel.querySelectorAll(".slide:not(.see_more) [href]"));
+                }
             }
+
+            // Get standard ad link elements
+            const adElements = Array.from(document.querySelectorAll(".b_ad > ul > li, .b_adLastChild")).filter(adElement => {
+                return !adElement.querySelector(".adsMvCarousel");
+            });
+
+            for (const adElement of adElements) {
+                adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
+                    return !adLinkElement.matches('.b_adcaret, .b_adcaret *, .b_adinfo, .b_adinfo *');
+                }));
+            }
+
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
-
-        // Get standard ad link elements
-        const adElements = Array.from(document.querySelectorAll(".b_ad > ul > li, .b_adLastChild")).filter(adElement => {
-            return !adElement.querySelector(".adsMvCarousel");
-        });
-
-        for (const adElement of adElements) {
-            adLinkElements.push(...Array.from(adElement.querySelectorAll("[href]")).filter(adLinkElement => {
-                return !adLinkElement.matches('.b_adcaret, .b_adcaret *, .b_adinfo, .b_adinfo *');
-            }));
-        }
-
-        return adLinkElements;
     }
 
     /**
@@ -74,7 +86,7 @@ const serpScript = function () {
         try {
             return (document.querySelector("#b_header") as HTMLElement).offsetHeight;
         } catch (error) {
-            return null;
+            return -1;
         }
     }
 
@@ -82,16 +94,24 @@ const serpScript = function () {
      * @returns {number} The number of pixels between the top of the page and the bottom of the search area.
      */
     function getSearchAreaBottomHeight(): number {
-        const element = (document.querySelector(".b_pag") as HTMLElement);
-        return getElementTopHeight(element);
+        try {
+            const element = (document.querySelector(".b_pag") as HTMLElement);
+            return getElementTopHeight(element);
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageElement = document.querySelector(".sb_pagS_bp")
-        return Number(pageElement.textContent);
+        try {
+            const pageElement = document.querySelector(".sb_pagS_bp")
+            return Number(pageElement.textContent);
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
@@ -102,14 +122,18 @@ const serpScript = function () {
             // The DOM element that contains the count
             const element = document.querySelector(".sb_count");
 
-            // If the DOM element doesn't exist, we assume this means there are no results.
-            if (!element) {
+            if (document.querySelector(".b_no")) {
                 return 0;
+            } else if (!element) {
+                return null;
             } else {
-                const sentence = element.textContent;
+                // Format of string on Bing is "6,930,000,000 Results" or "11-24 Of 359,000 Results"
+                let sentence = element.textContent.replace(/[.,\s]/g, '');
 
-                // Format of string on Bing is "6,930,000,000 Results"
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
+                // Removes the "-" and surrounding numerical characters.
+                sentence = element.textContent.replace(/\d*-\d*/g, '');
+
+                const extractedNumber: string = sentence.match(/[0-9]+/g)[0];
                 if (extractedNumber == null || extractedNumber == "") {
                     return null;
                 } else {
@@ -127,31 +151,36 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        // Make sure the target is in the search area
-        if (target.matches("#b_content *")) {
-            // Make sure the target is not a pagination element, organic element, or ad element
-            if (!target.matches(".b_pag *")) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("bing.com")) {
-                            // If the link URL is a valid link to a different page and the hostname includes
-                            // bing.com, then it is an internal link.
-                            return href;
+        try {
+            // Make sure the target is in the search area
+            if (target.matches("#b_content *")) {
+                // Make sure the target is not a pagination element, organic element, or ad element
+                if (!target.matches(".b_pag *")) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("bing.com")) {
+                                // If the link URL is a valid link to a different page and the hostname includes
+                                // bing.com, then it is an internal link.
+                                return href;
+                            }
+                        } else {
+                            // If the link is not a valid link to a different page, it is possibly an internal link.
+                            return "";
                         }
                     } else {
-                        // If the link is not a valid link to a different page, it is possibly an internal link.
+                        // If there is no href, then it is possibly an internal link.
                         return "";
                     }
-                } else {
-                    // If there is no href, then it is possibly an internal link.
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
+
     }
 
     /**

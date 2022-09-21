@@ -1,5 +1,5 @@
 import { PageValues, getElementBottomHeight, getElementTopHeight, isValidLinkToDifferentPage, getNormalizedUrl, waitForPageManagerLoad, getXPathElements, getXPathElement, ElementType } from "../common.js"
-import { getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
+import { getNumResultsGoogle, getQueryVariable, searchEnginesMetadata } from "../../Utils.js"
 import { onlineServicesMetadata } from "../../OnlineServiceData";
 
 /**
@@ -19,7 +19,11 @@ const serpScript = function () {
      * (flights, hotels, other travel, maps, lyrics, weather, shopping, or other direct answer).
      */
     function getSerpQueryVertical(): string {
-        return document.querySelector("[aria-current='page']").nextElementSibling.textContent;
+        try {
+            return document.querySelector("[aria-current='page']").nextElementSibling.textContent;
+        } catch (error) {
+            return "";
+        }
     }
 
     /**
@@ -36,106 +40,118 @@ const serpScript = function () {
                     return metadata.serviceName;
                 }
             }
+            return "";
         } catch (error) {
-            // Do nothing
+            return "";
         }
-        return "";
     }
 
     /**
      * @returns {OrganicDetail[]} An array of details for each of the organic search results.
      */
     function getOrganicDetailsAndLinkElements(): { organicDetails: OrganicDetail[], organicLinkElements: Element[][] } {
-        const organicResults = Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
-            // Remove shopping results
-            return !element.querySelector(":scope > g-card")
-        });
+        try {
+            const organicResults = Array.from(document.querySelectorAll("#rso .g:not(.rally-study-self-preferenced-tracking):not(.related-question-pair .g):not(.g .g):not(.kno-kp *):not(.kno-kp):not([data-async-type='editableDirectionsSearch'] .g)")).filter(element => {
+                // Remove shopping results
+                return !element.querySelector(":scope > g-card")
+            });
 
-        const organicDetails: OrganicDetail[] = [];
-        const organicLinkElements: Element[][] = [];
-        for (const organicResult of organicResults) {
-            organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: getOnlineServiceFromOrganicResult(organicResult) });
-            organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')).filter(organicLinkElement => {
-                // Gets rid of link elements that are relative URLs. This gets rid of "Must include:" links
-                // which are relative links to other Google SERP pages.
-                try {
-                    if (new URL(organicLinkElement.getAttribute("href"))) {
-                        return true;
+            const organicDetails: OrganicDetail[] = [];
+            const organicLinkElements: Element[][] = [];
+            for (const organicResult of organicResults) {
+                organicDetails.push({ topHeight: getElementTopHeight(organicResult), bottomHeight: getElementBottomHeight(organicResult), pageNum: null, onlineService: getOnlineServiceFromOrganicResult(organicResult) });
+                organicLinkElements.push(Array.from(organicResult.querySelectorAll('[href]:not(.exp-c *)')).filter(organicLinkElement => {
+                    // Gets rid of link elements that are relative URLs. This gets rid of "Must include:" links
+                    // which are relative links to other Google SERP pages.
+                    try {
+                        if (new URL(organicLinkElement.getAttribute("href"))) {
+                            return true;
+                        }
+                    } catch (error) {
+                        // Do nothing
                     }
-                } catch (error) {
-                    // Do nothing
-                }
-                return false;
-            }));
+                    return false;
+                }));
 
+            }
+            return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
+        } catch (error) {
+            return { organicDetails: [], organicLinkElements: [] };
         }
-        return { organicDetails: organicDetails, organicLinkElements: organicLinkElements };
     }
 
     /**
      * @returns {number} The number of ad results on the page.
      */
     function getNumAdResults(): number {
-        // gets all basic keyword ads
-        const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
+        try {
+            // gets all basic keyword ads
+            const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
 
-        // gets all text tags on page that are "Ad" or "Ads"
-        const adTagElements = getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
+            // gets all text tags on page that are "Ad" or "Ads"
+            const adTagElements = getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
 
-        // Creates a list from the non-keyword ads making sure that none of these non-keyword ads contain each other.
-        // Is necessary because some ads on Google contain multiple ad tags
-        const nonKeywordAds: Element[] = []
-        for (let i = 0; i < adTagElements.length; i++) {
-            let add = true
-            for (let j = i + 1; j < adTagElements.length; j++) {
-                if (adTagElements[i].contains(adTagElements[j]) || adTagElements[j].contains(adTagElements[i])) {
-                    add = false
-                    break;
+            // Creates a list from the non-keyword ads making sure that none of these non-keyword ads contain each other.
+            // Is necessary because some ads on Google contain multiple ad tags
+            const nonKeywordAds: Element[] = []
+            for (let i = 0; i < adTagElements.length; i++) {
+                let add = true
+                for (let j = i + 1; j < adTagElements.length; j++) {
+                    if (adTagElements[i].contains(adTagElements[j]) || adTagElements[j].contains(adTagElements[i])) {
+                        add = false
+                        break;
+                    }
+                }
+                if (add === true) {
+                    nonKeywordAds.push(adTagElements[i])
                 }
             }
-            if (add === true) {
-                nonKeywordAds.push(adTagElements[i])
-            }
-        }
 
-        return nonKeywordAds.length + keywordAds.length;
+            return nonKeywordAds.length + keywordAds.length;
+        } catch (error) {
+            return -1;
+        }
     }
 
     /**
      * @returns {Element[]} An array of ad link elements on the page.
      */
     function getAdLinkElements(): Element[] {
-        // gets all basic keyword ads
-        const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
+        try {
+            // gets all basic keyword ads
+            const keywordAds = document.querySelectorAll("[aria-label='Ads'] > div")
 
-        // gets all text tags on page that are "Ad" or "Ads" but not within an [aria-label='Ads'] element
-        const adTagElements = getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
+            // gets all text tags on page that are "Ad" or "Ads" but not within an [aria-label='Ads'] element
+            const adTagElements = getXPathElements("//*[(normalize-space(text()) = 'Ad' or normalize-space(text()) = 'Ads') and not(ancestor::*[@aria-label='Ads'])]/../../../../..");
 
-        // Creates a list from the non-keyword ads making sure that none of these non-keyword ads contain each other.
-        // Is necessary because some ads on Google contain multiple ad tags
-        const nonKeywordAds: Element[] = []
-        for (let i = 0; i < adTagElements.length; i++) {
-            let add = true
-            for (let j = i + 1; j < adTagElements.length; j++) {
-                if (adTagElements[i].contains(adTagElements[j]) || adTagElements[j].contains(adTagElements[i])) {
-                    add = false
-                    break;
+            // Creates a list from the non-keyword ads making sure that none of these non-keyword ads contain each other.
+            // Is necessary because some ads on Google contain multiple ad tags
+            const nonKeywordAds: Element[] = []
+            for (let i = 0; i < adTagElements.length; i++) {
+                let add = true
+                for (let j = i + 1; j < adTagElements.length; j++) {
+                    if (adTagElements[i].contains(adTagElements[j]) || adTagElements[j].contains(adTagElements[i])) {
+                        add = false
+                        break;
+                    }
+                }
+                if (add === true) {
+                    nonKeywordAds.push(adTagElements[i])
                 }
             }
-            if (add === true) {
-                nonKeywordAds.push(adTagElements[i])
+
+            const adLinkElements: Element[] = [];
+            const adResults = Array.from(keywordAds).concat(nonKeywordAds);
+            for (const adResult of adResults) {
+                adLinkElements.push(...Array.from(adResult.querySelectorAll("[href]")).filter(hrefElement => {
+                    return !getNormalizedUrl((hrefElement as any).href).includes("google.com/search");
+                }));
             }
-        }
 
-        const adLinkElements: Element[] = [];
-        const adResults = Array.from(keywordAds).concat(nonKeywordAds);
-        for (const adResult of adResults) {
-            adLinkElements.push(...Array.from(adResult.querySelectorAll("[href]")).filter(hrefElement => {
-                return !getNormalizedUrl((hrefElement as any).href).includes("google.com/search");
-            }));
+            return adLinkElements;
+        } catch (error) {
+            return [];
         }
-
-        return adLinkElements;
     }
 
     /**
@@ -170,42 +186,19 @@ const serpScript = function () {
         } catch (error) {
             return null;
         }
-
     }
 
     /**
      * @returns {number} The page number.
      */
     function getPageNum(): number {
-        const pageElement = getXPathElement("//div[@role='navigation']//tbody/tr/td[normalize-space(text())]")
-        return pageElement ? Number(pageElement.textContent) : -1;
-    }
-
-    /**
-     * @returns {number} The number of results produced for the query by the search engine.
-     */
-    function getNumResults(): number {
         try {
-            // The DOM element that contains the count
-            const element = document.querySelector("#result-stats");
-
-            // If the DOM element doesn't exist, we assume this means there are no results.
-            if (!element) {
-                return 0;
-            } else {
-                const sentence = element.textContent;
-
-                // Format of string on Google is "About 1 results (0.34 seconds) "
-                const extractedNumber: string = sentence.match(/[0-9,]+/g)[0].replace(/\D/g, '');
-                if (extractedNumber == null || extractedNumber == "") {
-                    return null;
-                } else {
-                    return Number(extractedNumber);
-                }
-            }
+            const pageElement = getXPathElement("//div[@role='navigation']//tbody/tr/td[normalize-space(text())]")
+            return pageElement ? Number(pageElement.textContent) : -1;
         } catch (error) {
-            return null;
+            return -1;
         }
+
     }
 
     /**
@@ -214,35 +207,39 @@ const serpScript = function () {
      * An empty string if it was a possible internal link element. null otherwise.
      */
     function getInternalLink(target: Element): string {
-        if (target.matches("#rcnt *, #appbar *, #atvcap *")) {
-            if (!target.matches("[role=navigation] *")) {
-                const hrefElement = target.closest("[href]");
-                if (hrefElement) {
-                    const href = (hrefElement as any).href;
-                    if (isValidLinkToDifferentPage(href)) {
-                        const url = new URL(href);
-                        if (url.hostname.includes("google.com")) {
-                            if (url.pathname === "/url") {
-                                const newUrlString = getQueryVariable(href, "url");
-                                const newUrl = new URL(newUrlString)
-                                if (newUrl.hostname.includes("google.com")) {
-                                    return newUrlString;
+        try {
+            if (target.matches("#rcnt *, #appbar *, #atvcap *")) {
+                if (!target.matches("[role=navigation] *")) {
+                    const hrefElement = target.closest("[href]");
+                    if (hrefElement) {
+                        const href = (hrefElement as any).href;
+                        if (isValidLinkToDifferentPage(href)) {
+                            const url = new URL(href);
+                            if (url.hostname.includes("google.com")) {
+                                if (url.pathname === "/url") {
+                                    const newUrlString = getQueryVariable(href, "url");
+                                    const newUrl = new URL(newUrlString)
+                                    if (newUrl.hostname.includes("google.com")) {
+                                        return newUrlString;
+                                    }
+                                } else if (url.pathname.includes("/aclk")) {
+                                    return null;
+                                } else {
+                                    return href;
                                 }
-                            } else if (url.pathname.includes("/aclk")) {
-                                return null;
-                            } else {
-                                return href;
                             }
+                        } else {
+                            return "";
                         }
                     } else {
                         return "";
                     }
-                } else {
-                    return "";
                 }
             }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -317,7 +314,7 @@ const serpScript = function () {
     }
 
     // Create a pageValues object to track data for the SERP page
-    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, selfPreferencingType, getSerpQueryVertical, getNumResults);
+    const pageValues = new PageValues("Google", onNewTab, getIsWebSerpPage, getPageNum, getSearchAreaBottomHeight, getSearchAreaTopHeight, getNumAdResults, getOrganicDetailsAndLinkElements, getAdLinkElements, getInternalLink, null, selfPreferencingType, getSerpQueryVertical, getNumResultsGoogle);
 
     webScience.pageManager.onPageVisitStart.addListener(({ timeStamp }) => {
         pageValues.resetTracking(timeStamp);
