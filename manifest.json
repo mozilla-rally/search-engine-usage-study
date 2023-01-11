@@ -3,11 +3,11 @@
   "author": "Kartikeya Kandula",
   "manifest_version": 2,
   "name": "Search Engine Usage and Result Quality Study",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "homepage_url": "https://github.com/mozilla-rally/search-engine-usage-study",
   "applications": {
     "gecko": {
-      "id": "search-engine-usage@rally.mozilla.org",
+      "id": "search-engine-usage-relaunch@rally.mozilla.org",
       "strict_min_version": "77.0a1"
     }
   },
