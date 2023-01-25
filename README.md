@@ -1,4 +1,4 @@
-# Search Engine Usage Study
+# Search Engine Usage Study [DECOMMISSIONED]
 A study to assess how individuals interact with their search engines.
 
 ## Requirements
