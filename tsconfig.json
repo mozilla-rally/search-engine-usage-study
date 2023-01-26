@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "lib": [
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "noImplicitAny": false,
+    "sourceMap": false,
+    "allowJs": false,
+    "outDir": "compiled-ts"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

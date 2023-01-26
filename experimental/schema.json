@@ -1,0 +1,75 @@
+[
+  {
+    "namespace": "experimental",
+    "functions": [
+      {
+        "name": "createPopup",
+        "type": "function",
+        "description": "Pops up a modal dialog notifying the participant that their search engine has been changed and asks the participant if they would like to change it back.",
+        "async": true,
+        "parameters": [
+          {
+            "name": "searchEngineOld",
+            "type": "string",
+            "description": "The name of the search engine that their default was changed from."
+          },
+          {
+            "name": "searchEngineNew",
+            "type": "string",
+            "description": "The name of the search engine that their default was changed to."
+          },
+          {
+            "name": "modalPrimaryRevert",
+            "type": "boolean",
+            "description": "Whether the option to change their search engine back on the modal dialog will be the primary button."
+          }
+        ]
+      },
+      {
+        "name": "changeSearchEngine",
+        "type": "function",
+        "description": "Changes the participant's default search engine.",
+        "async": true,
+        "parameters": [
+          {
+            "name": "searchEngineName",
+            "type": "string",
+            "description": "The name of the search engine to make default. Should be either 'Google', 'DuckDuckGo', 'Yahoo', 'Bing', 'Ecosia', 'Brave', 'Baidu', or 'Ask'."
+          },
+          {
+            "name": "revert",
+            "type": "boolean",
+            "description": "Whether we are reverting a previous change of the default search engine by the study extension."
+          }
+        ]
+      },
+      {
+        "name": "getSearchEngine",
+        "type": "function",
+        "description": "Get the participant's current default search engine in the browser.",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "changeHomepage",
+        "type": "function",
+        "description": "Changes the participant's current homepage in the browser.",
+        "async": false,
+        "parameters": [
+          {
+            "name": "homepage",
+            "type": "string",
+            "description": "The URL that the homepage should be changed to."
+          }
+        ]
+      },
+      {
+        "name": "getHomepage",
+        "type": "function",
+        "description": "A promise for the participant's current '|' separated homepage URLs.",
+        "async": true,
+        "parameters": []
+      }
+    ]
+  }
+]

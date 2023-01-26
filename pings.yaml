@@ -1,0 +1,90 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# This file defines the pings that are recorded by the Glean SDK.
+# Their code APIs is automatically generated, at build time using,
+# the `glean_parser` PyPI package.
+
+---
+$schema: moz://mozilla.org/schemas/glean/pings/2-0-0
+
+study-enrollment:
+  description: |
+    This ping is sent when the user has consented to the study.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+study-initialization:
+  description: |
+    This ping is sent when the study first loads in the participant's
+    web browser.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+ballot-interaction:
+  description: |
+    This ping is sent for users in the search engine ballot treatment group
+    once they've made a selection, or if they have refused to make a
+    selection three times.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+notice-interaction:
+  description: |
+    This ping is sent after completion of the default condition treatment.
+    We consider the treatment to be complete when the participant closes the
+    default change notice, either by closing the notice window with the menu
+    bar X, clicking on the “Close” button, clicking on the “Revert” button if
+    it is present, or exiting the browser.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+modal-interaction:
+  description: |
+    This ping is sent for users in the modal treatment group once the user
+    interacts with the modal.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+serp-visit:
+  description: |
+    This ping is sent when there is a visit to a search engine results page.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com
+online-service-navigation:
+  description: |
+    This ping is sent on around a daily basis and contains details
+    about participant navigation to the tracked online services.
+  include_client_id: false
+  bugs:
+    - https://bugzilla.mozilla.org/show_bug.cgi?id=1748721
+  data_reviews:
+    - https://docs.google.com/document/d/1TDfq3wwX2lPgCPVnksWaMtvEKiPCNuAQxITfob38Ga0
+  notification_emails:
+    - than@mozilla.com

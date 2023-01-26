@@ -1,21 +1,58 @@
 {
-  "description": "A basic template for a Mozilla Rally Study.",
-  "author": "Mozilla",
+  "description": "This study measures how individuals interact with their search engines.",
+  "author": "Kartikeya Kandula",
   "manifest_version": 2,
-  "name": "Rally Basic Study Template",
-  "version": "0.3.1",
-  "homepage_url": "https://github.com/mozilla-ion/ion-basic-study",
-
+  "name": "Search Engine Usage and Result Quality Study",
+  "version": "1.2.0",
+  "homepage_url": "https://github.com/mozilla-rally/search-engine-usage-study",
   "applications": {
     "gecko": {
-      "id": "ion-basic-study@mozilla.org",
+      "id": "search-engine-usage@rally.mozilla.org",
       "strict_min_version": "77.0a1"
     }
   },
-
-  "permissions": [],
-
+  "permissions": [
+    "<all_urls>",
+    "idle",
+    "notifications",
+    "storage",
+    "unlimitedStorage",
+    "tabs",
+    "webRequest",
+    "webNavigation",
+    "history",
+    "alarms",
+    "mozillaAddons"
+  ],
+  "experiment_apis": {
+    "experimental": {
+      "schema": "./experimental/schema.json",
+      "parent": {
+        "scopes": [
+          "addon_parent"
+        ],
+        "script": "./experimental/api.js",
+        "paths": [
+          [
+            "experimental"
+          ]
+        ]
+      }
+    }
+  },
   "background": {
-    "scripts": ["dist/background.js"]
+    "scripts": [
+      "dist/background.js"
+    ]
+  },
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": {
+      "16": "icons/search.svg"
+    }
+  },
+  "options_ui": {
+    "page": "public/options.html",
+    "open_in_tab": true
   }
 }

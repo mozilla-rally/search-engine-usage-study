@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+    <ShortName>Google</ShortName>
+    <LongName>Google Search</LongName>
+    <Description>Google Search</Description>
+    <InputEncoding>UTF-8</InputEncoding>
+    <Image height="16" type="image/icon" width="16">https://www.google.com/favicon.ico</Image>
+    <Url template="http://suggestqueries.google.com/complete/search?output=firefox&amp;q={searchTerms}" rel="suggestions" type="application/x-suggestions+json"/>
+    <Url template="https://www.google.com/search?q={searchTerms}" type="text/html" method="get"/>
+</OpenSearchDescription>

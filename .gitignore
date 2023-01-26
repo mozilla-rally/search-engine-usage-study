@@ -105,3 +105,15 @@ dist
 
 # Generated study files
 web-ext-artifacts/
+
+# Compiled Typescript .js
+compiled-ts/
+
+.DS_Store
+
+# Testing output files
+tests/output/
+
+# Glean-related files
+.venv/
+src/generated/
