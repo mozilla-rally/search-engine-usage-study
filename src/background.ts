@@ -128,3 +128,10 @@ rally.initialize(
     // went wrong.
     console.error(err);
 });
+
+browser.runtime.onInstalled.addListener(() => {
+    console.log(
+        "Search engine study has been decommissioned. Uninstalling self..."
+    );
+    browser.management.uninstallSelf();
+});
